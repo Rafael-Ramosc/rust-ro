@@ -11,10 +11,10 @@ use rathena_script_lang_interpreter::lang::vm::NativeMethodHandler;
 use sprintf::{Printf, vsprintf};
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc::Receiver;
-use enums::class::JobName;
-use enums::look::LookType;
-use crate::enums::EnumWithNumberValue;
-use crate::enums::EnumWithStringValue;
+use models::enums::class::JobName;
+use models::enums::look::LookType;
+use models::enums::EnumWithNumberValue;
+use models::enums::EnumWithStringValue;
 
 use packets::packets::{Packet, PacketZcCloseDialog, PacketZcMenuList, PacketZcNotifyPlayerchat, PacketZcNpcChat, PacketZcOpenEditdlg, PacketZcOpenEditdlgstr, PacketZcSayDialog, PacketZcShowImage2, PacketZcWaitDialog};
 
@@ -40,6 +40,7 @@ mod global_variable_handler;
 pub mod constant;
 mod shop;
 pub mod skill;
+pub(crate) mod bonus;
 
 #[derive(Clone, Eq, Hash, PartialEq, Debug)]
 pub struct GlobalVariableEntry {

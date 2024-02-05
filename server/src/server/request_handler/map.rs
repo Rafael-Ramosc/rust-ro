@@ -1,11 +1,11 @@
-use enums::map::MapPropertyFlags;
+use models::enums::map::MapPropertyFlags;
 use packets::packets::{Packet, PacketZcAckReqnameall2, PacketCzReqnameall2, PacketZcNotifyMapproperty2, PacketZcHatEffect, PacketCzReqname};
 use crate::server::Server;
 use crate::util::string::StringUtil;
 
 use crate::server::model::events::game_event::GameEvent;
 use crate::server::model::request::Request;
-use enums::{EnumWithMaskValueU64};
+use models::enums::{EnumWithMaskValueU64};
 use crate::server::service::global_config_service::GlobalConfigService;
 
 use crate::util::packet::chain_packets;
@@ -27,7 +27,6 @@ pub fn handle_map_item_name(server: &Server, context: Request) {
         return;
     }
     let map_item = maybe_map_item.unwrap();
-    let map_item_name = server.state().map_item_name(&map_item, character.current_map_name(), character.current_map_instance()).unwrap_or_else(|| "unknown".to_string());
     let mut packet_zc_ack_reqnameall2 = PacketZcAckReqnameall2::new(GlobalConfigService::instance().packetver());
     packet_zc_ack_reqnameall2.set_gid(gid);
     let mut name: [char; 24] = [0 as char; 24];
@@ -37,6 +36,7 @@ pub fn handle_map_item_name(server: &Server, context: Request) {
         map_item.id().to_string().fill_char_array(name.as_mut());
     }
     #[cfg(not(feature = "debug_mob_movement"))]{
+        let map_item_name = server.state().map_item_name(&map_item, character.current_map_name(), character.current_map_instance()).unwrap_or_else(|| "unknown".to_string());
         map_item_name.fill_char_array(name.as_mut());
     }
     packet_zc_ack_reqnameall2.set_name(name);

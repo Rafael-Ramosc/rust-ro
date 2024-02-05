@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -75,6 +76,12 @@ impl SkillBase for Gank {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -147,6 +154,12 @@ impl SkillBase for Mug {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
@@ -164,6 +177,10 @@ impl OffensiveSkillBase for Mug {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // RG_BACKSTAP
@@ -226,6 +243,12 @@ impl SkillBase for BackStab {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 16 { Ok(16) } else {Err(())}
@@ -281,6 +304,10 @@ impl OffensiveSkillBase for BackStab {
             return Some(7.000)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // RG_TUNNELDRIVE
@@ -342,6 +369,12 @@ impl SkillBase for Stalk {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -414,6 +447,12 @@ impl SkillBase for SightlessMind {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 20 { Ok(20) } else {Err(())}
@@ -467,6 +506,10 @@ impl OffensiveSkillBase for SightlessMind {
             return Some(3.200)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 impl SelfSkillBase for SightlessMind {
@@ -546,6 +589,12 @@ impl SkillBase for DivestWeapon {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -586,6 +635,10 @@ impl OffensiveSkillBase for DivestWeapon {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // RG_STRIPSHIELD
@@ -663,6 +716,12 @@ impl SkillBase for DivestShield {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -703,6 +762,10 @@ impl OffensiveSkillBase for DivestShield {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // RG_STRIPARMOR
@@ -780,6 +843,12 @@ impl SkillBase for DivestArmor {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -820,6 +889,10 @@ impl OffensiveSkillBase for DivestArmor {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // RG_STRIPHELM
@@ -897,6 +970,12 @@ impl SkillBase for DivestHelm {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -937,6 +1016,10 @@ impl OffensiveSkillBase for DivestHelm {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // RG_INTIMIDATE
@@ -1014,6 +1097,12 @@ impl SkillBase for Snatch {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1081,6 +1170,10 @@ impl OffensiveSkillBase for Snatch {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 // RG_GRAFFITI
 pub struct Scribble {
@@ -1142,6 +1235,12 @@ impl SkillBase for Scribble {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
@@ -1149,7 +1248,7 @@ impl SkillBase for Scribble {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 716, name_english: "Red_Gemstone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 716 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 716 && item.amount >= 1) {
             return Err(UseSkillFailure::RedGemstone);
         }
         Ok(Some(required_items))
@@ -1224,6 +1323,12 @@ impl SkillBase for Piece {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1300,6 +1405,12 @@ impl SkillBase for Remover {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 5 { Ok(5) } else {Err(())}
@@ -1375,6 +1486,12 @@ impl SkillBase for Slyness {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1445,6 +1562,12 @@ impl SkillBase for Haggle {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1517,6 +1640,12 @@ impl SkillBase for Intimidate {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1588,6 +1717,12 @@ impl SkillBase for CloseConfine {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 25 { Ok(25) } else {Err(())}
@@ -1605,5 +1740,9 @@ impl OffensiveSkillBase for CloseConfine {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }

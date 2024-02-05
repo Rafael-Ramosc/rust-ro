@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -75,6 +76,12 @@ impl SkillBase for RighthandMastery {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -147,6 +154,12 @@ impl SkillBase for LefthandMastery {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -218,6 +231,12 @@ impl SkillBase for KatarMastery {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -288,6 +307,12 @@ impl SkillBase for Cloaking {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -394,6 +419,12 @@ impl SkillBase for SonicBlow {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -488,6 +519,10 @@ impl OffensiveSkillBase for SonicBlow {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 // AS_GRIMTOOTH
 pub struct Grimtooth {
@@ -549,6 +584,12 @@ impl SkillBase for Grimtooth {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 3 { Ok(3) } else {Err(())}
@@ -602,6 +643,10 @@ impl OffensiveSkillBase for Grimtooth {
             return Some(2.000)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // AS_ENCHANTPOISON
@@ -663,6 +708,12 @@ impl SkillBase for EnchantPoison {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Support
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -769,6 +820,12 @@ impl SkillBase for PoisonReact {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -859,6 +916,10 @@ impl OffensiveSkillBase for PoisonReact {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
 }
 impl SelfSkillBase for PoisonReact {
 }
@@ -922,6 +983,12 @@ impl SkillBase for VenomDust {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 20 { Ok(20) } else {Err(())}
@@ -929,7 +996,7 @@ impl SkillBase for VenomDust {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 716, name_english: "Red_Gemstone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 716 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 716 && item.amount >= 1) {
             return Err(UseSkillFailure::RedGemstone);
         }
         Ok(Some(required_items))
@@ -1035,6 +1102,12 @@ impl SkillBase for VenomSplasher {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1072,7 +1145,7 @@ impl SkillBase for VenomSplasher {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 716, name_english: "Red_Gemstone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 716 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 716 && item.amount >= 1) {
             return Err(UseSkillFailure::RedGemstone);
         }
         Ok(Some(required_items))
@@ -1128,6 +1201,10 @@ impl OffensiveSkillBase for VenomSplasher {
             return Some(3.000)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // AS_SONICACCEL
@@ -1189,6 +1266,12 @@ impl SkillBase for SonicAcceleration {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1261,6 +1344,12 @@ impl SkillBase for ThrowVenomKnife {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
@@ -1286,5 +1375,9 @@ impl OffensiveSkillBase for ThrowVenomKnife {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }

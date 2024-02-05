@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -105,6 +106,12 @@ impl SkillBase for Running {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -242,6 +249,12 @@ impl SkillBase for TornadoStance {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 1 { Ok(1) } else {Err(())}
@@ -338,6 +351,12 @@ impl SkillBase for TornadoKick {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -410,6 +429,10 @@ impl OffensiveSkillBase for TornadoKick {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 impl SelfSkillBase for TornadoKick {
 }
@@ -472,6 +495,12 @@ impl SkillBase for HeelDropStance {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -569,6 +598,12 @@ impl SkillBase for HeelDrop {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -641,6 +676,10 @@ impl OffensiveSkillBase for HeelDrop {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 impl SelfSkillBase for HeelDrop {
 }
@@ -703,6 +742,12 @@ impl SkillBase for RoundhouseStance {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -800,6 +845,12 @@ impl SkillBase for RoundhouseKick {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -872,6 +923,10 @@ impl OffensiveSkillBase for RoundhouseKick {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 impl SelfSkillBase for RoundhouseKick {
 }
@@ -934,6 +989,12 @@ impl SkillBase for CounterKickStance {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1031,6 +1092,12 @@ impl SkillBase for CounterKick {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1103,6 +1170,10 @@ impl OffensiveSkillBase for CounterKick {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 impl SelfSkillBase for CounterKick {
 }
@@ -1165,6 +1236,12 @@ impl SkillBase for Tumbling {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1262,6 +1339,12 @@ impl SkillBase for FlyingKick {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Support
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1334,6 +1417,10 @@ impl OffensiveSkillBase for FlyingKick {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 impl SupportiveSkillBase for FlyingKick {
 }
@@ -1396,6 +1483,12 @@ impl SkillBase for PeacefulBreak {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1468,6 +1561,12 @@ impl SkillBase for HappyBreak {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1538,6 +1637,12 @@ impl SkillBase for Kihop {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1630,6 +1735,12 @@ impl SkillBase for MildWind {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1727,6 +1838,12 @@ impl SkillBase for TaekwonJump {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 50 { Ok(50) } else {Err(())}
@@ -1820,6 +1937,12 @@ impl SkillBase for TaekwonMission {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {

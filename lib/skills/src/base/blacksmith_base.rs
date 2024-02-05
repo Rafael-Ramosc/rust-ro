@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -75,6 +76,12 @@ impl SkillBase for IronTempering {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -147,6 +154,12 @@ impl SkillBase for SteelTempering {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -217,6 +230,12 @@ impl SkillBase for EnchantedStoneCraft {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -289,6 +308,12 @@ impl SkillBase for OrideconResearch {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -359,6 +384,12 @@ impl SkillBase for SmithDagger {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -431,6 +462,12 @@ impl SkillBase for SmithSword {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -501,6 +538,12 @@ impl SkillBase for SmithTwohandedSword {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -573,6 +616,12 @@ impl SkillBase for SmithAxe {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -643,6 +692,12 @@ impl SkillBase for SmithMace {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -715,6 +770,12 @@ impl SkillBase for SmithKnucklebrace {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -785,6 +846,12 @@ impl SkillBase for SmithSpear {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -857,6 +924,12 @@ impl SkillBase for HiltBinding {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -927,6 +1000,12 @@ impl SkillBase for OreDiscovery {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -999,6 +1078,12 @@ impl SkillBase for WeaponryResearch {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1069,6 +1154,12 @@ impl SkillBase for WeaponRepair {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Support
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1149,6 +1240,12 @@ impl SkillBase for SkinTempering {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1219,6 +1316,12 @@ impl SkillBase for HammerFall {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1317,6 +1420,12 @@ impl SkillBase for AdrenalineRush {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1431,6 +1540,12 @@ impl SkillBase for WeaponPerfection {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1536,6 +1651,12 @@ impl SkillBase for PowerThrust {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1634,6 +1755,12 @@ impl SkillBase for MaximizePower {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -1709,6 +1836,12 @@ impl SkillBase for UnfairTrick {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1779,6 +1912,12 @@ impl SkillBase for Greed {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1858,6 +1997,12 @@ impl SkillBase for AdvancedAdrenalineRush {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {

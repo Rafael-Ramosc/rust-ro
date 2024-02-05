@@ -60,7 +60,7 @@ pub trait CharacterRepository {
     async fn character_zeny_fetch(&self, _char_id: u32) -> Result<i32, Error> { todo!() }
     async fn character_allocated_skill_points(&self, _char_id: u32) -> Result<i32, Error> { todo!() }
     async fn character_skills(&self, _char_id: u32) -> Result<Vec<KnownSkill>, Error> { todo!() }
-    async fn character_fetch(&self, account_id: u32, char_num: u8) -> Result<CharSelectModel, Error> { todo!() }
+    async fn character_fetch(&self, _account_id: u32, _char_num: u8) -> Result<CharSelectModel, Error> { todo!() }
     async fn character_reset_skills(&self, _char_id: i32, _skills: Vec<i32>) -> Result<(), Error> { todo!() }
     async fn character_allocate_skill_point(&self, _char_id: i32,  _skill_id: i32, _increment: u8) -> Result<(), Error> { todo!() }
 }
@@ -81,4 +81,5 @@ pub trait ItemRepository {
     async fn get_item_script(&self, id: i32) -> Result<String, Error>;
     async fn get_weight(&self, ids: Vec<i32>) -> Result<Vec<(i32, i32)>, Error>;
     async fn get_all_items(&self) -> Result<Vec<ItemModel>, Error>;
+    async fn update_script_compilation(&self, to_update: Vec<(i32, Vec<u8>, u128)>) -> Result<(), Error>;
 }

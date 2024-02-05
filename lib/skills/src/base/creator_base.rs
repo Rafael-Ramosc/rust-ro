@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -76,6 +77,12 @@ impl SkillBase for AidCondensedPotion {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 30 { Ok(30) } else {Err(())}
@@ -83,34 +90,34 @@ impl SkillBase for AidCondensedPotion {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 545, name_english: "Red_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 545, name_english: "Red_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 545, name_english: "Red_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 545, name_english: "Red_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 545, name_english: "Red_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 546, name_english: "Yellow_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 546, name_english: "Yellow_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 546, name_english: "Yellow_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 546, name_english: "Yellow_Slim_Potion".to_string(), amount: 1}),(NormalInventoryItem {item_id: 547, name_english: "White_Slim_Potion".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 545 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 545 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 545 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 545 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 545 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 545 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 545 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 545 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 545 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 545 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 546 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 546 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 546 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 546 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 546 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 546 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 546 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 546 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 547 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 547 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -194,6 +201,12 @@ impl SkillBase for FullProtection {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Support
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 40 { Ok(40) } else {Err(())}
@@ -201,7 +214,7 @@ impl SkillBase for FullProtection {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7139, name_english: "Coating_Bottle".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7139 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7139 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -281,6 +294,12 @@ impl SkillBase for AcidDemonstration {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 30 { Ok(30) } else {Err(())}
@@ -288,10 +307,10 @@ impl SkillBase for AcidDemonstration {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7135, name_english: "Fire_Bottle".to_string(), amount: 1}),(NormalInventoryItem {item_id: 7136, name_english: "Acid_Bottle".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7135 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7135 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 7136 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7136 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -347,6 +366,10 @@ impl OffensiveSkillBase for AcidDemonstration {
             return 10
         }
         0
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // CR_CULTIVATION
@@ -409,6 +432,12 @@ impl SkillBase for PlantCultivation {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -416,10 +445,10 @@ impl SkillBase for PlantCultivation {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 921, name_english: "Mushroom_Spore".to_string(), amount: 1}),(NormalInventoryItem {item_id: 905, name_english: "Stem".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 921 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 921 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 905 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 905 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))

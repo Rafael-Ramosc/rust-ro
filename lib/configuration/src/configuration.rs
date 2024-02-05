@@ -1,17 +1,17 @@
 use crate::serde_helper::*;
 use accessor::{GettersAll, Setters, SettersAll};
-use enums::class::JobName;
-use enums::element::Element;
-use enums::skill::{
+use models::enums::class::JobName;
+use models::enums::element::Element;
+use models::enums::skill::{
     SkillCastTimeDelayType, SkillCopyType, SkillDamageFlags, SkillDamageType, SkillFlags,
     SkillState, SkillTargetType, SkillType, SkillUnitType,
 };
-use enums::unit::UnitTargetType;
-use enums::weapon::{AmmoType, WeaponType};
-use enums::EnumWithNumberValue;
-use enums::{EnumWithMaskValueU64, EnumWithStringValue};
-use serde::{Deserialize, Deserializer};
-use std::collections::HashMap;
+use models::enums::unit::UnitTargetType;
+use models::enums::weapon::{AmmoType, WeaponType};
+use models::enums::EnumWithNumberValue;
+use models::enums::{EnumWithMaskValueU64, EnumWithStringValue};
+use serde::{Deserialize, Deserializer, Serialize};
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::{env, fs};
 
@@ -149,13 +149,13 @@ pub struct ProxyConfig {
     pub local_map_server_port: u16,
 }
 
-#[derive(Deserialize, Debug, Clone)]
-struct InternalJobsConfig {
+#[derive(Deserialize, Serialize, Debug, Clone, GettersAll)]
+pub struct InternalJobsConfig {
     level: HashMap<String, JobLevel>,
-    jobs: HashMap<String, InternalJobConfig>,
+    pub jobs: BTreeMap<String, InternalJobConfig>,
 }
 
-#[derive(Deserialize, Debug, Clone, GettersAll)]
+#[derive(Deserialize, Serialize, Debug, Clone, GettersAll)]
 pub struct JobLevel {
     #[serde(rename = "maxJobLevel")]
     max_job_level: u8,
@@ -163,16 +163,25 @@ pub struct JobLevel {
     min_job_level_to_change_job: u8,
 }
 
-#[derive(Deserialize, Debug, Clone)]
-struct InternalJobConfig {
+#[derive(Deserialize, Serialize, Debug, Clone, SettersAll, GettersAll)]
+pub struct InternalJobConfig {
+    #[serde(skip_serializing_if = "Option::is_none")]
     base_weight: Option<u32>,
     id: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     inherit: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     inherit_sp: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     inherit_hp: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     base_hp: Option<Vec<u32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     base_sp: Option<Vec<u32>>,
-    base_aspd: Option<HashMap<String, u32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    bonus_stats: Option<Vec<BTreeMap<String, u16>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    base_aspd: Option<BTreeMap<String, u32>>,
 }
 
 #[derive(Deserialize, Debug, Clone, GettersAll)]
@@ -182,7 +191,8 @@ pub struct JobConfig {
     base_weight: u32,
     base_hp: Vec<u32>,
     base_sp: Vec<u32>,
-    base_aspd: HashMap<String, u32>,
+    base_aspd: BTreeMap<String, u32>,
+    bonus_stats: Vec<BTreeMap<String, u16>>,
     job_level: JobLevel,
 }
 
@@ -1975,6 +1985,16 @@ impl Config {
                 .unwrap_or_else(|| {
                     panic!("job config for class {name}: expected to find property base_sp")
                 }),
+                bonus_stats: Self::resolve_inherited_config(
+                    name,
+                    config,
+                    &internal_configs,
+                    "bonus_stats",
+                    |_conf| None,
+                    |conf| conf.bonus_stats.clone(),
+                ).unwrap_or_else(|| {
+                    panic!("job config for class {name}: expected to find property bonus_stats")
+                }),
                 base_aspd,
             });
         }
@@ -2045,6 +2065,9 @@ impl Config {
         F1: Fn(&InternalJobConfig) -> Option<&String>,
         F2: Fn(&InternalJobConfig) -> Option<T>,
     {
+        if defined_property_fn(current_config).is_some() {
+            return defined_property_fn(current_config);
+        }
         return if let Some(inherit) = current_config.inherit.as_ref() {
             let inherited_config = configs.jobs.get(inherit).unwrap_or_else(|| {
                 panic!("job config for class {name}: inherit \"{inherit}\" was not found")

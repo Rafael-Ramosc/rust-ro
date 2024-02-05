@@ -1,4 +1,5 @@
-
+use base64::Engine;
+use base64::engine::general_purpose;
 use serde::{Deserialize, Serialize};
 use sqlx::{Decode, Error, FromRow, Postgres, Row};
 use sqlx::database::HasValueRef;
@@ -9,15 +10,16 @@ use configuration::serde_helper::{*};
 
 use sqlx::postgres::PgRow;
 
-use enums::class::EquipClassFlag;
-use enums::{EnumWithMaskValueU64, EnumWithStringValue};
-use enums::item::{EquipmentLocation, ItemClass, ItemFlag, ItemTradeFlag, ItemType};
-use enums::weapon::{AmmoType, WeaponType};
+use models::enums::class::EquipClassFlag;
+use models::enums::{EnumWithMaskValueU64, EnumWithStringValue};
+use models::enums::bonus::BonusType;
+use models::enums::item::{EquipmentLocation, ItemClass, ItemFlag, ItemTradeFlag, ItemType};
+use models::enums::weapon::{AmmoType, WeaponType};
 use models::item::{NormalInventoryItem, WearAmmo, WearGear, WearWeapon};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ItemModels {
-    items: Vec<ItemModel>
+    pub items: Vec<ItemModel>
 }
 impl From<Vec<ItemModel>> for ItemModels {
     fn from(items: Vec<ItemModel>) -> Self {
@@ -39,40 +41,75 @@ pub struct ItemModel {
     pub name_english: String,
     #[serde(serialize_with = "serialize_string_enum", deserialize_with = "deserialize_string_enum")]
     pub item_type: ItemType,
-    #[serde(serialize_with = "serialize_optional_string_enum", deserialize_with = "deserialize_optional_string_enum", default)]
+    #[serde(serialize_with = "serialize_optional_string_enum", deserialize_with = "deserialize_optional_string_enum", default, skip_serializing_if = "Option::is_none")]
     pub weapon_type: Option<WeaponType>,
-    #[serde(serialize_with = "serialize_optional_string_enum", deserialize_with = "deserialize_optional_string_enum", default)]
+    #[serde(serialize_with = "serialize_optional_string_enum", deserialize_with = "deserialize_optional_string_enum", default, skip_serializing_if = "Option::is_none")]
     pub ammo_type: Option<AmmoType>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub price_buy: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub price_sell: Option<i32>,
     pub weight: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub attack: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub defense: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub range: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub slots: Option<i16>,
     pub job_flags: u64,
     pub class_flags: u64,
     pub location: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub gender: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub weapon_level: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub armor_level: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub equip_level_min: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub equip_level_max: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub refineable: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub view: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub alias_name: Option<String>,
     pub flags: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub delay_duration: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub delay_status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_amount: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_inventory: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_cart: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_storage: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub stack_guildstorage: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nouse_override: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub nouse_sitting: Option<i16>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub trade_override: Option<i32>,
     pub trade_flags: u64,
+    #[serde(skip)]
+    pub script: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub script_compilation: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub script_compilation_hash: Option<u128>,
+    #[serde(skip)]
+    pub bonuses: Vec<BonusType>,
+    #[serde(skip)]
+    pub item_bonuses_are_dynamic: bool
+
 }
 
 impl<'r> FromRow<'r, PgRow> for ItemModel {
@@ -197,6 +234,7 @@ impl<'r> FromRow<'r, PgRow> for ItemModel {
         let nouse_override: Option<i32> = row.try_get("nouse_override").or_else(Self::map_error())?;
         let nouse_sitting: Option<i16> = row.try_get("nouse_sitting").or_else(Self::map_error())?;
         let trade_override: Option<i32> = row.try_get("trade_override").or_else(Self::map_error())?;
+        let script: Option<String> = row.try_get("script").or_else(Self::map_error())?;
 
         let mut trade_flags = vec![];
         row.try_get::<'r, Option<i16>, _>("trade_nodrop").map(|v| if v.is_some() && v.unwrap() != 0 { trade_flags.push(ItemTradeFlag::NoDrop) }).or_else(Self::map_error())?;
@@ -209,6 +247,10 @@ impl<'r> FromRow<'r, PgRow> for ItemModel {
         row.try_get::<'r, Option<i16>, _>("trade_noauction").map(|v| if v.is_some() && v.unwrap() != 0 { trade_flags.push(ItemTradeFlag::NoAuction) }).or_else(Self::map_error())?;
         row.try_get::<'r, Option<i16>, _>("trade_nomail").map(|v| if v.is_some() && v.unwrap() != 0 { trade_flags.push(ItemTradeFlag::NoMail) }).or_else(Self::map_error())?;
         let trade_flags = Self::enum_flags_into_u64(&trade_flags);
+        let mut script_compilation = None;
+        let mut script_compilation_hash = None;
+        row.try_get::<'r, Option<Vec<u8>>, _>("script_compilation").map(|v| if let Some(v) = v { script_compilation = Some(general_purpose::STANDARD.encode(v)) }).or_else(Self::map_error())?;
+        row.try_get::<'r, Option<Vec<u8>>, _>("script_compilation_hash").map(|v| if let Some(v) = v { let hash: [u8;16] = v.try_into().unwrap(); script_compilation_hash = Some(u128::from_le_bytes(hash)) }).or_else(Self::map_error())?;
 
         Ok(ItemModel {
             id,
@@ -247,6 +289,11 @@ impl<'r> FromRow<'r, PgRow> for ItemModel {
             trade_override,
             trade_flags,
             class_flags,
+            script,
+            script_compilation,
+            script_compilation_hash,
+            bonuses: vec![],
+            item_bonuses_are_dynamic: false,
         })
     }
 }

@@ -2,12 +2,12 @@ use std::sync::{Arc, Once};
 use std::sync::mpsc::SyncSender;
 use rand::RngCore;
 use tokio::runtime::Runtime;
-use enums::class::{EquipClassFlag, JobName};
-use enums::EnumWithMaskValueU64;
-use enums::item::{EquipmentLocation, ItemType};
-use enums::look::LookType;
+use models::enums::class::{EquipClassFlag, JobName};
+use models::enums::EnumWithMaskValueU64;
+use models::enums::item::{EquipmentLocation, ItemType};
+use models::enums::look::LookType;
 use models::item::{Wearable};
-use crate::enums::EnumWithNumberValue;
+use models::enums::EnumWithNumberValue;
 use packets::packets::{EquipmentitemExtrainfo301, EQUIPSLOTINFO, NormalitemExtrainfo3, PacketZcAttackRange, PacketZcEquipArrow, PacketZcEquipmentItemlist3, PacketZcItemFallEntry, PacketZcItemPickupAck3, PacketZcItemThrowAck, PacketZcNormalItemlist3, PacketZcPcPurchaseResult, PacketZcReqTakeoffEquipAck2, PacketZcReqWearEquipAck2, PacketZcSpriteChange2};
 use crate::repository::model::item_model::{InventoryItemModel, ItemModel};
 use crate::repository::{InventoryRepository};
@@ -164,7 +164,7 @@ impl InventoryService {
 
     pub fn reload_inventory(&self, runtime: &Runtime, char_id: u32, character: &mut Character) {
         character.inventory = vec![];
-        let _items = runtime.block_on(async {
+        runtime.block_on(async {
             let items = self.repository.character_inventory_fetch(char_id as i32).await.unwrap();
             character.status.takeoff_all_equipment();
             character.add_items(items);

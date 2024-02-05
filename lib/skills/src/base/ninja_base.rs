@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -75,6 +76,12 @@ impl SkillBase for ShurikenTraining {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -147,6 +154,12 @@ impl SkillBase for ThrowShuriken {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 2 { Ok(2) } else {Err(())}
@@ -176,6 +189,10 @@ impl OffensiveSkillBase for ThrowShuriken {
     #[inline(always)]
     fn _dmg_atk(&self) -> Option<f32> {
        Some(1.000)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // NJ_KUNAI
@@ -253,6 +270,12 @@ impl SkillBase for ThrowKunai {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -301,6 +324,10 @@ impl OffensiveSkillBase for ThrowKunai {
     #[inline(always)]
     fn _dmg_atk(&self) -> Option<f32> {
        Some(3.000)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // NJ_HUUMA
@@ -377,6 +404,12 @@ impl SkillBase for ThrowHuumaShuriken {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -461,6 +494,10 @@ impl OffensiveSkillBase for ThrowHuumaShuriken {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 // NJ_ZENYNAGE
 pub struct ThrowZeny {
@@ -522,6 +559,12 @@ impl SkillBase for ThrowZeny {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 50 { Ok(50) } else {Err(())}
@@ -577,6 +620,10 @@ impl OffensiveSkillBase for ThrowZeny {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }
 // NJ_TATAMIGAESHI
@@ -639,6 +686,12 @@ impl SkillBase for ImprovisedDefense {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
@@ -687,6 +740,10 @@ impl OffensiveSkillBase for ImprovisedDefense {
             return Some(1.500)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 impl SelfSkillBase for ImprovisedDefense {
@@ -781,6 +838,12 @@ impl SkillBase for VanishingSlash {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -867,6 +930,10 @@ impl OffensiveSkillBase for VanishingSlash {
         }
         None
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
 }
 // NJ_SHADOWJUMP
 pub struct ShadowLeap {
@@ -927,6 +994,12 @@ impl SkillBase for ShadowLeap {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1031,6 +1104,12 @@ impl SkillBase for ShadowSlash {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1091,6 +1170,10 @@ impl OffensiveSkillBase for ShadowSlash {
             return Some(5.000)
         }
         None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // NJ_UTSUSEMI
@@ -1167,6 +1250,12 @@ impl SkillBase for CicadaSkinSheeding {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1292,6 +1381,12 @@ impl SkillBase for MirrorImage {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1329,7 +1424,7 @@ impl SkillBase for MirrorImage {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7524, name_english: "Shadow_Orb".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7524 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7524 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -1443,6 +1538,12 @@ impl SkillBase for SpiritoftheBlade {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -1547,6 +1648,12 @@ impl SkillBase for CrimsonFirePetal {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1660,6 +1767,44 @@ impl OffensiveSkillBase for CrimsonFirePetal {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(0.900)
+        }
+        if self.level == 2 {
+            return Some(1.800)
+        }
+        if self.level == 3 {
+            return Some(2.700)
+        }
+        if self.level == 4 {
+            return Some(3.600)
+        }
+        if self.level == 5 {
+            return Some(4.500)
+        }
+        if self.level == 6 {
+            return Some(5.400)
+        }
+        if self.level == 7 {
+            return Some(6.300)
+        }
+        if self.level == 8 {
+            return Some(7.200)
+        }
+        if self.level == 9 {
+            return Some(8.100)
+        }
+        if self.level == 10 {
+            return Some(9.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
+    }
 }
 // NJ_KAENSIN
 pub struct CrimsonFireFormation {
@@ -1721,6 +1866,12 @@ impl SkillBase for CrimsonFireFormation {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 25 { Ok(25) } else {Err(())}
@@ -1728,7 +1879,7 @@ impl SkillBase for CrimsonFireFormation {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7521, name_english: "Flame_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7521 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7521 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -1857,6 +2008,12 @@ impl SkillBase for RagingFireDragon {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1879,7 +2036,7 @@ impl SkillBase for RagingFireDragon {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7521, name_english: "Flame_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7521 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7521 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -1905,6 +2062,29 @@ impl OffensiveSkillBase for RagingFireDragon {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        -3
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(3.000)
+        }
+        if self.level == 2 {
+            return Some(4.500)
+        }
+        if self.level == 3 {
+            return Some(6.000)
+        }
+        if self.level == 4 {
+            return Some(7.500)
+        }
+        if self.level == 5 {
+            return Some(9.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
     }
 }
 // NJ_HYOUSENSOU
@@ -1996,6 +2176,12 @@ impl SkillBase for SpearofIce {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -2109,6 +2295,44 @@ impl OffensiveSkillBase for SpearofIce {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(4.500)
+        }
+        if self.level == 2 {
+            return Some(6.000)
+        }
+        if self.level == 3 {
+            return Some(7.500)
+        }
+        if self.level == 4 {
+            return Some(9.000)
+        }
+        if self.level == 5 {
+            return Some(10.500)
+        }
+        if self.level == 6 {
+            return Some(12.000)
+        }
+        if self.level == 7 {
+            return Some(13.500)
+        }
+        if self.level == 8 {
+            return Some(15.000)
+        }
+        if self.level == 9 {
+            return Some(16.500)
+        }
+        if self.level == 10 {
+            return Some(18.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
+    }
 }
 // NJ_SUITON
 pub struct HiddenWater {
@@ -2200,6 +2424,12 @@ impl SkillBase for HiddenWater {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2237,7 +2467,7 @@ impl SkillBase for HiddenWater {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7522, name_english: "Ice_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7522 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7522 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -2332,6 +2562,12 @@ impl SkillBase for IceMeteor {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2354,7 +2590,7 @@ impl SkillBase for IceMeteor {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7522, name_english: "Ice_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7522 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7522 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -2483,6 +2719,12 @@ impl SkillBase for WindBlade {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2599,6 +2841,44 @@ impl OffensiveSkillBase for WindBlade {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(2.000)
+        }
+        if self.level == 4 {
+            return Some(3.000)
+        }
+        if self.level == 5 {
+            return Some(3.000)
+        }
+        if self.level == 6 {
+            return Some(4.000)
+        }
+        if self.level == 7 {
+            return Some(4.000)
+        }
+        if self.level == 8 {
+            return Some(5.000)
+        }
+        if self.level == 9 {
+            return Some(5.000)
+        }
+        if self.level == 10 {
+            return Some(6.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Wind
+    }
 }
 // NJ_RAIGEKISAI
 pub struct LightningStrikeofDestruction {
@@ -2675,6 +2955,12 @@ impl SkillBase for LightningStrikeofDestruction {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2697,7 +2983,7 @@ impl SkillBase for LightningStrikeofDestruction {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7523, name_english: "Wind_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7523 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7523 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -2792,6 +3078,12 @@ impl SkillBase for Kamaitachi {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2814,7 +3106,7 @@ impl SkillBase for Kamaitachi {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 7523, name_english: "Wind_Stone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 7523 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 7523 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -2836,6 +3128,29 @@ impl OffensiveSkillBase for Kamaitachi {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(2.000)
+        }
+        if self.level == 2 {
+            return Some(3.000)
+        }
+        if self.level == 3 {
+            return Some(4.000)
+        }
+        if self.level == 4 {
+            return Some(5.000)
+        }
+        if self.level == 5 {
+            return Some(6.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Wind
     }
 }
 // NJ_NEN
@@ -2912,6 +3227,12 @@ impl SkillBase for Soul {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -3052,6 +3373,12 @@ impl SkillBase for FinalStrike {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -3099,5 +3426,9 @@ impl OffensiveSkillBase for FinalStrike {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
     }
 }

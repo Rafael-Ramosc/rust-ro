@@ -1,6 +1,7 @@
 use std::sync::{Once};
+use models::enums::class::JobName;
 use models::status::{Status, StatusSnapshot};
-use crate::enums::EnumWithStringValue;
+use models::enums::{EnumWithNumberValue, EnumWithStringValue};
 use crate::server::service::global_config_service::GlobalConfigService;
 
 
@@ -27,9 +28,48 @@ impl StatusService {
     }
 
     pub fn to_snapshot(&self, status: &Status) -> StatusSnapshot {
-        let mut snapshot = StatusSnapshot::from(status);
+        let mut snapshot = StatusSnapshot::_from(status);
+        let job = JobName::from_value(status.job as usize);
+        let job_config = self.configuration_service.get_job_config(snapshot.job());
+        let index_for_job_level = (status.job_level.max(1) - 1) as usize;
+        let index_for_base_level = (status.base_level.max(1) - 1).min(99) as usize; // TODO if we want to scale some stats after lvl 99, need to remove min(99) and implement formula
+        job_config.bonus_stats()
+            .get(index_for_job_level)
+            .map(|bonus| {
+                snapshot.set_bonus_str(*bonus.get("str").unwrap_or(&0_u16));
+                snapshot.set_bonus_agi(*bonus.get("agi").unwrap_or(&0_u16));
+                snapshot.set_bonus_dex(*bonus.get("dex").unwrap_or(&0_u16));
+                snapshot.set_bonus_vit(*bonus.get("vit").unwrap_or(&0_u16));
+                snapshot.set_bonus_int(*bonus.get("int").unwrap_or(&0_u16));
+                snapshot.set_bonus_luk(*bonus.get("luk").unwrap_or(&0_u16));
+            });
+        for equipment in status.all_equipped_items() {
+            let item_model = self.configuration_service.get_item(equipment.item_id());
+            if item_model.item_bonuses_are_dynamic {
+                // TODO
+            } else {
+                item_model.bonuses.iter().for_each(|bonus| bonus.add_bonus_to_status(&mut snapshot))
+            }
+        }
+        // TODO [([base_hp*(1 + VIT/100)* trans_mod]+HPAdditions)*ItemHPMultipliers] https://irowiki.org/classic/Max_HP
+        let hp_rebirth_modifier: f32 = if job.is_rebirth() { 1.25 } else { 1.0 };
+        println!("{}", job_config.base_hp()[index_for_base_level] as f32 * (1.0 + snapshot.vit() as f32 / 100.0));
+        snapshot.set_max_hp((job_config.base_hp()[index_for_base_level] as f32 * (1.0 + snapshot.vit() as f32 / 100.0) * hp_rebirth_modifier).floor() as u32);
+        // TODO https://irowiki.org/classic/Max_SP
+        snapshot.set_max_sp((job_config.base_sp()[index_for_base_level] as f32 * (1.0 + snapshot.int() as f32 / 100.0) * hp_rebirth_modifier ).floor() as u32);
+        // TODO 1 + YourLUK*0.3 + Critical Increasing Cards)*CritModifier - TargetLUK/5
+        snapshot.set_crit(Self::truncate(snapshot.crit() + (1.0 + snapshot.luk() as f32 * 0.3), 1));
+        snapshot.set_hit(snapshot.hit() + status.base_level as u16 + snapshot.dex());
+        snapshot.set_flee(snapshot.flee() + status.base_level as u16 + snapshot.agi());
         snapshot.set_aspd(self.aspd(&snapshot));
+        snapshot.set_matk_min(((snapshot.int() + ((snapshot.int() as f32 / 7.0).floor() as u16).pow(2)) as f32 * snapshot.matk_item_modifier()).floor() as u16);
+        snapshot.set_matk_max(((snapshot.int() + ((snapshot.int() as f32 / 5.0).floor() as u16).pow(2)) as f32 * snapshot.matk_item_modifier()).floor() as u16);
+        // TODO add bonuses from item and cards snapshot.bonuses.push(...)
         snapshot
+    }
+    fn truncate(x: f32, decimals: u32) -> f32 {
+        let y = 10i32.pow(decimals) as f32;
+        (x * y).round() / y
     }
 
     #[inline]
@@ -106,7 +146,7 @@ impl StatusService {
     /// UI right side atk in status info panel
     /// https://web.archive.org/web/20060717223009/http://rodatazone.simgaming.net/mechanics/substats.php
     /// https://web.archive.org/web/20060717222819/http://rodatazone.simgaming.net/items/upgrading.php
-    pub fn status_atk_right_side(&self, status: &StatusSnapshot) -> i32 {
+    pub fn status_atk_right_side(&self, _status: &StatusSnapshot) -> i32 {
         // TODO: it is refinement damage. do not mix with refinement bonus which refers to random additional atk for over upgrade
         // refinement
         //    Weapon Lv. 1 - Every +1 upgrade gives +2 ATK (+1~3 ATK for every overupgrade).

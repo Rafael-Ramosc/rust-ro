@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -90,6 +91,12 @@ impl SkillBase for Assumptio {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Support
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -253,6 +260,12 @@ impl SkillBase for Basilica {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -275,16 +288,16 @@ impl SkillBase for Basilica {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 715, name_english: "Yellow_Gemstone".to_string(), amount: 1}),(NormalInventoryItem {item_id: 716, name_english: "Red_Gemstone".to_string(), amount: 1}),(NormalInventoryItem {item_id: 717, name_english: "Blue_Gemstone".to_string(), amount: 1}),(NormalInventoryItem {item_id: 523, name_english: "Holy_Water".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 715 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 715 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
-        if inventory.iter().find(|item| item.item_id == 716 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 716 && item.amount >= 1) {
             return Err(UseSkillFailure::RedGemstone);
         }
-        if inventory.iter().find(|item| item.item_id == 717 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 717 && item.amount >= 1) {
             return Err(UseSkillFailure::BlueGemstone);
         }
-        if inventory.iter().find(|item| item.item_id == 523 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 523 && item.amount >= 1) {
             return Err(UseSkillFailure::Holywater);
         }
         Ok(Some(required_items))
@@ -417,6 +430,12 @@ impl SkillBase for Meditatio {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -487,6 +506,12 @@ impl SkillBase for ManaRecharge {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {

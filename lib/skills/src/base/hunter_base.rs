@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -76,6 +77,12 @@ impl SkillBase for SkidTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -83,7 +90,7 @@ impl SkillBase for SkidTrap {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -159,6 +166,12 @@ impl SkillBase for LandMine {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -166,7 +179,7 @@ impl SkillBase for LandMine {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -242,6 +255,12 @@ impl SkillBase for AnkleSnare {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 12 { Ok(12) } else {Err(())}
@@ -249,7 +268,7 @@ impl SkillBase for AnkleSnare {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -325,6 +344,12 @@ impl SkillBase for ShockwaveTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 45 { Ok(45) } else {Err(())}
@@ -332,7 +357,7 @@ impl SkillBase for ShockwaveTrap {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 2})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 2).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 2) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -408,6 +433,12 @@ impl SkillBase for Sandman {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 12 { Ok(12) } else {Err(())}
@@ -415,7 +446,7 @@ impl SkillBase for Sandman {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -491,6 +522,12 @@ impl SkillBase for Flasher {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 12 { Ok(12) } else {Err(())}
@@ -498,7 +535,7 @@ impl SkillBase for Flasher {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 2})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 2).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 2) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -574,6 +611,12 @@ impl SkillBase for FreezingTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -581,7 +624,7 @@ impl SkillBase for FreezingTrap {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 2})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 2).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 2) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -611,6 +654,10 @@ impl OffensiveSkillBase for FreezingTrap {
     #[inline(always)]
     fn _dmg_atk(&self) -> Option<f32> {
        Some(1.000)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
     }
 }
 impl GroundSkillBase for FreezingTrap {
@@ -675,6 +722,12 @@ impl SkillBase for BlastMine {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -682,7 +735,7 @@ impl SkillBase for BlastMine {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -758,6 +811,12 @@ impl SkillBase for ClaymoreTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
@@ -765,7 +824,7 @@ impl SkillBase for ClaymoreTrap {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 2})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 2).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 2) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -841,6 +900,12 @@ impl SkillBase for RemoveTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Trap
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 5 { Ok(5) } else {Err(())}
@@ -906,6 +971,12 @@ impl SkillBase for TalkieBox {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 1 { Ok(1) } else {Err(())}
@@ -913,7 +984,7 @@ impl SkillBase for TalkieBox {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 1065, name_english: "Booby_Trap".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 1065 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 1065 && item.amount >= 1) {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
@@ -989,6 +1060,12 @@ impl SkillBase for BeastBane {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1060,6 +1137,12 @@ impl SkillBase for FalconryMastery {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
@@ -1130,6 +1213,12 @@ impl SkillBase for SteelCrow {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1217,6 +1306,12 @@ impl SkillBase for BlitzBeat {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1282,6 +1377,10 @@ impl OffensiveSkillBase for BlitzBeat {
         }
         0
     }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
 }
 // HT_DETECTING
 pub struct Detect {
@@ -1342,6 +1441,12 @@ impl SkillBase for Detect {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1427,6 +1532,12 @@ impl SkillBase for SpringTrap {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Trap
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -1501,6 +1612,12 @@ impl SkillBase for PhantasmicArrow {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
@@ -1526,6 +1643,10 @@ impl OffensiveSkillBase for PhantasmicArrow {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }
 // HT_POWER
@@ -1588,6 +1709,12 @@ impl SkillBase for BeastStrafing {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        true
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 12 { Ok(12) } else {Err(())}
@@ -1625,5 +1752,9 @@ impl OffensiveSkillBase for BeastStrafing {
     #[inline(always)]
     fn _dmg_atk(&self) -> Option<f32> {
        Some(1.000)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
     }
 }

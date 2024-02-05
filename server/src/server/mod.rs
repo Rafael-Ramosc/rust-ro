@@ -1,8 +1,8 @@
 use std::sync::{Arc, mpsc, RwLock};
 use std::net::{Shutdown, TcpListener, TcpStream};
-use std::collections::HashMap;
+
 use rathena_script_lang_interpreter::lang::vm::Vm;
-use std::sync::mpsc::{Receiver, RecvTimeoutError, SyncSender};
+use std::sync::mpsc::{Receiver, SyncSender};
 use std::thread;
 use std::thread::Scope;
 use tokio::runtime::Runtime;
@@ -12,7 +12,7 @@ use crate::repository::Repository;
 use configuration::configuration::Config;
 
 
-use crate::server::model::map_item::{MapItem, MapItems};
+use crate::server::model::map_item::{MapItems};
 use crate::server::model::path::manhattan_distance;
 use crate::server::model::request::Request;
 use crate::server::model::response::Response;
@@ -28,18 +28,18 @@ use std::cell::RefCell;
 use std::time::Duration;
 
 
-use rand::Rng;
+
 
 
 use crate::server::service::character::character_service::CharacterService;
 use crate::server::service::character::inventory_service::InventoryService;
-use crate::server::service::character::item_service::ItemService;
+use crate::server::service::item_service::ItemService;
 use script::skill::ScriptSkillService;
 use crate::server::game_loop::GAME_TICK_RATE;
-use crate::server::model::events::client_notification::CharNotification;
 
 
-use crate::server::service::battle_service::BattleService;
+
+use crate::server::service::battle_service::{BattleResultMode, BattleService};
 use crate::server::service::character::skill_tree_service::SkillTreeService;
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::service::map_instance_service::MapInstanceService;
@@ -50,7 +50,7 @@ use crate::server::service::skill_service::SkillService;
 use crate::server::service::status_service::StatusService;
 
 use crate::server::state::server::ServerState;
-use crate::util::hasher::NoopHasherU32;
+
 use crate::util::packet::{debug_packets_from_vec, PacketDirection, PacketsBuffer};
 use crate::util::tick::delayed_tick;
 
@@ -122,8 +122,8 @@ impl Server {
                             InventoryService::new(client_notification_sender.clone(), persistence_event_sender.clone(), repository.clone(), GlobalConfigService::instance(), tasks_queue.clone()),
                             CharacterService::new(client_notification_sender.clone(), persistence_event_sender.clone(), repository.clone(), GlobalConfigService::instance(), SkillTreeService::new(client_notification_sender.clone(), GlobalConfigService::instance()), StatusService::new(GlobalConfigService::instance()), tasks_queue.clone()),
                             MapInstanceService::new(client_notification_sender.clone(), GlobalConfigService::instance(), MobService::new(client_notification_sender.clone(), GlobalConfigService::instance()), tasks_queue.clone()),
-                            BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
-                            SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
+                            BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance(), BattleResultMode::Normal),
+                            SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance(), BattleResultMode::Normal), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
                             StatusService::new(GlobalConfigService::instance()),
         );
         Server {
@@ -302,14 +302,14 @@ impl Server {
         })
     }
 
-    fn buffer_packets(mut packets_by_session: &mut Vec<PacketsBuffer>, char_id: u32, data: &[u8]) {
+    fn buffer_packets(packets_by_session: &mut Vec<PacketsBuffer>, char_id: u32, data: &[u8]) {
         let maybe_buffer = packets_by_session.iter_mut().find(|buffer| buffer.session_id() == char_id);
         if maybe_buffer.is_none() {
             let mut buffer = PacketsBuffer::new(char_id, 2048);
             buffer.push(data);
             packets_by_session.push(buffer);
         } else {
-            let mut buffer = maybe_buffer.unwrap();
+            let buffer = maybe_buffer.unwrap();
             if buffer.can_contain(data.len()) {
                 buffer.push(data);
             } else {

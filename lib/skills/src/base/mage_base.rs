@@ -3,9 +3,10 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use enums::{EnumWithMaskValueU64, EnumWithNumberValue};
-use enums::skill::*;
-use enums::weapon::AmmoType;
+use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::skill::*;
+use models::enums::weapon::AmmoType;
+use models::enums::element::Element;
 
 use models::item::WearWeapon;
 
@@ -75,6 +76,12 @@ impl SkillBase for IncreaseSpRecovery {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Passive
+    }
+    fn _is_magic(&self) -> bool {
+        false
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -146,6 +153,12 @@ impl SkillBase for Sight {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -251,6 +264,12 @@ impl SkillBase for NapalmBeat {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -372,6 +391,44 @@ impl OffensiveSkillBase for NapalmBeat {
     fn _hit_count(&self) -> i8 {
        1
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(0.800)
+        }
+        if self.level == 2 {
+            return Some(0.900)
+        }
+        if self.level == 3 {
+            return Some(1.000)
+        }
+        if self.level == 4 {
+            return Some(1.100)
+        }
+        if self.level == 5 {
+            return Some(1.200)
+        }
+        if self.level == 6 {
+            return Some(1.300)
+        }
+        if self.level == 7 {
+            return Some(1.400)
+        }
+        if self.level == 8 {
+            return Some(1.500)
+        }
+        if self.level == 9 {
+            return Some(1.600)
+        }
+        if self.level == 10 {
+            return Some(1.700)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Ghost
+    }
 }
 // MG_SAFETYWALL
 pub struct SafetyWall {
@@ -463,6 +520,12 @@ impl SkillBase for SafetyWall {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -500,7 +563,7 @@ impl SkillBase for SafetyWall {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 717, name_english: "Blue_Gemstone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 717 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 717 && item.amount >= 1) {
             return Err(UseSkillFailure::BlueGemstone);
         }
         Ok(Some(required_items))
@@ -639,6 +702,12 @@ impl SkillBase for SoulStrike {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -790,6 +859,44 @@ impl OffensiveSkillBase for SoulStrike {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(1.000)
+        }
+        if self.level == 3 {
+            return Some(2.000)
+        }
+        if self.level == 4 {
+            return Some(2.000)
+        }
+        if self.level == 5 {
+            return Some(3.000)
+        }
+        if self.level == 6 {
+            return Some(3.000)
+        }
+        if self.level == 7 {
+            return Some(4.000)
+        }
+        if self.level == 8 {
+            return Some(4.000)
+        }
+        if self.level == 9 {
+            return Some(5.000)
+        }
+        if self.level == 10 {
+            return Some(5.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Ghost
+    }
 }
 // MG_COLDBOLT
 pub struct ColdBolt {
@@ -880,6 +987,12 @@ impl SkillBase for ColdBolt {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1061,6 +1174,44 @@ impl OffensiveSkillBase for ColdBolt {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(3.000)
+        }
+        if self.level == 4 {
+            return Some(4.000)
+        }
+        if self.level == 5 {
+            return Some(5.000)
+        }
+        if self.level == 6 {
+            return Some(6.000)
+        }
+        if self.level == 7 {
+            return Some(7.000)
+        }
+        if self.level == 8 {
+            return Some(8.000)
+        }
+        if self.level == 9 {
+            return Some(9.000)
+        }
+        if self.level == 10 {
+            return Some(10.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
+    }
 }
 // MG_FROSTDIVER
 pub struct FrostDiver {
@@ -1152,6 +1303,12 @@ impl SkillBase for FrostDiver {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1207,6 +1364,44 @@ impl OffensiveSkillBase for FrostDiver {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.100)
+        }
+        if self.level == 2 {
+            return Some(1.200)
+        }
+        if self.level == 3 {
+            return Some(1.300)
+        }
+        if self.level == 4 {
+            return Some(1.400)
+        }
+        if self.level == 5 {
+            return Some(1.500)
+        }
+        if self.level == 6 {
+            return Some(1.600)
+        }
+        if self.level == 7 {
+            return Some(1.700)
+        }
+        if self.level == 8 {
+            return Some(1.800)
+        }
+        if self.level == 9 {
+            return Some(1.900)
+        }
+        if self.level == 10 {
+            return Some(2.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
     }
 }
 // MG_STONECURSE
@@ -1299,6 +1494,12 @@ impl SkillBase for StoneCurse {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -1336,7 +1537,7 @@ impl SkillBase for StoneCurse {
     #[inline(always)]
     fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {
         let required_items = vec![(NormalInventoryItem {item_id: 716, name_english: "Red_Gemstone".to_string(), amount: 1})]; 
-        if inventory.iter().find(|item| item.item_id == 716 && item.amount >= 1).is_none() {
+        if !inventory.iter().any(|item| item.item_id == 716 && item.amount >= 1) {
             return Err(UseSkillFailure::RedGemstone);
         }
         Ok(Some(required_items))
@@ -1364,6 +1565,10 @@ impl OffensiveSkillBase for StoneCurse {
     #[inline(always)]
     fn _hit_count(&self) -> i8 {
        1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Earth
     }
 }
 // MG_FIREBALL
@@ -1425,6 +1630,12 @@ impl SkillBase for FireBall {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1546,6 +1757,44 @@ impl OffensiveSkillBase for FireBall {
     fn _hit_count(&self) -> i8 {
        1
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(0.800)
+        }
+        if self.level == 2 {
+            return Some(0.900)
+        }
+        if self.level == 3 {
+            return Some(1.000)
+        }
+        if self.level == 4 {
+            return Some(1.100)
+        }
+        if self.level == 5 {
+            return Some(1.200)
+        }
+        if self.level == 6 {
+            return Some(1.300)
+        }
+        if self.level == 7 {
+            return Some(1.400)
+        }
+        if self.level == 8 {
+            return Some(1.500)
+        }
+        if self.level == 9 {
+            return Some(1.600)
+        }
+        if self.level == 10 {
+            return Some(1.700)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
+    }
 }
 // MG_FIREWALL
 pub struct FireWall {
@@ -1606,6 +1855,12 @@ impl SkillBase for FireWall {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1745,6 +2000,12 @@ impl SkillBase for FireBolt {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1926,6 +2187,44 @@ impl OffensiveSkillBase for FireBolt {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(3.000)
+        }
+        if self.level == 4 {
+            return Some(4.000)
+        }
+        if self.level == 5 {
+            return Some(5.000)
+        }
+        if self.level == 6 {
+            return Some(6.000)
+        }
+        if self.level == 7 {
+            return Some(7.000)
+        }
+        if self.level == 8 {
+            return Some(8.000)
+        }
+        if self.level == 9 {
+            return Some(9.000)
+        }
+        if self.level == 10 {
+            return Some(10.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
+    }
 }
 // MG_LIGHTNINGBOLT
 pub struct LightningBolt {
@@ -2016,6 +2315,12 @@ impl SkillBase for LightningBolt {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Attack
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -2197,15 +2502,53 @@ impl OffensiveSkillBase for LightningBolt {
         }
         0
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(3.000)
+        }
+        if self.level == 4 {
+            return Some(4.000)
+        }
+        if self.level == 5 {
+            return Some(5.000)
+        }
+        if self.level == 6 {
+            return Some(6.000)
+        }
+        if self.level == 7 {
+            return Some(7.000)
+        }
+        if self.level == 8 {
+            return Some(8.000)
+        }
+        if self.level == 9 {
+            return Some(9.000)
+        }
+        if self.level == 10 {
+            return Some(10.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Wind
+    }
 }
 // MG_THUNDERSTORM
-pub struct Thunderstorm {
+pub struct ThunderStorm {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
     pub(crate) after_cast_act_delay: u32,
     pub(crate) after_cast_walk_delay: u32,
 }
-impl SkillBase for Thunderstorm {
+impl SkillBase for ThunderStorm {
     #[inline(always)]
     fn as_any(&self) -> &dyn Any {
         self
@@ -2288,6 +2631,12 @@ impl SkillBase for Thunderstorm {
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::Ground
     }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
+    }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if self.level == 1 {
@@ -2369,7 +2718,7 @@ impl SkillBase for Thunderstorm {
         Some(self)
     }
 }
-impl GroundSkillBase for Thunderstorm {
+impl GroundSkillBase for ThunderStorm {
 }
 // MG_ENERGYCOAT
 pub struct EnergyCoat {
@@ -2430,6 +2779,12 @@ impl SkillBase for EnergyCoat {
     }
     fn _target_type(&self) -> SkillTargetType {
         SkillTargetType::MySelf
+    }
+    fn _is_magic(&self) -> bool {
+        true
+    }
+    fn _is_physical(&self) -> bool {
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {

@@ -4,9 +4,9 @@ use tokio::runtime::Runtime;
 use packets::packets::{PacketCzPlayerChat, PacketZcNotifyPlayerchat};
 use crate::server::model::session::Session;
 use regex::Regex;
-use enums::class::JobName;
-use enums::EnumWithStringValue;
-use crate::enums::EnumWithNumberValue;
+use models::enums::class::JobName;
+use models::enums::EnumWithStringValue;
+use models::enums::EnumWithNumberValue;
 use std::fmt::Write;
 use std::time::Instant;
 
@@ -220,7 +220,7 @@ pub fn handle_set_base_level(server: &Server, session: Arc<Session>, _runtime: &
     }
     server.add_to_next_tick(GameEvent::CharacterChangeLevel(CharacterChangeLevel {
         char_id: session.char_id(),
-        set_level: args.first().unwrap().parse::<u32>().map_or_else(|_| None, Some),
+        set_level: args.first().unwrap().parse::<u32>().ok(),
         add_level: None,
     }));
     String::new()
@@ -240,7 +240,7 @@ pub fn handle_set_job_level(server: &Server, session: Arc<Session>, _runtime: &R
     }
     server.add_to_next_tick(GameEvent::CharacterChangeJobLevel(CharacterChangeJobLevel {
         char_id: session.char_id(),
-        set_level: args.first().unwrap().parse::<u32>().map_or_else(|_| None, Some),
+        set_level: args.first().unwrap().parse::<u32>().ok(),
         add_level: None,
     }));
     String::new()

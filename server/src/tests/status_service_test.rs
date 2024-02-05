@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+
 use crate::server::model::events::client_notification::Notification;
 use crate::server::model::events::persistence_event::PersistenceEvent;
 use crate::server::service::global_config_service::GlobalConfigService;
@@ -22,7 +23,7 @@ fn before_each_with_latch(latch_size: usize) -> StatusServiceTestContext {
     let (persistence_event_sender, persistence_event_receiver) = create_mpsc::<PersistenceEvent>();
     let count_down_latch = CountDownLatch::new(latch_size);
     StatusServiceTestContext {
-        test_context:TestContext::new(client_notification_sender.clone(), client_notification_receiver, persistence_event_sender.clone(), persistence_event_receiver, count_down_latch),
+        test_context: TestContext::new(client_notification_sender.clone(), client_notification_receiver, persistence_event_sender.clone(), persistence_event_receiver, count_down_latch),
         status_service: StatusService::new(GlobalConfigService::instance()),
     }
 }
@@ -30,13 +31,15 @@ fn before_each_with_latch(latch_size: usize) -> StatusServiceTestContext {
 #[cfg(test)]
 #[cfg(not(feature = "integration_tests"))]
 mod tests {
-    
-    use enums::class::JobName;
-    use enums::weapon::WeaponType;
-    use models::status::StatusSnapshot;
-    use crate::enums::EnumWithStringValue;
-    use crate::enums::EnumWithNumberValue;
-    use crate::status_snapshot;
+    use std::fs::File;
+    use std::io::{Seek, SeekFrom, Write};
+    use std::path::Path;
+    use models::enums::class::JobName;
+    use models::enums::weapon::WeaponType;
+    use models::status::{Status, StatusSnapshot};
+    use models::enums::EnumWithStringValue;
+    use models::enums::EnumWithNumberValue;
+    use crate::{eq_with_variance, status_snapshot};
 
     use crate::tests::common::character_helper::{create_character, equip_item_from_name};
     use super::*;
@@ -59,7 +62,13 @@ mod tests {
         // Given
         let context = before_each();
         #[derive(Debug)]
-        struct Stats<'a> { weapon: &'a str, agi: u16, dex: u16, job: &'a str, expected_aspd: u16 }
+        struct Stats<'a> {
+            weapon: &'a str,
+            agi: u16,
+            dex: u16,
+            job: &'a str,
+            expected_aspd: u16,
+        }
         let stats = vec![
             Stats { weapon: "", agi: 1, dex: 1, job: "Novice", expected_aspd: 150 },
             Stats { weapon: "Knife", agi: 1, dex: 1, job: "Novice", expected_aspd: 135 },
@@ -117,7 +126,13 @@ mod tests {
         // Given
         let context = before_each();
         #[derive(Debug)]
-        struct Stats<'a> { weapon: &'a str, str: u16, dex: u16, luk: u16, expected_status_atk: i32 }
+        struct Stats<'a> {
+            weapon: &'a str,
+            str: u16,
+            dex: u16,
+            luk: u16,
+            expected_status_atk: i32,
+        }
         let stats = vec![
             Stats { weapon: "Knife", str: 1, dex: 1, luk: 1, expected_status_atk: 18 },
             Stats { weapon: "Knife", str: 5, dex: 1, luk: 1, expected_status_atk: 22 },
@@ -155,6 +170,7 @@ mod tests {
             assert_eq!(format!("{attack_motion:.2}"), **expectation, "Expected attack motion to be {expectation} with aspd {aspd} but was {attack_motion}");
         }
     }
+
     #[test]
     fn test_mob_vit_def() {
         // Given
@@ -167,4 +183,234 @@ mod tests {
             assert!(actual_vit >= *vit, "Expected actual_vit {} to be greater or equal to {}", actual_vit, vit);
         }
     }
+
+    #[test]
+    fn test_all_stats_when_job_level_change() {
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-each-job-level.json";
+        let result_file_path = "../doc/progress/stats-for-each-job-level_progress.md";
+        stats_tests(fixture_file, result_file_path, "Stats for each job level", None);
+    }
+
+
+    #[test]
+    fn playground() {
+        let id = "jkj3id";
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-each-job-level.json";
+        let result_file_path = "../doc/progress/stats-for-each-job-level_progress.md";
+        stats_tests(fixture_file, result_file_path, "Stats for each job level", Some(id));
+    }
+
+    fn stats_tests(fixture_file: &str, result_file_path: &str, title: &str, test_id: Option<&str>) {
+        // Given
+        let context = before_each();
+        let mut character = create_character();
+        let _packetver = GlobalConfigService::instance().packetver();
+        let scenario = common::fixtures::battle_fixture::BattleFixture::load(fixture_file);
+        let mut i = -1;
+        #[derive(Clone)]
+        struct TestResult {
+            id: String,
+            job: String,
+            job_level: usize,
+            passed: bool,
+            actual_str: u16,
+            actual_bonus_str: u16,
+            actual_agi: u16,
+            actual_bonus_agi: u16,
+            actual_vit: u16,
+            actual_bonus_vit: u16,
+            actual_int: u16,
+            actual_bonus_int: u16,
+            actual_dex: u16,
+            actual_bonus_dex: u16,
+            actual_luk: u16,
+            actual_bonus_luk: u16,
+            actual_aspd: f32,
+            actual_atk_left: u16,
+            actual_atk_right: u16,
+            actual_matk_min: u16,
+            actual_matk_max: u16,
+            actual_def: u16,
+            actual_mdef: u16,
+            actual_hit: u16,
+            actual_flee: u16,
+            actual_hp: u16,
+            actual_sp: u16,
+            actual_crit: f32,
+            expected_str: u16,
+            expected_bonus_str: u16,
+            expected_agi: u16,
+            expected_bonus_agi: u16,
+            expected_vit: u16,
+            expected_bonus_vit: u16,
+            expected_int: u16,
+            expected_bonus_int: u16,
+            expected_dex: u16,
+            expected_bonus_dex: u16,
+            expected_luk: u16,
+            expected_bonus_luk: u16,
+            expected_aspd: f32,
+            expected_atk_left: u16,
+            expected_atk_right: u16,
+            expected_matk_min: u16,
+            expected_matk_max: u16,
+            expected_def: u16,
+            expected_mdef: u16,
+            expected_hit: u16,
+            expected_flee: u16,
+            expected_hp: u16,
+            expected_sp: u16,
+            expected_crit: f32,
+        }
+        let mut results: Vec<TestResult> = Vec::with_capacity(scenario.len());
+        // When
+        for scenarii in scenario.iter() {
+            if let Some(test_id) = test_id {
+                if !scenarii.id().eq(test_id) {
+                    continue;
+                }
+            }
+            i += 1;
+            let mut character_status = Status::default();
+            let job = JobName::from_string(scenarii.job().as_str());
+            character_status.job = job.value() as u32;
+            character_status.job_level = scenarii.job_level();
+            character_status.str = scenarii.base_str();
+            character_status.agi = scenarii.base_agi();
+            character_status.vit = scenarii.base_vit();
+            character_status.dex = scenarii.base_dex();
+            character_status.int = scenarii.base_int();
+            character_status.luk = scenarii.base_luk();
+            character_status.base_level = scenarii.base_level();
+            let status_snapshot = context.status_service.to_snapshot(&character_status);
+            let result = TestResult {
+                id: scenarii.id().clone(),
+                job: job.as_str().to_string(),
+                job_level: scenarii.job_level() as usize,
+                passed: false,
+                actual_str: status_snapshot.base_str(),
+                actual_bonus_str: status_snapshot.bonus_str(),
+                actual_agi: status_snapshot.base_agi(),
+                actual_bonus_agi: status_snapshot.bonus_agi(),
+                actual_vit: status_snapshot.base_vit(),
+                actual_bonus_vit: status_snapshot.bonus_vit(),
+                actual_int: status_snapshot.base_int(),
+                actual_bonus_int: status_snapshot.bonus_int(),
+                actual_dex: status_snapshot.base_dex(),
+                actual_bonus_dex: status_snapshot.bonus_dex(),
+                actual_luk: status_snapshot.base_luk(),
+                actual_bonus_luk: status_snapshot.bonus_luk(),
+                actual_aspd: status_snapshot.aspd() as f32,
+                actual_atk_left: context.status_service.status_atk_left_side(&status_snapshot) as u16,
+                actual_atk_right: context.status_service.status_atk_right_side(&status_snapshot) as u16,
+                actual_matk_min: status_snapshot.matk_min(),
+                actual_matk_max: status_snapshot.matk_max(),
+                actual_def: status_snapshot.def(),
+                actual_mdef: status_snapshot.mdef(),
+                actual_hit: status_snapshot.hit(),
+                actual_flee: status_snapshot.flee(),
+                actual_hp: status_snapshot.max_hp() as u16,
+                actual_sp: status_snapshot.max_sp() as u16,
+                actual_crit: status_snapshot.crit(),
+                expected_str: scenarii.base_str(),
+                expected_bonus_str: scenarii.bonus_str() as u16,
+                expected_agi: scenarii.base_agi(),
+                expected_bonus_agi: scenarii.bonus_agi() as u16,
+                expected_vit: scenarii.base_vit(),
+                expected_bonus_vit: scenarii.bonus_vit() as u16,
+                expected_int: scenarii.base_int(),
+                expected_bonus_int: scenarii.bonus_int() as u16,
+                expected_dex: scenarii.base_dex(),
+                expected_bonus_dex: scenarii.bonus_dex() as u16,
+                expected_luk: scenarii.base_luk(),
+                expected_bonus_luk: scenarii.bonus_luk() as u16,
+                expected_aspd: scenarii.aspd_displayed(),
+                expected_atk_left: scenarii.atk_left(),
+                expected_atk_right: scenarii.atk_right(),
+                expected_matk_min: scenarii.matk_min(),
+                expected_matk_max: scenarii.matk_max(),
+                expected_def: scenarii.def(),
+                expected_mdef: scenarii.mdef(),
+                expected_hit: scenarii.hit(),
+                expected_flee: scenarii.flee(),
+                expected_hp: scenarii.max_hp(),
+                expected_sp: scenarii.max_sp(),
+                expected_crit: scenarii.crit(),
+            };
+            let mut passed = false;
+            results.push(result);
+        }
+        if test_id.is_some() {
+            return;
+        }
+        macro_rules! format_result {
+            ( $passed:expr, $arg1:expr ) => {
+                if $passed {format!("**{}**", format!("{}", $arg1))} else {format!("*{}*", format!("{}", $arg1))}
+          };
+            ( $passed:expr, $arg1:expr, $arg2:expr  ) => {
+                if $passed {format!("**{}**", format!("{}/{}", $arg1, $arg2))} else {format!("*{}*", format!("{}/{}", $arg1, $arg2))}
+          };
+            ( $passed:expr, $arg1:expr, $arg2:expr , $arg3:expr , $arg4:expr  ) => {
+                if $passed {format!("**{}**", format!("{}+{}/{}+{}", $arg1, $arg2, $arg3, $arg4))} else {format!("*{}*", format!("{}+{}/{}+{}", $arg1, $arg2, $arg3, $arg4))}
+          };
+        }
+        let path = Path::new(result_file_path);
+        let mut result_file = File::create(path).unwrap();
+        result_file.write_all(b"                              \n").unwrap();
+        result_file.write_all(format!("fixture file was [{}](/server/{})\n\n", fixture_file, fixture_file).as_bytes()).unwrap();
+        result_file.write_all(format!("# {}\n", title).as_bytes()).unwrap();
+        result_file.write_all(b"|id|job|jobLv|passed|str|agi|vit|dex|int|luk|aspd|atk left|atk right|matk min|matk max|def|mdef|hit|flee|crit|hp|sp|\n").unwrap();
+        result_file.write_all(b"|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|\n").unwrap();
+        let mut passed_count = 0;
+        for result in results.iter_mut() {
+            let str_passed = result.actual_str + result.actual_bonus_str == result.expected_str + result.expected_bonus_str;
+            let agi_passed = result.actual_agi + result.actual_bonus_agi == result.expected_agi + result.expected_bonus_agi;
+            let vit_passed = result.actual_vit + result.actual_bonus_vit == result.expected_vit + result.expected_bonus_vit;
+            let dex_passed = result.actual_dex + result.actual_bonus_dex == result.expected_dex + result.expected_bonus_dex;
+            let int_passed = result.actual_int + result.actual_bonus_int == result.expected_int + result.expected_bonus_int;
+            let luk_passed = result.actual_luk + result.actual_bonus_luk == result.expected_luk + result.expected_bonus_luk;
+            let aspd_passed = result.actual_aspd == result.expected_aspd;
+            let atk_left_passed = result.actual_atk_left == result.expected_atk_left;
+            let atk_right_passed = result.actual_atk_right == result.expected_atk_right;
+            let def_passed = result.actual_def == result.expected_def;
+            let mdef_passed = result.actual_mdef == result.expected_mdef;
+            let hit_passed = result.actual_hit == result.expected_hit;
+            let matk_min_passed = result.actual_matk_min == result.expected_matk_min;
+            let matk_max_passed = result.actual_matk_max == result.expected_matk_max;
+            let flee_passed = result.actual_flee == result.expected_flee;
+            let crit_passed = result.actual_crit == result.expected_crit;
+            let hp_passed = eq_with_variance!(1, result.actual_hp, result.expected_hp);
+            let sp_passed = eq_with_variance!(1, result.actual_sp, result.expected_sp);
+            result.passed = str_passed && agi_passed && vit_passed && dex_passed && int_passed && luk_passed && aspd_passed && atk_left_passed && atk_right_passed
+                && matk_max_passed && matk_min_passed && def_passed && mdef_passed && hit_passed && flee_passed && crit_passed
+                && hp_passed && sp_passed;
+            if result.passed {
+                passed_count += 1;
+            }
+            result_file.write_all(format!("|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|\n",
+                                          result.id, result.job, result.job_level, format_result!(result.passed, result.passed),
+                                          format_result!(str_passed, result.actual_str, result.actual_bonus_str, result.expected_str, result.expected_bonus_str),
+                                          format_result!(agi_passed, result.actual_agi, result.actual_bonus_agi, result.expected_agi, result.expected_bonus_agi),
+                                          format_result!(vit_passed, result.actual_vit, result.actual_bonus_vit, result.expected_vit, result.expected_bonus_vit),
+                                          format_result!(dex_passed, result.actual_dex, result.actual_bonus_dex, result.expected_dex, result.expected_bonus_dex),
+                                          format_result!(int_passed, result.actual_int, result.actual_bonus_int, result.expected_int, result.expected_bonus_int),
+                                          format_result!(luk_passed, result.actual_luk, result.actual_bonus_luk, result.expected_luk, result.expected_bonus_luk),
+                                          format_result!(aspd_passed, result.actual_aspd, result.expected_aspd),
+                                          format_result!(atk_left_passed, result.actual_atk_left,result.expected_atk_left),
+                                          format_result!(atk_right_passed, result.actual_atk_right,result.expected_atk_right),
+                                          format_result!(matk_min_passed,result.actual_matk_min, result.expected_matk_min),
+                                          format_result!(matk_max_passed,result.actual_matk_max, result.expected_matk_max),
+                                          format_result!(def_passed, result.actual_def, result.expected_def),
+                                          format_result!(mdef_passed, result.actual_mdef, result.expected_mdef),
+                                          format_result!(hit_passed, result.actual_hit, result.expected_hit),
+                                          format_result!(flee_passed, result.actual_flee, result.expected_flee),
+                                          format_result!(crit_passed, result.actual_crit, result.expected_crit),
+                                          format_result!(hp_passed, result.actual_hp, result.expected_hp),
+                                          format_result!(sp_passed, result.actual_sp, result.expected_sp),
+            ).as_bytes()).unwrap();
+        }
+        result_file.seek(SeekFrom::Start(0));
+        result_file.write_all(format!("{}/{} tests passed\n", passed_count, results.len()).as_bytes()).unwrap();
+    }
 }
+

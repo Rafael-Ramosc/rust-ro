@@ -5,13 +5,14 @@ use std::sync::mpsc::SyncSender;
 use std::sync::{Arc, Once};
 use tokio::runtime::Runtime;
 
-use enums::class::{JOB_BASE_MASK, JobName};
-use enums::effect::Effect;
+use models::enums::class::{JOB_BASE_MASK, JobName};
+use models::enums::effect::Effect;
 
-use enums::look::LookType;
-use enums::status::StatusTypes;
+use models::enums::look::LookType;
+use models::enums::status::StatusTypes;
 
-use crate::enums::EnumWithNumberValue;
+use models::enums::EnumWithNumberValue;
+use models::enums::skill_enums::SkillEnum;
 
 
 use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues};
@@ -80,19 +81,20 @@ impl CharacterService {
     }
 
     pub fn print(&self, character: &Character) {
+        let status_snapshot = self.status_service.to_snapshot(&character.status);
         let mut stdout = io::stdout();
         writeln!(stdout, "************** {} - {} ****************", character.name, character.char_id).unwrap();
         writeln!(stdout, "Status:").unwrap();
-        writeln!(stdout, "  str: {}", character.status.str).unwrap();
-        writeln!(stdout, "  agi: {}", character.status.agi).unwrap();
-        writeln!(stdout, "  vit: {}", character.status.vit).unwrap();
-        writeln!(stdout, "  int: {}", character.status.int).unwrap();
-        writeln!(stdout, "  dex: {}", character.status.dex).unwrap();
-        writeln!(stdout, "  luk: {}", character.status.luk).unwrap();
-        writeln!(stdout, "  speed: {}", character.status.speed).unwrap();
-        writeln!(stdout, "  hp: {}/{}", character.status.hp, character.status.max_hp).unwrap();
-        writeln!(stdout, "  sp: {}/{}", character.status.sp, character.status.max_sp).unwrap();
-        writeln!(stdout, "  zeny: {}", character.status.zeny).unwrap();
+        writeln!(stdout, "  str: {}", status_snapshot.str()).unwrap();
+        writeln!(stdout, "  agi: {}", status_snapshot.agi()).unwrap();
+        writeln!(stdout, "  vit: {}", status_snapshot.vit()).unwrap();
+        writeln!(stdout, "  int: {}", status_snapshot.int()).unwrap();
+        writeln!(stdout, "  dex: {}", status_snapshot.dex()).unwrap();
+        writeln!(stdout, "  luk: {}", status_snapshot.luk()).unwrap();
+        writeln!(stdout, "  speed: {}", status_snapshot.speed()).unwrap();
+        writeln!(stdout, "  hp: {}/{}", status_snapshot.hp(), status_snapshot.max_hp()).unwrap();
+        writeln!(stdout, "  sp: {}/{}", status_snapshot.sp(), status_snapshot.max_sp()).unwrap();
+        writeln!(stdout, "  zeny: {}", status_snapshot.zeny()).unwrap();
         writeln!(stdout, "  weight: {}/{}", character.weight(), self.max_weight(character)).unwrap();
         writeln!(stdout, "Inventory:").unwrap();
         type PredicateClosure = Box<dyn Fn(&(usize, &InventoryItemModel)) -> bool>;
@@ -422,7 +424,7 @@ impl CharacterService {
         true
     }
 
-    pub fn allocate_skill_point(&self, character: &mut Character, skill: enums::skill_enums::SkillEnum) -> bool {
+    pub fn allocate_skill_point(&self, character: &mut Character, skill: SkillEnum) -> bool {
         let skill_point = character.status.skill_point;
         if skill_point < 1 {
             return false
@@ -620,27 +622,27 @@ impl CharacterService {
         let character_status = self.status_service.to_snapshot(&character.status);
         let mut packet_str = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_str.set_status_type(StatusTypes::Str.value() as u32);
-        packet_str.set_default_status(character.status.str as i32);
+        packet_str.set_default_status(character_status.base_str() as i32);
         packet_str.fill_raw();
         let mut packet_agi = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_agi.set_status_type(StatusTypes::Agi.value() as u32);
-        packet_agi.set_default_status(character.status.agi as i32);
+        packet_agi.set_default_status(character_status.base_agi() as i32);
         packet_agi.fill_raw();
         let mut packet_dex = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_dex.set_status_type(StatusTypes::Dex.value() as u32);
-        packet_dex.set_default_status(character.status.dex as i32);
+        packet_dex.set_default_status(character_status.base_dex() as i32);
         packet_dex.fill_raw();
         let mut packet_int = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_int.set_status_type(StatusTypes::Int.value() as u32);
-        packet_int.set_default_status(character.status.int as i32);
+        packet_int.set_default_status(character_status.base_int() as i32);
         packet_int.fill_raw();
         let mut packet_vit = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_vit.set_status_type(StatusTypes::Vit.value() as u32);
-        packet_vit.set_default_status(character.status.vit as i32);
+        packet_vit.set_default_status(character_status.base_vit() as i32);
         packet_vit.fill_raw();
         let mut packet_luk = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_luk.set_status_type(StatusTypes::Luk.value() as u32);
-        packet_luk.set_default_status(character.status.luk as i32);
+        packet_luk.set_default_status(character_status.base_luk() as i32);
         packet_luk.fill_raw();
         let mut packet_str_increase_cost = PacketZcParChange::new(self.configuration_service.packetver());
         packet_str_increase_cost.set_var_id(StatusTypes::StrNextLevelIncreaseCost.value() as u16);
@@ -725,19 +727,19 @@ impl CharacterService {
         packet_attack_range.fill_raw();
         let mut packet_maxhp = PacketZcParChange::new(self.configuration_service.packetver());
         packet_maxhp.set_var_id(StatusTypes::Maxhp.value() as u16);
-        packet_maxhp.set_count(character.status.max_hp as i32);
+        packet_maxhp.set_count(character_status.max_hp() as i32);
         packet_maxhp.fill_raw();
         let mut packet_maxsp = PacketZcParChange::new(self.configuration_service.packetver());
         packet_maxsp.set_var_id(StatusTypes::Maxsp.value() as u16);
-        packet_maxsp.set_count(character.status.max_sp as i32);
+        packet_maxsp.set_count(character_status.max_sp() as i32);
         packet_maxsp.fill_raw();
         let mut packet_hp = PacketZcParChange::new(self.configuration_service.packetver());
         packet_hp.set_var_id(StatusTypes::Hp.value() as u16);
-        packet_hp.set_count(character.status.hp as i32);
+        packet_hp.set_count(character_status.hp() as i32);
         packet_hp.fill_raw();
         let mut packet_sp = PacketZcParChange::new(self.configuration_service.packetver());
         packet_sp.set_var_id(StatusTypes::Sp.value() as u16);
-        packet_sp.set_count(character.status.sp as i32);
+        packet_sp.set_count(character_status.sp() as i32);
         packet_sp.fill_raw();
         let mut packet_speed = PacketZcParChange::new(self.configuration_service.packetver());
         packet_speed.set_var_id(StatusTypes::Speed.value() as u16);

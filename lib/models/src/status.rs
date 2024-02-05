@@ -1,19 +1,18 @@
 use crate::item::{WearAmmo, WearGear, WearGearSnapshot, WearWeapon, Wearable, WearAmmoSnapshot, WearWeaponSnapshot};
-use accessor::{GettersAll,  SettersAll};
-use enums::bonus::BonusType;
-use enums::item::EquipmentLocation;
-use enums::size::Size;
-use enums::EnumWithMaskValueU64;
-use enums::status::StatusEffect;
-use enums::weapon::WeaponType;
+use accessor::{GettersAll, SettersAll};
+use crate::enums::bonus::BonusType;
+use crate::enums::element::Element;
+use crate::enums::item::EquipmentLocation;
+use crate::enums::size::Size;
+use crate::enums::EnumWithMaskValueU64;
+use crate::enums::status::StatusEffect;
+use crate::enums::weapon::WeaponType;
 
 #[derive(SettersAll, Debug, Default, Clone)]
 pub struct Status {
     pub job: u32,
     pub hp: u32,
     pub sp: u32,
-    pub max_hp: u32,
-    pub max_sp: u32,
     pub str: u16,
     pub agi: u16,
     pub vit: u16,
@@ -40,29 +39,39 @@ pub struct Status {
     pub bonuses_temporary: Vec<TemporaryStatusBonus>,
 }
 
-#[derive(Clone, PartialEq, Debug, GettersAll, SettersAll)]
+#[derive(Clone, Debug, SettersAll, GettersAll)]
 pub struct StatusSnapshot {
     job: u32,
     hp: u32,
     max_hp: u32,
     sp: u32,
     max_sp: u32,
-    str: u16,
-    agi: u16,
-    vit: u16,
-    int: u16,
-    dex: u16,
-    luk: u16,
+    base_str: u16,
+    base_agi: u16,
+    base_vit: u16,
+    base_int: u16,
+    base_dex: u16,
+    base_luk: u16,
     base_atk: u16,
+    bonus_str: u16,
+    bonus_agi: u16,
+    bonus_vit: u16,
+    bonus_int: u16,
+    bonus_dex: u16,
+    bonus_luk: u16,
+    bonus_atk: u16,
     matk_min: u16,
     matk_max: u16,
+    matk_item_modifier: f32,
     speed: u16,
     hit: u16,
     flee: u16,
-    crit: u16,
+    crit: f32,
     def: u16,
     mdef: u16,
     size: Size,
+    element: Element,
+    element_level: u8,
     state: u64,
     zeny: u32,
     aspd: f32,
@@ -81,35 +90,48 @@ pub struct StatusSnapshot {
     ammo: Option<WearAmmoSnapshot>,
     effect: Option<StatusEffect>,
     known_skills: Vec<KnownSkill>,
+    bonuses: Vec<StatusBonus>,
 }
 
 impl StatusSnapshot {
     pub fn new_for_mob(mob_id: u32, hp: u32, sp: u32, max_hp:u32, max_sp: u32,
                        str: u16, agi: u16, vit: u16, int: u16, dex: u16, luk: u16,
-                       atk1: u16, atk2: u16, matk1: u16, matk2: u16, speed: u16, def: u16, mdef: u16,
-    size: Size) -> Self {
+                       atk1: u16, _atk2: u16, matk1: u16, matk2: u16, speed: u16, def: u16, mdef: u16,
+                       size: Size,
+                       element: Element,
+                       element_level: u8) -> Self {
         Self {
             job: mob_id,
             hp,
             max_hp,
             sp,
             max_sp,
-            str,
-            agi,
-            vit,
-            int,
-            dex,
-            luk,
+            base_str: str,
+            base_agi: agi,
+            base_vit: vit,
+            base_int: int,
+            base_dex: dex,
+            base_luk: luk,
             base_atk: atk1,
+            bonus_str: 0,
+            bonus_agi: 0,
+            bonus_vit: 0,
+            bonus_int: 0,
+            bonus_dex: 0,
+            bonus_luk: 0,
+            bonus_atk: 0,
             matk_min: matk1,
             matk_max: matk2,
+            matk_item_modifier: 1.0,
             speed,
             hit: 0,
             flee: 0,
-            crit: 0,
+            crit: 0.0,
             def,
             mdef,
             size,
+            element,
+            element_level,
             state: 0,
             zeny: 0,
             aspd: 0.0,
@@ -128,31 +150,45 @@ impl StatusSnapshot {
             ammo: None,
             effect: None,
             known_skills: vec![],
+            bonuses: vec![],
         }
     }
-    pub fn from(status: &Status) -> Self {
+    /// Do not use this method directly, use StatusService::to_snapshot instead
+    pub fn _from(status: &Status) -> Self {
+        let int = status.int; // TODO add bonuses
+        let dex = status.dex;
         let mut snapshot = Self {
             job: status.job,
             hp: status.hp,
-            max_hp: status.max_hp,
+            max_hp: 0,
             sp: status.sp,
-            max_sp: status.max_sp,
-            str: status.str,
-            agi: status.agi,
-            vit: status.vit,
-            int: status.int,
-            dex: status.dex,
-            luk: status.luk,
+            max_sp: 0,
+            base_str: status.str,
+            base_agi: status.agi,
+            base_vit: status.vit,
+            base_int: int,
+            base_dex: dex,
+            base_luk: status.luk,
             base_atk: 0,
+            bonus_str: 0,
+            bonus_agi: 0,
+            bonus_vit: 0,
+            bonus_int: 0,
+            bonus_dex: 0,
+            bonus_luk: 0,
+            bonus_atk: 0,
             matk_min: 0,
             matk_max: 0,
+            matk_item_modifier: 1.0,
             speed: status.speed,
             hit: 0,
             flee: 0,
-            crit: 0,
+            crit: 0.0,
             def: 0,
             mdef: 0,
             size: status.size,
+            element: Element::Neutral,
+            element_level: 1,
             state: status.state,
             zeny: status.zeny,
             aspd: 0.0,
@@ -169,8 +205,9 @@ impl StatusSnapshot {
             accessory_left: None,
             accessory_right: None,
             ammo: status.equipped_ammo().map(|a| a.to_snapshot()),
-            effect: status.effect.clone(),
+            effect: status.effect,
             known_skills: status.known_skills.clone(),
+            bonuses: vec![],
         };
         for gear in status.equipped_gears() {
             let gear_snapshot = Some(gear.to_snapshot());
@@ -216,11 +253,30 @@ impl StatusSnapshot {
     pub fn weapon_lvl(&self) -> Option<u16> {
         self.right_hand_weapon().map(|right_hand_weapon| right_hand_weapon.level() as u16)
     }
+
+    pub fn str(&self) -> u16 {
+        self.base_str + self.bonus_str
+    }
+    pub fn agi(&self) -> u16 {
+        self.base_agi + self.bonus_agi
+    }
+    pub fn vit(&self) -> u16 {
+        self.base_vit + self.bonus_vit
+    }
+    pub fn dex(&self) -> u16 {
+        self.base_dex + self.bonus_dex
+    }
+    pub fn int(&self) -> u16 {
+        self.base_int + self.bonus_int
+    }
+    pub fn luk(&self) -> u16 {
+        self.base_luk + self.bonus_luk
+    }
 }
 
 #[derive(Clone, Copy, PartialEq, Debug)]
 pub struct KnownSkill {
-    pub value: enums::skill_enums::SkillEnum,
+    pub value: crate::enums::skill_enums::SkillEnum,
     pub level: u8,
 }
 
@@ -311,12 +367,9 @@ pub struct Look {
 #[derive(GettersAll, Debug, Clone, Copy)]
 pub struct StatusBonus {
     bonus: BonusType,
-    value: i32,
 }
 #[derive(GettersAll, Debug, Clone, Copy)]
 pub struct TemporaryStatusBonus {
     bonus: BonusType,
-    value: i32,
-    set_at_tick: u128,
-    expire_at_tick: u128,
+    expire_at: u128
 }

@@ -1,12 +1,12 @@
 use std::mem;
 use std::sync::mpsc::SyncSender;
 use std::sync::Once;
-use enums::EnumWithNumberValue;
-use enums::skill::{UseSkillFailure, UseSkillFailureClientSideType};
+use models::enums::EnumWithNumberValue;
+use models::enums::skill::{UseSkillFailure, UseSkillFailureClientSideType};
 use models::item::NormalInventoryItem;
 use packets::packets::{PacketZcAckTouseskill, PacketZcActionFailure, PacketZcNotifySkill2, PacketZcUseskillAck2};
 use skills::OffensiveSkill;
-use enums::skill_enums::SkillEnum;
+use models::enums::skill_enums::SkillEnum;
 use models::status::{StatusSnapshot};
 use crate::server::model::events::client_notification::{AreaNotification, AreaNotificationRangeType, CharNotification, Notification};
 use crate::server::model::events::persistence_event::PersistenceEvent;
@@ -29,6 +29,7 @@ pub struct SkillService {
     battle_service: BattleService,
     status_service: StatusService,
 }
+
 
 impl SkillService {
     pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: StatusService, configuration_service: &'static GlobalConfigService) -> SkillService {
@@ -112,8 +113,8 @@ impl SkillService {
             damage = self.do_use_skill(character, target, source_status, target_status, tick);
         }
 
-        if validate_sp.unwrap() > 0 {}
-        return damage;
+        validate_sp.unwrap() > 0;
+        damage
     }
 
     pub fn do_use_skill(&self, character: &mut Character, target: Option<MapItemSnapshot>, source_status: &StatusSnapshot, target_status: Option<&StatusSnapshot>, tick: u128) -> Option<Damage> {
@@ -137,7 +138,7 @@ impl SkillService {
         packet_zc_notify_skill2.set_damage(damage as i32);
         packet_zc_notify_skill2.set_start_time(0);
 
-        let attack_motion = self.status_service.attack_motion(&source_status);
+        let attack_motion = self.status_service.attack_motion(source_status);
         packet_zc_notify_skill2.set_attack_mt(attack_motion as i32);
         packet_zc_notify_skill2.set_attacked_mt(attack_motion  as i32);
         packet_zc_notify_skill2.set_level(skill.level() as i16);
@@ -178,15 +179,28 @@ impl SkillService {
     }
 
     pub fn calculate_damage(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill: &dyn OffensiveSkill) -> u32 {
-        let mut skill_modifier = skill.dmg_atk().unwrap_or(1.0);
-        if skill.hit_count() > 1 {
-            skill_modifier /= skill.hit_count() as f32;
-        }
-        let mut damage = self.battle_service.damage_character_attack_monster(source_status, target_status, skill_modifier, skill.is_ranged());
-        if skill.hit_count() > 1 {
-            damage *= skill.hit_count() as u32;
-        } else {
-            damage = ((damage as f32 / skill.hit_count().abs() as f32).floor() * skill.hit_count().abs() as f32) as u32;
+
+        let mut damage = 0;
+        if skill.is_physical() {
+            let mut skill_modifier = skill.dmg_atk().unwrap_or(1.0);
+            if skill.hit_count() > 1 {
+                skill_modifier /= skill.hit_count() as f32;
+            }
+            damage = self.battle_service.physical_damage_character_attack_monster(source_status, target_status, skill_modifier, skill.is_ranged());
+            if skill.hit_count() > 1 {
+                damage *= skill.hit_count() as u32;
+            } else {
+                damage = ((damage as f32 / skill.hit_count().abs() as f32).floor() * skill.hit_count().abs() as f32) as u32;
+            }
+        } else if skill.is_magic() {
+            let mut skill_modifier = skill.dmg_matk().unwrap_or(1.0);
+            if skill.hit_count() > 1 {
+                skill_modifier /= skill.hit_count() as f32;
+            }
+            damage = self.battle_service.magic_damage_character_attack_monster(source_status, target_status, skill_modifier, &skill.element());
+            if skill.hit_count() > 1 {
+                damage *= skill.hit_count() as u32;
+            }
         }
         damage
     }

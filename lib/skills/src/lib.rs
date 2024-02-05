@@ -1,7 +1,8 @@
 use std::any::Any;
-use enums::skill::{SkillTargetType, UseSkillFailure};
-use enums::status::StatusEffect;
-use enums::weapon::{AmmoType};
+use models::enums::element::Element;
+use models::enums::skill::{SkillTargetType, UseSkillFailure};
+use models::enums::status::StatusEffect;
+use models::enums::weapon::{AmmoType};
 use models::item::{NormalInventoryItem};
 use models::status::{StatusSnapshot};
 
@@ -126,6 +127,9 @@ pub trait SkillBase {
     fn _sp_cost(&self) -> u16;
     fn _target_type(&self) -> SkillTargetType;
     fn _is_ranged(&self) -> bool;
+
+    fn _is_magic(&self) -> bool;
+    fn _is_physical(&self) -> bool;
 }
 
 pub trait Skill: SkillBase {
@@ -254,7 +258,14 @@ pub trait Skill: SkillBase {
         self._after_cast_walk_delay()
     }
 
-
+    #[inline(always)]
+    fn is_magic(&self) -> bool {
+        self._is_magic()
+    }
+    #[inline(always)]
+    fn is_physical(&self) -> bool {
+        self._is_physical()
+    }
 }
 
 pub trait OffensiveSkillBase: Skill {
@@ -266,6 +277,11 @@ pub trait OffensiveSkillBase: Skill {
     fn _dmg_atk(&self) -> Option<f32> {
         None
     }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        None
+    }
+    fn _element(&self) -> Element;
     #[inline(always)]
     fn _inflict_status_effect(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot) -> Option<StatusEffect> {
         None
@@ -281,6 +297,14 @@ pub trait OffensiveSkill: OffensiveSkillBase {
     #[inline(always)]
     fn dmg_atk(&self) -> Option<f32> {
         self._dmg_atk()
+    }
+    #[inline(always)]
+    fn dmg_matk(&self) -> Option<f32> {
+        self._dmg_matk()
+    }
+    #[inline(always)]
+    fn element(&self) -> Element {
+        self._element()
     }
     #[inline(always)]
     fn inflict_status_effect(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot) -> Option<StatusEffect> {

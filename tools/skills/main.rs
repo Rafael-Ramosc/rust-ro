@@ -8,9 +8,10 @@ use std::collections::{HashMap, HashSet};
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use configuration::configuration::{JobSkillTree, SkillConfig, SkillsConfig};
-use enums::{EnumWithMaskValueU64, EnumWithStringValue};
-use enums::skill::{SkillTargetType, SkillFlags};
-use enums::weapon::WeaponType;
+use models::enums::{EnumWithMaskValueU64, EnumWithStringValue};
+use models::enums::element::Element;
+use models::enums::skill::{SkillTargetType, SkillFlags, SkillType};
+use models::enums::weapon::WeaponType;
 
 lazy_static! {
     pub static ref SHORT_CLASS_NAME: HashMap<&'static str, &'static str> = HashMap::from([
@@ -85,7 +86,7 @@ pub fn main() {
     let path = Path::new("./config/skill.json");
     let skill_tree_path = Path::new("./config/skill_tree.json");
     let output_path = Path::new("lib/skills/src");
-    let output_enum_path = Path::new("lib/enums/src");
+    let output_enum_path = Path::new("lib/models/src/enums");
     if !path.exists() {
         panic!("config/skill.json file does not exists at {}", path.to_str().unwrap());
     }
@@ -231,9 +232,10 @@ fn generate_skills_impl(output_path: &Path, skills: &Vec<SkillConfig>, skill_tre
 
 fn write_file_header(file: &mut File) {
     write_file_header_comments(file);
-    file.write_all(b"use enums::{EnumWithMaskValueU64, EnumWithNumberValue};\n").unwrap();
-    file.write_all(b"use enums::skill::*;\n").unwrap();
-    file.write_all(b"use enums::weapon::AmmoType;\n").unwrap();
+    file.write_all(b"use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};\n").unwrap();
+    file.write_all(b"use models::enums::skill::*;\n").unwrap();
+    file.write_all(b"use models::enums::weapon::AmmoType;\n").unwrap();
+    file.write_all(b"use models::enums::element::Element;\n").unwrap();
     file.write_all(b"\nuse models::item::WearWeapon;\n").unwrap();
     file.write_all(b"\nuse models::status::StatusSnapshot;\n").unwrap();
     file.write_all(b"use models::item::NormalInventoryItem;\n").unwrap();
@@ -304,6 +306,8 @@ fn write_skills(job_skills_file: &mut File, skill_config: &SkillConfig, item_nam
         job_skills_file.write_all(format!("impl OffensiveSkillBase for {} {{\n", to_struct_name(skill_config)).as_bytes()).unwrap();
         generate_hit_count(job_skills_file, skill_config);
         generate_dmg_atk(job_skills_file, skill_config);
+        generate_dmg_matk(job_skills_file, skill_config);
+        generate_element(job_skills_file, skill_config);
         job_skills_file.write_all(b"}\n").unwrap();
     }
     if is_support(skill_config) {
@@ -393,18 +397,16 @@ fn generate_getters(job_skills_file: &mut File, skill_config: &SkillConfig) {
     job_skills_file.write_all(b"    fn _is_ranged(&self) -> bool {\n").unwrap();
     if skill_config.range().is_none() {
         job_skills_file.write_all(b"        false\n").unwrap();
+    } else if let Some(range) = skill_config.range() {
+        if *range < -1 || *range > 1 {
+            job_skills_file.write_all(b"        true\n").unwrap();
+        } else {
+            job_skills_file.write_all(b"        false\n").unwrap();
+        }
+    } else if skill_config.range_per_level().is_some() {
+        job_skills_file.write_all(b"        true\n").unwrap();
     } else {
-       if let Some(range) = skill_config.range() {
-           if *range < -1 || *range > 1 {
-               job_skills_file.write_all(b"        true\n").unwrap();
-           } else {
-               job_skills_file.write_all(b"        false\n").unwrap();
-           }
-       } else if skill_config.range_per_level().is_some() {
-           job_skills_file.write_all(b"        true\n").unwrap();
-       } else {
-           job_skills_file.write_all(b"        false\n").unwrap();
-       }
+        job_skills_file.write_all(b"        false\n").unwrap();
     }
     job_skills_file.write_all(b"    }\n").unwrap();
     job_skills_file.write_all(b"    #[inline(always)]\n").unwrap();
@@ -423,6 +425,12 @@ fn generate_getters(job_skills_file: &mut File, skill_config: &SkillConfig) {
     job_skills_file.write_all(b"    }\n").unwrap();
     job_skills_file.write_all(b"    fn _target_type(&self) -> SkillTargetType {\n").unwrap();
     job_skills_file.write_all(format!("        SkillTargetType::{:?}\n", skill_config.target_type()).as_bytes()).unwrap();
+    job_skills_file.write_all(b"    }\n").unwrap();
+    job_skills_file.write_all(b"    fn _is_magic(&self) -> bool {\n").unwrap();
+    job_skills_file.write_all(format!("        {}\n", matches!(skill_config.skill_type().unwrap_or(SkillType::Misc), SkillType::Magic)).as_bytes()).unwrap();
+    job_skills_file.write_all(b"    }\n").unwrap();
+    job_skills_file.write_all(b"    fn _is_physical(&self) -> bool {\n").unwrap();
+    job_skills_file.write_all(format!("        {}\n", matches!(skill_config.skill_type().unwrap_or(SkillType::Misc), SkillType::Weapon)).as_bytes()).unwrap();
     job_skills_file.write_all(b"    }\n").unwrap();
 }
 
@@ -507,7 +515,7 @@ fn generate_validate_item(job_skills_file: &mut File, skill_config: &SkillConfig
             job_skills_file.write_all(b"    #[inline(always)]\n").unwrap();
             job_skills_file.write_all(b"    fn _validate_item(&self, inventory: &Vec<NormalInventoryItem>) -> Result<Option<Vec<NormalInventoryItem>>, UseSkillFailure> {\n").unwrap();
             job_skills_file.write_all(format!("        let required_items = vec![{}]; \n", requirements.item_cost().iter()
-                .map(|item| format!("(NormalInventoryItem {{item_id: {}, name_english: \"{}\".to_string(), amount: {}}})", item_name_ids.get(item.item()).unwrap(), item.item(), item.amount())).collect::<Vec<String>>().join(",")).as_bytes()).unwrap();
+                .map(|item| format!("(NormalInventoryItem {{item_id: {}, name_english: \"{}\".to_string(), amount: {}}})", item_name_ids.get(item.item()).unwrap_or_else(|| panic!("Item {} not found", item.item())), item.item(), item.amount())).collect::<Vec<String>>().join(",")).as_bytes()).unwrap();
             for item in requirements.item_cost().iter() {
                 job_skills_file.write_all(format!("        if inventory.iter().find(|item| item.item_id == {} && item.amount >= {}).is_none() {{\n", item_name_ids.get(item.item()).unwrap(), item.amount()).as_bytes()).unwrap();
                 if item.item().eq("Red_Gemstone") {
@@ -583,6 +591,22 @@ fn generate_dmg_atk(job_skills_file: &mut File, skill_config: &SkillConfig) {
     job_skills_file.write_all(b"    #[inline(always)]\n").unwrap();
     job_skills_file.write_all(b"    fn _dmg_atk(&self) -> Option<f32> {\n").unwrap();
     generate_return_per_level_option_f32(job_skills_file, skill_config.dmg_atk(), skill_config.dmg_atk_per_level());
+    job_skills_file.write_all(b"    }\n").unwrap();
+}
+fn generate_dmg_matk(job_skills_file: &mut File, skill_config: &SkillConfig) {
+    if skill_config.dmg_matk().is_none() && skill_config.dmg_matk_per_level().is_none() {
+        return;
+    }
+    job_skills_file.write_all(b"    #[inline(always)]\n").unwrap();
+    job_skills_file.write_all(b"    fn _dmg_matk(&self) -> Option<f32> {\n").unwrap();
+    generate_return_per_level_option_f32(job_skills_file, skill_config.dmg_matk(), skill_config.dmg_matk_per_level());
+    job_skills_file.write_all(b"    }\n").unwrap();
+}
+
+fn generate_element(job_skills_file: &mut File, skill_config: &SkillConfig) {
+    job_skills_file.write_all(b"    #[inline(always)]\n").unwrap();
+    job_skills_file.write_all(b"    fn _element(&self) -> Element {\n").unwrap();
+    job_skills_file.write_all(format!("        Element::{:?}\n", skill_config.element().unwrap_or(Element::Neutral)).as_bytes()).unwrap();
     job_skills_file.write_all(b"    }\n").unwrap();
 }
 
@@ -802,7 +826,7 @@ fn generate_skills_enum_to_object(output_path: &Path, skills: &Vec<SkillConfig>,
         file.write_all(format!("use crate::skills::{}::{{*}};\n", job).as_bytes()).unwrap();
         file.write_all(format!("use crate::base::{}_base::{{*}};\n", job).as_bytes()).unwrap();
     }
-    file.write_all("use enums::skill_enums::SkillEnum;\n\n".to_string().as_bytes()).unwrap();
+    file.write_all("use models::enums::skill_enums::SkillEnum;\n\n".to_string().as_bytes()).unwrap();
     file.write_all("use crate::Skill;\n\n".to_string().as_bytes()).unwrap();
 
 

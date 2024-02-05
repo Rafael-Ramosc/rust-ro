@@ -7,7 +7,7 @@ extern crate log;
 #[macro_use]
 extern crate accessor;
 
-extern crate enums;
+extern crate models;
 extern crate packets;
 extern crate core;
 
@@ -37,9 +37,12 @@ use std::sync::{Arc};
 use std::thread;
 use crate::repository::{ItemRepository, Repository};
 use std::time::{Instant};
-use flexi_logger::{AdaptiveFormat, DeferredNow, Logger, TS_DASHES_BLANK_COLONS_DOT_BLANK};
+use base64::Engine;
+use base64::engine::general_purpose;
+use flexi_logger::{DeferredNow, Logger, TS_DASHES_BLANK_COLONS_DOT_BLANK};
 use log::Record;
-use rathena_script_lang_interpreter::lang::value::Scope::Local;
+use rathena_script_lang_interpreter::lang::compiler::Compiler;
+
 
 use rathena_script_lang_interpreter::lang::vm::{DebugFlag, Vm};
 use tokio::runtime::Runtime;
@@ -63,6 +66,7 @@ use crate::server::model::script::Script;
 
 use self::server::script::ScriptHandler;
 use crate::server::service::global_config_service::GlobalConfigService;
+use crate::server::service::item_service::ItemService;
 
 use crate::util::log_filter::LogFilter;
 
@@ -78,7 +82,7 @@ pub async fn main() {
 
     let logger= Logger::try_with_str(configs().server.log_level.as_ref().unwrap()).unwrap();
     logger.format(|w: &mut dyn std::io::Write, now: &mut DeferredNow, record: &Record| {
-        let level = record.level();
+        let _level = record.level();
         write!(
             w,
             "{} [{}] [{}]: {}",
@@ -91,7 +95,31 @@ pub async fn main() {
         .filter(Box::new(LogFilter::new(configs().server.log_exclude_pattern.as_ref().unwrap().clone()))).start().unwrap();
     let repository : Repository = Repository::new_pg(&configs().database, Runtime::new().unwrap()).await;
     let repository_arc = Arc::new(repository);
-    let items =  repository_arc.get_all_items().await.unwrap();
+    let mut items =  repository_arc.get_all_items().await.unwrap();
+
+    let start = Instant::now();
+    let mut script_compilation_to_update: Vec<(i32, Vec<u8>, u128)> = vec![];
+    let mut item_script_compiled = 0;
+    let mut item_script_skipped = 0;
+    for item in items.iter_mut() {
+        if let Some(script) = &item.script {
+            let script_hash = fastmurmur3::hash(script.as_bytes());
+            if item.script_compilation_hash.is_none() || script_hash != item.script_compilation_hash.unwrap() {
+                let compilation_result = Compiler::compile_script_into_binary(format!("{}-{}", item.id, item.name_aegis), script.as_str(), "./native_functions_list.txt", rathena_script_lang_interpreter::lang::compiler::DebugFlag::None.value());
+                    compilation_result.map(|res| {
+                        item_script_compiled += 1;
+                        item.script_compilation_hash = Some(script_hash);
+                        item.script_compilation = Some(general_purpose::STANDARD.encode(res.clone()));
+                        script_compilation_to_update.push((item.id, res, script_hash));
+                });
+            } else {
+                item_script_skipped += 1;
+            }
+        }
+    }
+    repository_arc.update_script_compilation(script_compilation_to_update).await.unwrap();
+    info!("Compiled {} item scripts compiled, skipped {} item scripts compilation (already compiled) in {}ms", item_script_compiled, item_script_skipped, start.elapsed().as_millis());
+
     let mobs =  repository_arc.get_all_mobs().await.unwrap();
     let mut map_item_ids = MapItems::new(300000, u32::MAX);
     #[cfg(feature = "static_db_update")]
@@ -121,7 +149,10 @@ pub async fn main() {
     let mobs_map = mobs.clone().into_iter().map(|mob| (mob.id as u32, mob)).collect();
     let mob_spawns = unsafe { MobSpawnLoader::load_mob_spawns(CONFIGS.as_ref().unwrap(), mobs_map, MOB_ROOT_PATH).join().unwrap() };
     let maps = MapLoader::load_maps(warps, mob_spawns, scripts, &mut map_item_ids, unsafe { MAP_DIR });
-    info!("load {} map-cache in {} secs", maps.len(), start.elapsed().as_millis() as f32 / 1000.0);
+    info!("Loaded {} map-cache in {}ms", maps.len(), start.elapsed().as_millis());
+    let start = Instant::now();
+    let item_script_executed = ItemService::convert_script_into_bonuses(&mut items, "native_functions_list.txt");
+    info!("Executed {} item scripts, skipped {} item scripts (requiring runtime data) in {}ms", item_script_executed.0, item_script_executed.1, start.elapsed().as_millis());
     unsafe {
         GlobalConfigService::init(CONFIGS.clone().unwrap(),
                                   items,

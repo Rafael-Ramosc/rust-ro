@@ -1,6 +1,8 @@
 use std::sync::Mutex;
 use rand::RngCore;
-use enums::class::JobName;
+use models::enums::class::JobName;
+use models::enums::EnumWithMaskValueU64;
+use models::enums::item::{EquipmentLocation};
 
 
 use models::status::{Look, Status};
@@ -8,7 +10,7 @@ use crate::repository::model::item_model::{DBItemType, InventoryItemModel, ItemM
 use crate::server::model::map_instance::MapInstanceKey;
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::state::character::Character;
-use crate::enums::EnumWithNumberValue;
+use models::enums::EnumWithNumberValue;
 
 pub fn create_character() -> Character {
     Character {
@@ -17,8 +19,6 @@ pub fn create_character() -> Character {
             job: JobName::Novice.value() as u32,
             hp: 0,
             sp: 0,
-            max_hp: 0,
-            max_sp: 0,
             str: 1,
             agi: 1,
             vit: 1,
@@ -96,6 +96,11 @@ pub fn equip_item(character: &mut Character, item: &ItemModel) -> usize {
     let index = character.add_in_inventory(inventory_item);
     character.wear_equip_item(index, item.location, item);
     index
+}
+
+pub fn takeoff_weapon(character: &mut Character) {
+    character.takeoff_equip_item(EquipmentLocation::HandRight.as_flag() as usize);
+    character.takeoff_equip_item(EquipmentLocation::HandLeft.as_flag() as usize);
 }
 
 pub fn add_item_in_inventory(character: &mut Character, aegis_name: &str) -> usize {

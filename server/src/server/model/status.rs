@@ -1,8 +1,9 @@
 use crate::repository::model::char_model::CharSelectModel;
 use crate::repository::model::mob_model::MobModel;
 use configuration::configuration::GameConfig;
-use enums::size::Size;
-use enums::EnumWithStringValue;
+use models::enums::element::Element;
+use models::enums::size::Size;
+use models::enums::EnumWithStringValue;
 use models::status::{KnownSkill, Look, Status, StatusSnapshot};
 
 pub struct StatusFromDb;
@@ -12,8 +13,6 @@ impl StatusFromDb {
             job: char_model.class as u32,
             hp: char_model.hp as u32,
             sp: char_model.sp as u32,
-            max_hp: char_model.max_hp as u32,
-            max_sp: char_model.max_sp as u32,
             str: char_model.str as u16,
             agi: char_model.agi as u16,
             vit: char_model.vit as u16,
@@ -72,6 +71,8 @@ impl StatusFromDb {
             mob_model.def as u16,
             mob_model.mdef as u16,
             Size::from_string(&mob_model.size),
+            Element::from_string(mob_model.element.as_str()),
+            mob_model.element_level as u8
         )
     }
 }

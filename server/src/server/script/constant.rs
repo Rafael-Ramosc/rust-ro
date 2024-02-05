@@ -1,8 +1,14 @@
 use rathena_script_lang_interpreter::lang::value::Value;
-use enums::class::{JOB_2_1_MASK, JOB_2_2_MASK, JOB_BABY_MASK, JOB_BASE_MASK, JOB_TRANS_MASK, JobName};
-use enums::look::LookType;
-use crate::enums::EnumWithNumberValue;
-use crate::enums::EnumWithStringValue;
+use models::enums::class::{JOB_2_1_MASK, JOB_2_2_MASK, JOB_BABY_MASK, JOB_BASE_MASK, JOB_TRANS_MASK, JobName};
+use models::enums::element::Element;
+use models::enums::item::ItemGroup;
+use models::enums::look::LookType;
+use models::enums::mob::{MobClass, MobGroup, MobRace};
+use models::enums::size::Size;
+use models::enums::status::StatusEffect;
+use models::enums::EnumWithNumberValue;
+use models::enums::EnumWithStringValue;
+use crate::util::string::StringUtil;
 
 /*
 ([A-Z_]*): (.*)
@@ -1249,12 +1255,114 @@ pub fn load_constant(constant_name: &String) -> Option<Value> {
         "4_RAGFES_16" => Value::new_number(10506),
         "4_RAGFES_16_M" => Value::new_number(10507),
         "4_EXJOB_NINJA2" => Value::new_number(10508),
+        "Ele_Neutral" => Value::new_number(Element::Neutral.value() as i32),
+        "Ele_Water" => Value::new_number(Element::Water.value() as i32),
+        "Ele_Earth" => Value::new_number(Element::Earth.value() as i32),
+        "Ele_Fire" => Value::new_number(Element::Fire.value() as i32),
+        "Ele_Wind" => Value::new_number(Element::Wind.value() as i32),
+        "Ele_Poison" => Value::new_number(Element::Poison.value() as i32),
+        "Ele_Holy" => Value::new_number(Element::Holy.value() as i32),
+        "Ele_Dark" => Value::new_number(Element::Dark.value() as i32),
+        "Ele_Ghost" => Value::new_number(Element::Ghost.value() as i32),
+        "Ele_Undead" => Value::new_number(Element::Undead.value() as i32),
+        "Class_Normal" => Value::new_number(MobClass::Normal.value() as i32),
+        "Class_Boss" => Value::new_number(MobClass::Boss.value() as i32),
+        "Class_Guardian" => Value::new_number(MobClass::Guardian.value() as i32),
+        "Class_All" => Value::new_number(MobClass::All.value() as i32),
+        "RC2_Goblin" => Value::new_number(MobGroup::Goblin.value() as i32),
+        "RC2_Kobold" => Value::new_number(MobGroup::Kobold.value() as i32),
+        "RC2_Orc" => Value::new_number(MobGroup::Orc.value() as i32),
+        "RC2_Golem" => Value::new_number(MobGroup::Golem.value() as i32),
+        "RC2_Guardian" => Value::new_number(MobGroup::Guardian.value() as i32),
+        "RC2_Ninja" => Value::new_number(MobGroup::Ninja.value() as i32),
+        "RC2_GVG" => Value::new_number(MobGroup::GVG.value() as i32),
+        "RC2_Battlefield" => Value::new_number(MobGroup::Battlefield.value() as i32),
+        "RC2_Treasure" => Value::new_number(MobGroup::Treasure.value() as i32),
+        "RC2_BioLab" => Value::new_number(MobGroup::BioLab.value() as i32),
+        "RC2_Manuk" => Value::new_number(MobGroup::Manuk.value() as i32),
+        "RC2_Splendide" => Value::new_number(MobGroup::Splendide.value() as i32),
+        "RC2_Scaraba" => Value::new_number(MobGroup::Scaraba.value() as i32),
+        "RC2_Clocktower" => Value::new_number(MobGroup::Clocktower.value() as i32),
+        "RC2_Thanatos" => Value::new_number(MobGroup::Thanatos.value() as i32),
+        "RC2_Faceworm" => Value::new_number(MobGroup::Faceworm.value() as i32),
+        "RC2_Hearthunter" => Value::new_number(MobGroup::Hearthunter.value() as i32),
+        "RC2_Rockridge" => Value::new_number(MobGroup::Rockridge.value() as i32),
+        "RC2_Werner_Lab" => Value::new_number(MobGroup::WernerLab.value() as i32),
+        "RC2_Temple_Demon" => Value::new_number(MobGroup::TempleDemon.value() as i32),
+        "RC2_Illusion_Vampire" => Value::new_number(MobGroup::IllusionVampire.value() as i32),
+        "RC2_Malangdo" => Value::new_number(MobGroup::Malangdo.value() as i32),
+        "RC2_Rachel_Sanctuary" => Value::new_number(MobGroup::RachelSanctuary.value() as i32),
+        "RC_Angel" => Value::new_number(MobRace::Angel.value() as i32),
+        "RC_Brute" => Value::new_number(MobRace::Brute.value() as i32),
+        "RC_DemiHuman" => Value::new_number(MobRace::DemiHuman.value() as i32),
+        "RC_Demon" => Value::new_number(MobRace::Demon.value() as i32),
+        "RC_Dragon" => Value::new_number(MobRace::Dragon.value() as i32),
+        "RC_Fish" => Value::new_number(MobRace::Fish.value() as i32),
+        "RC_Formless" => Value::new_number(MobRace::Formless.value() as i32),
+        "RC_Insect" => Value::new_number(MobRace::Insect.value() as i32),
+        "RC_Plant" => Value::new_number(MobRace::Plant.value() as i32),
+        "RC_Player_Human" => Value::new_number(MobRace::PlayerHuman.value() as i32),
+        "RC_Player_Doram" => Value::new_number(MobRace::PlayerDoram.value() as i32),
+        "RC_Undead" => Value::new_number(MobRace::Undead.value() as i32),
+        "RC_All" => Value::new_number(MobRace::All.value() as i32),
+        "Eff_Bleeding" => Value::new_number(StatusEffect::Bleeding.value() as i32),
+        "Eff_Blind" => Value::new_number(StatusEffect::Blind.value() as i32),
+        "Eff_Burning" => Value::new_number(StatusEffect::Burning.value() as i32),
+        "Eff_Confusion" => Value::new_number(StatusEffect::Confuse.value() as i32),
+        "Eff_Curse" => Value::new_number(StatusEffect::Curse.value() as i32),
+        "Eff_Freeze" => Value::new_number(StatusEffect::Freeze.value() as i32),
+        "Eff_Poison" => Value::new_number(StatusEffect::Poison.value() as i32),
+        "Eff_Silence" => Value::new_number(StatusEffect::Silence.value() as i32),
+        "Eff_Sleep" => Value::new_number(StatusEffect::Sleep.value() as i32),
+        "Eff_Stone" => Value::new_number(StatusEffect::Stone.value() as i32),
+        "Eff_Stun" => Value::new_number(StatusEffect::Stun.value() as i32),
+        "IG_Bluebox" =>  Value::new_number(ItemGroup::Bluebox.value() as i32),
+        "IG_Violetbox" =>  Value::new_number(ItemGroup::Violetbox.value() as i32),
+        "IG_Cardalbum" =>  Value::new_number(ItemGroup::Cardalbum.value() as i32),
+        "IG_Giftbox" =>  Value::new_number(ItemGroup::Giftbox.value() as i32),
+        "IG_Scrollbox" =>  Value::new_number(ItemGroup::Scrollbox.value() as i32),
+        "IG_Findingore" =>  Value::new_number(ItemGroup::Findingore.value() as i32),
+        "IG_Cookiebag" =>  Value::new_number(ItemGroup::Cookiebag.value() as i32),
+        "IG_Firstaid" =>  Value::new_number(ItemGroup::Firstaid.value() as i32),
+        "IG_Herb" =>  Value::new_number(ItemGroup::Herb.value() as i32),
+        "IG_Fruit" =>  Value::new_number(ItemGroup::Fruit.value() as i32),
+        "IG_Meat" =>  Value::new_number(ItemGroup::Meat.value() as i32),
+        "IG_Candy" =>  Value::new_number(ItemGroup::Candy.value() as i32),
+        "IG_Juice" =>  Value::new_number(ItemGroup::Juice.value() as i32),
+        "IG_Fish" =>  Value::new_number(ItemGroup::Fish.value() as i32),
+        "IG_Box" =>  Value::new_number(ItemGroup::Box.value() as i32),
+        "IG_Gemstone" =>  Value::new_number(ItemGroup::Gemstone.value() as i32),
+        "IG_Resist" =>  Value::new_number(ItemGroup::Resist.value() as i32),
+        "IG_Ore" =>  Value::new_number(ItemGroup::Ore.value() as i32),
+        "IG_Fodd" =>  Value::new_number(ItemGroup::Food.value() as i32),
+        "IG_Recovery" =>  Value::new_number(ItemGroup::Recovery.value() as i32),
+        "IG_Mineral" =>  Value::new_number(ItemGroup::Mineral.value() as i32),
+        "IG_Taming" =>  Value::new_number(ItemGroup::Taming.value() as i32),
+        "IG_Scroll" =>  Value::new_number(ItemGroup::Scroll.value() as i32),
+        "IG_Quiver" =>  Value::new_number(ItemGroup::Quiver.value() as i32),
+        "IG_Mask" =>  Value::new_number(ItemGroup::Mask.value() as i32),
+        "IG_Accessory" =>  Value::new_number(ItemGroup::Accesory.value() as i32),
+        "IG_Jewel" =>  Value::new_number(ItemGroup::Jewel.value() as i32),
+        "IG_Potion" =>  Value::new_number(ItemGroup::Potion.value() as i32),
+        "Size_All" =>  Value::new_number(Size::All.value() as i32),
+        "Size_Medium" =>  Value::new_number(Size::Medium.value() as i32),
+        "Size_Small" =>  Value::new_number(Size::Small.value() as i32),
+        "Size_Large" =>  Value::new_number(Size::Large.value() as i32),
         &_ => Value::Reference(None)
     };
 
     if constant_value.is_reference() {
         if constant_name.starts_with("Job_") {
-            return Some(Value::new_number(JobName::from_string_ignore_case(constant_name.replace("Job_", "").replace('_', " ").as_str()).value() as i32));
+            let job_name = constant_name.replace("Job_", "");
+            if let Ok(job) = JobName::try_from_string(job_name.replace('_', " ").as_str()) {
+                return Some(Value::new_number(job.value() as i32));
+            }
+            if let Ok(job) = JobName::try_from_string(job_name.replace('_', "").as_str()) {
+                return Some(Value::new_number(job.value() as i32));
+            }
+            if let Ok(job) = JobName::try_from_string(job_name.camel_to_space().as_str()) {
+                return Some(Value::new_number(job.value() as i32));
+            }
         }
         None
     } else {

@@ -3,32 +3,42 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         job: 0,
         baseLevel: 0,
         jobLevel: 0,
+        baseStr: 0,
+        baseAgi: 0,
+        baseVit: 0,
+        baseDex: 0,
+        baseInt: 0,
+        baseLuk: 0,
         str: 0,
         agi: 0,
         vit: 0,
         dex: 0,
         int: 0,
         luk: 0,
-        bstr: 0, // A_STRp
-        bagi: 0, // A_AGIp
-        bvit: 0, // A_VITp
-        bdex: 0, // A_DEXp
-        bint: 0, // A_INTp
-        bluk: 0, // A_LUKp
+        bonusStr: 0, // A_STRp
+        bonusAgi: 0, // A_AGIp
+        bonusVit: 0, // A_VITp
+        bonusDex: 0, // A_DEXp
+        bonusInt: 0, // A_INTp
+        bonusLuk: 0, // A_LUKp
         maxHp: 0, // A_MaxHP
         maxSp: 0, // A_MaxSP
+        hit: 0,
+        flee: 0,
+        crit: 0,
         def: 0,
+        vitDEF: [],
         cast: 0,
         atkLeft: 0,
         atkRight: 0,
-        weaponType: 0,
-        weapon1: 0,
-        weapon1ATK: 0,
-        weapon2: 0,
-        weapon2ATK: 0,
-        weapon1Element: 0,
-        weapon2Element: 0,
         matk: [],
+        skillToUse: {},
+        baseATK: 0,
+        totalDef: 0,
+        perfectDodge: 0,
+        aspd: 0,
+        aspdForDisplay: 0,
+        critATK: [],
         isRebirth: false,
         passiveSkills: [],
         supportiveSkills: [],
@@ -36,26 +46,14 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         supportiveSkillsBattleChant: [],
         groundSupportiveSkills: [],
         foodBoxBonus: [],
-        cards: [],
-        equipments: [],
+        equipments: {},
         arrow: null,
-        weapon1Index: 0,
-        weapon2Index: 0,
-        shoulderDefPlus: 0,
-        headDefPlus: 0,
-        bodyDefPlus: 0,
-        shieldHandDefPlus: 0,
-        shoesHandDefPlus: 0,
-        totalGearDefPlus: 0,
+        totalGearRefinement: 0,
         speedPotion: false,
     }
     let {job, isRebirth} = n_A_JobSet(FORM_DATA);
     stats.job = job;
     stats.isRebirth = isRebirth;
-
-    stats.supportiveSkills = new Array();
-    for (let i = 0; i <= 15; i++)
-        stats.supportiveSkills[i] = 0;
 
 
     stats.performanceSkills = new Array();
@@ -92,12 +90,6 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     for (let i = 0; i <= 10; i++)
         stats.foodBoxBonus[i] = 0;
 
-    if (stats.job == 20) {
-        if (SuperNoviceFullWeaponCHECK == 0 && eval(FORM_DATA.A_PASSIVE_SKILL9) == 1)
-            SuperNoviceFullWeapon(1);
-        else if (SuperNoviceFullWeaponCHECK == 1 && eval(FORM_DATA.A_PASSIVE_SKILL9) == 0)
-            SuperNoviceFullWeapon(0);
-    }
     stats.baseLevel = eval(FORM_DATA.A_BaseLV);
     stats.jobLevel = eval(FORM_DATA.A_JobLV);
 
@@ -107,234 +99,247 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     stats.dex = eval(FORM_DATA.A_DEX);
     stats.int = eval(FORM_DATA.A_INT);
     stats.luk = eval(FORM_DATA.A_LUK);
-    let SU_STR = stats.str;
-    let SU_AGI = stats.agi;
-    let SU_VIT = stats.vit;
-    let SU_DEX = stats.dex;
-    let SU_INT = stats.int;
-    let SU_LUK = stats.luk;
+    stats.baseStr = stats.str;
+    stats.baseAgi = stats.agi;
+    stats.baseVit = stats.vit;
+    stats.baseDex = stats.dex;
+    stats.baseInt = stats.int;
+    stats.baseLuk = stats.luk;
 
-    stats.weaponType = eval(FORM_DATA.A_WeaponType);
 
     stats.arrow = eval(FORM_DATA.A_Arrow);
-    stats.weapon1Index = eval(FORM_DATA.A_weapon1);
 
-    stats.weapon1Lv = ItemOBJ[stats.weapon1Index][4];
-    stats.weapon1ATK = ItemOBJ[stats.weapon1Index][3];
 
-    stats.weapon2LV_upgradeBonusATK = 0;
-    stats.weapon2LV_Minplus = 0;
-    stats.weapon2LV_overUpgradeBonusATK = 0;
-    stats.weapon2LV = 0;
-    stats.weapon2_ATK = 0;
-    stats.weapon2_RefinementLevel = 0;
-    stats.cards = [];
-    stats.cards[0] = eval(FORM_DATA.A_weapon1_card1);
-    stats.cards[1] = eval(FORM_DATA.A_weapon1_card2);
-    stats.cards[2] = eval(FORM_DATA.A_weapon1_card3);
-    stats.cards[3] = eval(FORM_DATA.A_weapon1_card4);
-    if (hasLeftHand) {
-        stats.cards[4] = eval(FORM_DATA.A_weapon2_card1);
-        stats.cards[5] = eval(FORM_DATA.A_weapon2_card2);
-        stats.cards[6] = eval(FORM_DATA.A_weapon2_card3);
-        stats.cards[7] = eval(FORM_DATA.A_weapon2_card4);
-    } else {
-        stats.cards[4] = 0;
-        stats.cards[5] = 0;
-        stats.cards[6] = 0;
-        stats.cards[7] = 0;
+    const weaponRefinementLevel = eval(FORM_DATA.A_Weapon_ATKplus) ? eval(FORM_DATA.A_Weapon_ATKplus) : 0;
+    stats.equipments.weapon = buildEquipment(eval(FORM_DATA.A_weapon1), true, weaponRefinementLevel);
+    stats.equipments.weapon.type = eval(FORM_DATA.A_WeaponType);
+    stats.equipments.weapon.level = ItemOBJ[stats.equipments.weapon.index][4];
+    stats.equipments.weapon.starCrumb = eval(FORM_DATA.A_Weapon_StarCrumb) ? eval(FORM_DATA.A_Weapon_StarCrumb) : 0;
+    stats.equipments.weapon.craftedByTop10Smith = eval(FORM_DATA.A_Weapon_CraftByTop10) ? eval(FORM_DATA.A_Weapon_CraftByTop10) : 0;
+
+    stats.equipments.weapon.element = eval(FORM_DATA.A_Weapon_element) ? eval(FORM_DATA.A_Weapon_element) : 0;
+    stats.equipments.weapon.minPlus = 0;
+    stats.equipments.weapon.overUpgradeBonusATK = 0;
+    stats.equipments.weapon.upgradeBonusATK = 0;
+    if (stats.equipments.weapon.level == 1) {
+        stats.equipments.weapon.upgradeBonusATK = weaponRefinementLevel * 2;
+        if (weaponRefinementLevel >= 8) {
+            stats.equipments.weapon.minPlus = 1;
+            stats.equipments.weapon.overUpgradeBonusATK = 3 * (weaponRefinementLevel - 7);
+        }
+    } else if (stats.equipments.weapon.level == 2) {
+        stats.equipments.weapon.upgradeBonusATK = weaponRefinementLevel * 3;
+        if (weaponRefinementLevel >= 7) {
+            stats.equipments.weapon.minPlus = 1;
+            stats.equipments.weapon.overUpgradeBonusATK = 5 * (weaponRefinementLevel - 6);
+        }
+    } else if (stats.equipments.weapon.level == 3) {
+        stats.equipments.weapon.upgradeBonusATK = weaponRefinementLevel * 5;
+        if (weaponRefinementLevel >= 6) {
+            stats.equipments.weapon.minPlus = 1;
+            stats.equipments.weapon.overUpgradeBonusATK = 8 * (weaponRefinementLevel - 5);
+        }
+    } else if (stats.equipments.weapon.level == 4) {
+        stats.equipments.weapon.upgradeBonusATK = weaponRefinementLevel * 7;
+        if (weaponRefinementLevel >= 5) {
+            stats.equipments.weapon.minPlus = 1;
+            stats.equipments.weapon.overUpgradeBonusATK = 14 * (weaponRefinementLevel - 4);
+        }
     }
-    stats.cards[8] = eval(FORM_DATA.A_head1_card);
-    stats.cards[9] = eval(FORM_DATA.A_head2_card);
-    stats.cards[10] = eval(FORM_DATA.A_left_card);
-    stats.cards[11] = eval(FORM_DATA.A_body_card);
-    stats.cards[12] = eval(FORM_DATA.A_shoulder_card);
-    stats.cards[13] = eval(FORM_DATA.A_shoes_card);
-    stats.cards[14] = eval(FORM_DATA.A_acces1_card);
-    stats.cards[15] = eval(FORM_DATA.A_acces2_card);
 
-    SetCard(stats);
+    let weapon2RefinementLevel = 0;
+    if (eval(FORM_DATA.A_weapon2)) {
 
-    if (hasLeftHand) {
+        weapon2RefinementLevel = eval(FORM_DATA.A_Weapon2_ATKplus) ? eval(FORM_DATA.A_Weapon2_ATKplus) : 0;
+        stats.equipments.weaponLeftHand = buildEquipment(eval(FORM_DATA.A_weapon2), true, weapon2RefinementLevel);
+        stats.equipments.weaponLeftHand.type = eval(FORM_DATA.A_Weapon2Type);
+        stats.equipments.weaponLeftHand.level = ItemOBJ[eval(FORM_DATA.A_weapon2)][4];
+        stats.equipments.weaponLeftHand.element = stats.equipments.weapon.element;
+        stats.equipments.weaponLeftHand.starCrumb = eval(FORM_DATA.A_Weapon2_StarCrumb) ? eval(FORM_DATA.A_Weapon2_StarCrumb) : 0;
+        stats.equipments.weaponLeftHand.craftedByTop10Smith = eval(FORM_DATA.A_Weapon2_CraftByTop10) ? eval(FORM_DATA.A_Weapon2_CraftByTop10) : 0;
 
-        if (!targetStats.isStaticPlant) {
-
-            stats.weapon2Index = eval(FORM_DATA.A_weapon2);
-            stats.weapon2LV = ItemOBJ[stats.weapon2Index][4];
-            stats.weapon2_ATK = ItemOBJ[stats.weapon2Index][3];
-            stats.weapon2_RefinementLevel = eval(FORM_DATA.A_Weapon2_ATKplus);
-
-
-            if (stats.weapon2LV == 1) {
-                stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 2;
-                if (stats.weapon2_RefinementLevel >= 8) {
-                    stats.weapon2LV_Minplus = 1;
-                    stats.weapon2LV_overUpgradeBonusATK = 3 * (stats.weapon2_RefinementLevel - 7);
-                }
-            } else if (stats.weapon2LV == 2) {
-                stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 3;
-                if (stats.weapon2_RefinementLevel >= 7) {
-                    stats.weapon2LV_Minplus = 1;
-                    stats.weapon2LV_overUpgradeBonusATK = 5 * (stats.weapon2_RefinementLevel - 6);
-                }
-            } else if (stats.weapon2LV == 3) {
-                stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 5;
-                if (stats.weapon2_RefinementLevel >= 6) {
-                    stats.weapon2LV_Minplus = 1;
-                    stats.weapon2LV_overUpgradeBonusATK = 8 * (stats.weapon2_RefinementLevel - 5);
-                }
-            } else if (stats.weapon2LV == 4) {
-                stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 7;
-                if (stats.weapon2_RefinementLevel >= 5) {
-                    stats.weapon2LV_Minplus = 1;
-                    stats.weapon2LV_overUpgradeBonusATK = 14 * (stats.weapon2_RefinementLevel - 4);
-                }
+        stats.equipments.weaponLeftHand.minPlus = 0;
+        stats.equipments.weaponLeftHand.overUpgradeBonusATK = 0;
+        stats.equipments.weaponLeftHand.upgradeBonusATK = 0;
+        if (stats.equipments.weaponLeftHand.level == 1) {
+            stats.equipments.weaponLeftHand.overUpgradeBonusATK = weapon2RefinementLevel * 2;
+            if (weapon2RefinementLevel >= 8) {
+                stats.equipments.weaponLeftHand.minPlus = 1;
+                stats.equipments.weaponLeftHand.level_overUpgradeBonusATK = 3 * (weapon2RefinementLevel - 7);
+            }
+        } else if (stats.equipments.weaponLeftHand.level == 2) {
+            stats.equipments.weaponLeftHand.overUpgradeBonusATK = weapon2RefinementLevel * 3;
+            if (weapon2RefinementLevel >= 7) {
+                stats.equipments.weaponLeftHand.minPlus = 1;
+                stats.equipments.weaponLeftHand.level_overUpgradeBonusATK = 5 * (weapon2RefinementLevel - 6);
+            }
+        } else if (stats.equipments.weaponLeftHand.level == 3) {
+            stats.equipments.weaponLeftHand.overUpgradeBonusATK = weapon2RefinementLevel * 5;
+            if (weapon2RefinementLevel >= 6) {
+                stats.equipments.weaponLeftHand.minPlus = 1;
+                stats.equipments.weaponLeftHand.level_overUpgradeBonusATK = 8 * (weapon2RefinementLevel - 5);
+            }
+        } else if (stats.equipments.weaponLeftHand.level == 4) {
+            stats.equipments.weaponLeftHand.overUpgradeBonusATK = weapon2RefinementLevel * 7;
+            if (weapon2RefinementLevel >= 5) {
+                stats.equipments.weaponLeftHand.minPlus = 1;
+                stats.equipments.weaponLeftHand.level_overUpgradeBonusATK = 14 * (weapon2RefinementLevel - 4);
             }
         }
+
     }
-
-    if (FORM_DATA.A_weapon2) {
-        stats.weapon2Index = eval(FORM_DATA.A_weapon2);
-        stats.weapon2_ATK = ItemOBJ[stats.weapon2Index][3];
-    } else {
-        stats.weapon2_ATK = 0;
-    }
-    let weaponRefinementLevel = eval(FORM_DATA.A_Weapon_ATKplus);
-
-    stats.weapon1LV_upgradeBonusATK = 0;
-    stats.weapon1LV_Minplus = 0;
-    stats.weapon1LV_overUpgradeBonusATK = 0;
-    if (stats.weapon1Lv == 1) {
-        stats.weapon1LV_upgradeBonusATK = weaponRefinementLevel * 2;
-        if (weaponRefinementLevel >= 8) {
-            stats.weapon1LV_Minplus = 1;
-            stats.weapon1LV_overUpgradeBonusATK = 3 * (weaponRefinementLevel - 7);
-        }
-    } else if (stats.weapon1Lv == 2) {
-        stats.weapon1LV_upgradeBonusATK = weaponRefinementLevel * 3;
-        if (weaponRefinementLevel >= 7) {
-            stats.weapon1LV_Minplus = 1;
-            stats.weapon1LV_overUpgradeBonusATK = 5 * (weaponRefinementLevel - 6);
-        }
-    } else if (stats.weapon1Lv == 3) {
-        stats.weapon1LV_upgradeBonusATK = weaponRefinementLevel * 5;
-        if (weaponRefinementLevel >= 6) {
-            stats.weapon1LV_Minplus = 1;
-            stats.weapon1LV_overUpgradeBonusATK = 8 * (weaponRefinementLevel - 5);
-        }
-    } else if (stats.weapon1Lv == 4) {
-        stats.weapon1LV_upgradeBonusATK = weaponRefinementLevel * 7;
-        if (weaponRefinementLevel >= 5) {
-            stats.weapon1LV_Minplus = 1;
-            stats.weapon1LV_overUpgradeBonusATK = 14 * (weaponRefinementLevel - 4);
-        }
-    }
-    stats.headDefPlus = eval(FORM_DATA.A_HEAD_DEF_PLUS);
-    stats.bodyDefPlus = eval(FORM_DATA.A_BODY_DEF_PLUS);
-    stats.shieldHandDefPlus = eval(FORM_DATA.A_LEFT_DEF_PLUS);
-    stats.shoulderDefPlus = eval(FORM_DATA.A_SHOULDER_DEF_PLUS);
-    stats.shoesHandDefPlus = eval(FORM_DATA.A_SHOES_DEF_PLUS);
-    stats.totalGearDefPlus = stats.headDefPlus + stats.bodyDefPlus + stats.shieldHandDefPlus + stats.shoulderDefPlus + stats.shoesHandDefPlus;
-
-    stats.skillToUse = eval(FORM_DATA.A_ActiveSkill);
-    stats.skillToUseName = SkillOBJ[stats.skillToUse][2];
-    if (stats.skillToUse > 100000)
-        stats.skillToUse = Math.floor((stats.skillToUse % 100000) / 100);
-
-    stats.skillToUseLV = eval(FORM_DATA.A_ActiveSkillLV);
+    stats.skillToUse = {};
+    stats.skillToUse.index = eval(FORM_DATA.A_ActiveSkill);
+    stats.skillToUse.name = SkillOBJ[stats.skillToUse.index][2];
+    stats.skillToUse.skid = SkillOBJ[stats.skillToUse.index][3];
+    if (stats.skillToUse.index > 100000)
+        stats.skillToUse.index = Math.floor((stats.skillToUse.index % 100000) / 100);
+    stats.skillToUse.additionalData = eval(FORM_DATA.SkillSubNum); // cart weight for cart revolution, remaining sp for asura strike...
+    stats.skillToUse.level = eval(FORM_DATA.A_ActiveSkillLV);
     stats.speedPotion = eval(FORM_DATA.A_SpeedPOT);
 
-    stats.equipments[0] = eval(FORM_DATA.A_weapon1);
-    if (hasLeftHand)
-        stats.equipments[1] = eval(FORM_DATA.A_weapon2);
-    else
-        stats.equipments[1] = 0;
-    stats.equipments[2] = eval(FORM_DATA.A_head1);
-    stats.equipments[3] = eval(FORM_DATA.A_head2);
-    stats.equipments[4] = eval(FORM_DATA.A_head3);
-    stats.equipments[5] = eval(FORM_DATA.A_left);
-    stats.equipments[6] = eval(FORM_DATA.A_body);
-    stats.equipments[7] = eval(FORM_DATA.A_shoulder);
-    stats.equipments[8] = eval(FORM_DATA.A_shoes);
-    stats.equipments[9] = eval(FORM_DATA.A_acces1);
-    stats.equipments[10] = eval(FORM_DATA.A_acces2);
 
-    SetEquip(stats);
+    stats.equipments.upperHeadgear = buildEquipment(eval(FORM_DATA.A_head1), false, eval(FORM_DATA.A_HEAD_DEF_PLUS));
+    stats.equipments.middleHeadgear = buildEquipment(eval(FORM_DATA.A_head2), false, 0);
+    stats.equipments.lowerHeadgear = buildEquipment(eval(FORM_DATA.A_head3), false, 0);
+    stats.equipments.shield = buildEquipment(eval(FORM_DATA.A_left), false, eval(FORM_DATA.A_LEFT_DEF_PLUS));
+    stats.equipments.body = buildEquipment(eval(FORM_DATA.A_body), false, eval(FORM_DATA.A_BODY_DEF_PLUS));
+    stats.equipments.shoulder = buildEquipment(eval(FORM_DATA.A_shoulder), false, eval(FORM_DATA.A_SHOULDER_DEF_PLUS));
+    stats.equipments.shoes = buildEquipment(eval(FORM_DATA.A_shoes), false, eval(FORM_DATA.A_SHOES_DEF_PLUS));
+    stats.equipments.accessory1 = buildEquipment(eval(FORM_DATA.A_acces1), false, 0);
+    stats.equipments.accessory2 = buildEquipment(eval(FORM_DATA.A_acces2), false, 0);
+    stats.totalGearRefinement = stats.equipments.upperHeadgear.refinement + stats.equipments.body.refinement + stats.equipments.shield.refinement + stats.equipments.shoulder.refinement + stats.equipments.shoes.refinement;
+
+    SetEquipmentCombo(stats);
 
 
-    stats.weapon1Element = eval(FORM_DATA.A_Weapon_element);
-    stats.weapon2Element = stats.weapon1Element;
+    if (stats.equipments.weapon) {
+        stats.equipments.weapon.cards = [];
+        stats.equipments.weapon.cards[0] = buildCard(eval(FORM_DATA.A_weapon1_card1));
+        stats.equipments.weapon.cards[1] = buildCard(eval(FORM_DATA.A_weapon1_card2));
+        stats.equipments.weapon.cards[2] = buildCard(eval(FORM_DATA.A_weapon1_card3));
+        stats.equipments.weapon.cards[3] = buildCard(eval(FORM_DATA.A_weapon1_card4));
+    }
+    if (stats.equipments.weaponLeftHand) {
+        stats.equipments.weaponLeftHand.cards = [];
+        stats.equipments.weaponLeftHand.cards[0] = buildCard(eval(FORM_DATA.A_weapon2_card1));
+        stats.equipments.weaponLeftHand.cards[1] = buildCard(eval(FORM_DATA.A_weapon2_card2));
+        stats.equipments.weaponLeftHand.cards[2] = buildCard(eval(FORM_DATA.A_weapon2_card3));
+        stats.equipments.weaponLeftHand.cards[3] = buildCard(eval(FORM_DATA.A_weapon2_card4));
+    }
 
 
-    if (stats.weapon1Element == 0) {
-        for (let j = 0; ItemOBJ[stats.equipments[0]][j + 11] != 0; j += 2) {
-            if (20 == ItemOBJ[stats.equipments[0]][j + 11])
-                stats.weapon1Element = ItemOBJ[stats.equipments[0]][j + 12];
+    stats.equipments.upperHeadgear.cards[0] = buildCard(eval(FORM_DATA.A_head1_card));
+    stats.equipments.middleHeadgear.cards[0] = buildCard(eval(FORM_DATA.A_head2_card));
+    stats.equipments.shield.cards[0] = buildCard(eval(FORM_DATA.A_left_card));
+    stats.equipments.body.cards[0] = buildCard(eval(FORM_DATA.A_body_card));
+    stats.equipments.shoulder.cards[0] = buildCard(eval(FORM_DATA.A_shoulder_card));
+    stats.equipments.shoes.cards[0] = buildCard(eval(FORM_DATA.A_shoes_card));
+    stats.equipments.accessory1.cards[0] = buildCard(eval(FORM_DATA.A_acces1_card));
+    stats.equipments.accessory2.cards[0] = buildCard(eval(FORM_DATA.A_acces2_card));
+
+    SetCardCombo(stats);
+
+
+    if (stats.equipments.weapon.element == 0) {
+        for (let j = 0; ItemOBJ[stats.equipments.weapon.index][j + 11] != 0; j += 2) {
+            if (20 == ItemOBJ[stats.equipments.weapon.index][j + 11])
+                stats.equipments.weapon.element = ItemOBJ[stats.equipments.weapon.index][j + 12];
         }
-        for (let j = 0; ItemOBJ[stats.equipments[1]][j + 11] != 0; j += 2) {
-            if (20 == ItemOBJ[stats.equipments[1]][j + 11])
-                stats.weapon2Element = ItemOBJ[stats.equipments[1]][j + 12];
+        if (stats.equipments.weaponLeftHand) {
+            for (let j = 0; ItemOBJ[stats.equipments.weaponLeftHand.index][j + 11] != 0; j += 2) {
+                if (20 == ItemOBJ[stats.equipments.weaponLeftHand.index][j + 11])
+                    stats.equipments.weaponLeftHand.element = ItemOBJ[stats.equipments.weaponLeftHand.index][j + 12];
+            }
         }
 
-        if (201 <= cardOBJ[stats.cards[0]][0] && cardOBJ[stats.cards[0]][0] <= 204)
-            stats.weapon1Element = cardOBJ[stats.cards[0]][0] - 200;
-        if (201 <= cardOBJ[stats.cards[4]][0] && cardOBJ[stats.cards[4]][0] <= 204)
-            stats.weapon2Element = cardOBJ[stats.cards[4]][0] - 200;
-
-        if (stats.weaponType == WEAPON_TYPE_BOW || stats.weaponType == WEAPON_TYPE_HANDGUN || stats.weaponType == WEAPON_TYPE_RIFLE || stats.weaponType == WEAPON_TYPE_SHOTGUN || stats.weaponType == WEAPON_TYPE_GATLING_GUN || stats.weaponType == WEAPON_TYPE_GRENADE_LAUNCHER) {
-            stats.weapon1Element = ArrowOBJ[stats.arrow][1];
+        if (stats.equipments.weapon.type == WEAPON_TYPE_BOW || stats.equipments.weapon.type == WEAPON_TYPE_HANDGUN || stats.equipments.weapon.type == WEAPON_TYPE_RIFLE || stats.equipments.weapon.type == WEAPON_TYPE_SHOTGUN || stats.equipments.weapon.type == WEAPON_TYPE_GATLING_GUN || stats.equipments.weapon.type == WEAPON_TYPE_GRENADE_LAUNCHER) {
+            stats.equipments.weapon.element = ArrowOBJ[stats.arrow][1];
         }
     }
 
     stats.passiveSkills = new Array();
 
+    for (let i = 0; i < 15; i++) {
+        addPassiveSkill(FORM_DATA, stats, i);
+    }
+    stats.supportiveSkills[0] = {
+        name: "Blessing",
+        skid: 34,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL0 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL0) : 0
+    };
+    stats.supportiveSkills[1] = {
+        name: "Increase AGI",
+        skid: 29,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL1 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL1) : 0
+    };
+    stats.supportiveSkills[2] = {
+        name: "Impositio Manus",
+        skid: 66,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL2 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL2) : 0
+    };
+    stats.supportiveSkills[3] = {name: "Gloria", skid: 75, level: FORM_DATA.A_SUPPORTIVE_SKILL3 === "on" ? 1 : 0};
+    stats.supportiveSkills[4] = {
+        name: "Angelus",
+        skid: 33,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL4 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL4) : 0
+    };
+    stats.supportiveSkills[5] = {name: "Assumptio", skid: 361, level: FORM_DATA.A_SUPPORTIVE_SKILL5 === "on" ? 1 : 0};
+    stats.supportiveSkills[6] = {
+        name: "Adrenaline Rush",
+        skid: 111,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL6 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL6) : 0
+    };
+    stats.supportiveSkills[7] = {
+        name: "Weapon Perfection",
+        skid: 112,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL7 === "on" ? 1 : 0
+    };
+    stats.supportiveSkills[8] = {
+        name: "Power-Thrust",
+        skid: 113,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL8 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL8) : 0
+    };
+    stats.supportiveSkills[9] = {
+        name: "Wind Walker",
+        skid: 383,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL9 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL9) : 0
+    };
+    stats.supportiveSkills[10] = {
+        name: "Spirit Sphere",
+        skid: 261,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL10 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL10) : 0
+    };
+    stats.supportiveSkills[11] = {
+        name: "Magnum break bonus",
+        skid: 7,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL11 === "on" ? 1 : 0
+    };
+    stats.supportiveSkills[12] = {name: "Provoke", skid: 6, level: FORM_DATA.A_SUPPORTIVE_SKILL12 === "on" ? 1 : 0};
+    stats.supportiveSkills[13] = {
+        name: "Suffragium",
+        skid: 67,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL13 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL13) : 0
+    };
+    stats.supportiveSkills[14] = {
+        name: "Providence",
+        skid: 256,
+        level: FORM_DATA.A_SUPPORTIVE_SKILL14 ? eval(FORM_DATA.A_SUPPORTIVE_SKILL14) : 0
+    };
 
-    if (JobSkillPassOBJ[stats.job][0] != 999) stats.passiveSkills[0] = eval(FORM_DATA.A_PASSIVE_SKILL0);
-    if (JobSkillPassOBJ[stats.job][1] != 999) stats.passiveSkills[1] = eval(FORM_DATA.A_PASSIVE_SKILL1);
-    if (JobSkillPassOBJ[stats.job][2] != 999) stats.passiveSkills[2] = eval(FORM_DATA.A_PASSIVE_SKILL2);
-    if (JobSkillPassOBJ[stats.job][3] != 999) stats.passiveSkills[3] = eval(FORM_DATA.A_PASSIVE_SKILL3);
-    if (JobSkillPassOBJ[stats.job][4] != 999) stats.passiveSkills[4] = eval(FORM_DATA.A_PASSIVE_SKILL4);
-    if (JobSkillPassOBJ[stats.job][5] != 999) stats.passiveSkills[5] = eval(FORM_DATA.A_PASSIVE_SKILL5);
-    if (JobSkillPassOBJ[stats.job][6] != 999) stats.passiveSkills[6] = eval(FORM_DATA.A_PASSIVE_SKILL6);
-    if (JobSkillPassOBJ[stats.job][7] != 999) stats.passiveSkills[7] = eval(FORM_DATA.A_PASSIVE_SKILL7);
-    if (JobSkillPassOBJ[stats.job][8] != 999) stats.passiveSkills[8] = eval(FORM_DATA.A_PASSIVE_SKILL8);
-    if (JobSkillPassOBJ[stats.job][9] != 999) stats.passiveSkills[9] = eval(FORM_DATA.A_PASSIVE_SKILL9);
-    if (JobSkillPassOBJ[stats.job][10] != 999) stats.passiveSkills[10] = eval(FORM_DATA.A_PASSIVE_SKILL10);
-    if (JobSkillPassOBJ[stats.job][11] != 999) stats.passiveSkills[11] = eval(FORM_DATA.A_PASSIVE_SKILL11);
-    if (JobSkillPassOBJ[stats.job][12] != 999) stats.passiveSkills[12] = eval(FORM_DATA.A_PASSIVE_SKILL12);
-    if (JobSkillPassOBJ[stats.job][13] != 999) stats.passiveSkills[13] = eval(FORM_DATA.A_PASSIVE_SKILL13);
-    if (JobSkillPassOBJ[stats.job][14] != 999) stats.passiveSkills[14] = eval(FORM_DATA.A_PASSIVE_SKILL14);
 
+    stats.performanceSkills[0] = FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_1) : 0;
+    stats.performanceSkills[1] = FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_1) : 0;
+    stats.performanceSkills[2] = FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_1) : 0;
+    stats.performanceSkills[3] = FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_1) : 0;
+    stats.performanceSkills[4] = FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_1) : 0;
 
-    stats.supportiveSkills[0] = eval(FORM_DATA.A_SUPPORTIVE_SKILL0);
-    stats.supportiveSkills[1] = eval(FORM_DATA.A_SUPPORTIVE_SKILL1);
-    stats.supportiveSkills[2] = eval(FORM_DATA.A_SUPPORTIVE_SKILL2);
-    stats.supportiveSkills[3] = FORM_DATA.A_SUPPORTIVE_SKILL3 === "on";
-    stats.supportiveSkills[4] = eval(FORM_DATA.A_SUPPORTIVE_SKILL4);
-    stats.supportiveSkills[5] = FORM_DATA.A_SUPPORTIVE_SKILL5 === "on";
-    stats.supportiveSkills[6] = eval(FORM_DATA.A_SUPPORTIVE_SKILL6);
-    stats.supportiveSkills[7] = FORM_DATA.A_SUPPORTIVE_SKILL7 === "on";
-    stats.supportiveSkills[8] = eval(FORM_DATA.A_SUPPORTIVE_SKILL8);
-    stats.supportiveSkills[9] = eval(FORM_DATA.A_SUPPORTIVE_SKILL9);
-    stats.supportiveSkills[10] = eval(FORM_DATA.A_SUPPORTIVE_SKILL10);
-    stats.supportiveSkills[11] = FORM_DATA.A_SUPPORTIVE_SKILL11 === "on";
-    stats.supportiveSkills[12] = FORM_DATA.A_SUPPORTIVE_SKILL12 === "on";
-    stats.supportiveSkills[13] = eval(FORM_DATA.A_SUPPORTIVE_SKILL13);
-    stats.supportiveSkills[14] = eval(FORM_DATA.A_SUPPORTIVE_SKILL14);
+    stats.performanceSkills[5] = FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_1 ? eval(FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_1) : 0;
 
+    stats.performanceSkills[7] = FORM_DATA.A_PERFORMANCE_SKILL7 ? eval(FORM_DATA.A_PERFORMANCE_SKILL7) : 0;
 
-    stats.performanceSkills[0] = eval(FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_1);
-    stats.performanceSkills[1] = eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_1);
-    stats.performanceSkills[2] = eval(FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_1);
-    stats.performanceSkills[3] = eval(FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_1);
-    stats.performanceSkills[4] = eval(FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_1);
-
-    stats.performanceSkills[5] = eval(FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_1);
-
-    stats.performanceSkills[7] = eval(FORM_DATA.A_PERFORMANCE_SKILL7);
-
-    stats.performanceSkills[9] = eval(FORM_DATA.A_PERFORMANCE_SKILL9);
-    stats.performanceSkills[10] = eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT10);
+    stats.performanceSkills[9] = FORM_DATA.A_PERFORMANCE_SKILL9 ? eval(FORM_DATA.A_PERFORMANCE_SKILL9) : 0;
+    stats.performanceSkills[10] = FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT10 ? eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT10) : 0;
     stats.performanceSkills[11] = FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT11 === "on";
     stats.performanceSkills[12] = eval(FORM_DATA.A_PERFORMANCE_BARD_STR);
     stats.performanceSkills[13] = eval(FORM_DATA.A_PERFORMANCE_BARD_AGI);
@@ -345,40 +350,40 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     if (stats.performanceSkills[0]) {
         stats.performanceSkills[20] = eval(FORM_DATA.A_PERFORMANCE_BARD_AGI);
-        stats.performanceSkills[30] = eval(FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_3);
+        stats.performanceSkills[30] = FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_3 ? eval(FORM_DATA.PERFORMANCE_SKILL_PERFECT_TABLATURE0_3) : 0;
     }
     if (stats.performanceSkills[1]) {
         stats.performanceSkills[21] = eval(FORM_DATA.A_PERFORMANCE_BARD_AGI);
-        stats.performanceSkills[31] = eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_3);
+        stats.performanceSkills[31] = FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_3 ? eval(FORM_DATA.PERFORMANCE_SKILL_IMPRESSIVE_RIFT1_3) : 0;
     }
     if (stats.performanceSkills[2]) {
         stats.performanceSkills[22] = eval(FORM_DATA.A_PERFORMANCE_BARD_DEX);
         stats.performanceSkills[29] = eval(FORM_DATA.A_PERFORMANCE_BARD_INT);
-        stats.performanceSkills[32] = eval(FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_4);
+        stats.performanceSkills[32] = FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_4 ? eval(FORM_DATA.PERFORMANCE_SKILL_MAGIC_STRING2_4) : 0;
     }
     if (stats.performanceSkills[3]) {
         stats.performanceSkills[23] = eval(FORM_DATA.A_PERFORMANCE_BARD_VIT);
-        stats.performanceSkills[33] = eval(FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_3);
+        stats.performanceSkills[33] = FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_2 ? eval(FORM_DATA.PERFORMANCE_SKILL_SONG_OF_LUTIE3_2) : 0;
     }
     if (stats.performanceSkills[4]) {
         stats.performanceSkills[24] = eval(FORM_DATA.A_PERFORMANCE_BARD_DEX);
-        stats.performanceSkills[34] = eval(FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_3);
+        stats.performanceSkills[34] = FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_3 ? eval(FORM_DATA.PERFORMANCE_SKILL_FOCUS_BALLET4_3) : 0;
     }
     if (stats.performanceSkills[5]) {
         stats.performanceSkills[25] = eval(FORM_DATA.A_PERFORMANCE_BARD_LUK);
-        stats.performanceSkills[35] = eval(FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_3);
+        stats.performanceSkills[35] = FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_3 ? eval(FORM_DATA.PERFORMANCE_SKILL_LADY_LUCK5_3) : 0;
     }
     if (stats.performanceSkills[6]) {
         stats.performanceSkills[26] = eval(FORM_DATA.A_PERFORMANCE_BARD_INT);
-        stats.performanceSkills[36] = eval(FORM_DATA.PERFORMANCE_SKILL_GYPSIE_KISS6_3);
+        stats.performanceSkills[36] = FORM_DATA.PERFORMANCE_SKILL_GYPSIE_KISS6_3 ? eval(FORM_DATA.PERFORMANCE_SKILL_GYPSIE_KISS6_3) : 0;
     }
 
 
     stats.performanceSkills[40] = FORM_DATA.A_PERFORMANCE_SKILL40 === "on";
-    stats.performanceSkills[41] = eval(FORM_DATA.A_PERFORMANCE_SKILL41);
-    stats.performanceSkills[42] = eval(FORM_DATA.A_PERFORMANCE_SKILL42);
-    stats.performanceSkills[43] = eval(FORM_DATA.A_PERFORMANCE_SKILL43);
-    stats.performanceSkills[44] = eval(FORM_DATA.A_PERFORMANCE_SKILL44);
+    stats.performanceSkills[41] = FORM_DATA.A_PERFORMANCE_SKILL41 ? eval(FORM_DATA.A_PERFORMANCE_SKILL41) : 0;
+    stats.performanceSkills[42] = FORM_DATA.A_PERFORMANCE_SKILL42 ? eval(FORM_DATA.A_PERFORMANCE_SKILL42) : 0;
+    stats.performanceSkills[43] = FORM_DATA.A_PERFORMANCE_SKILL43 ? eval(FORM_DATA.A_PERFORMANCE_SKILL43) : 0;
+    stats.performanceSkills[44] = FORM_DATA.A_PERFORMANCE_SKILL44 ? eval(FORM_DATA.A_PERFORMANCE_SKILL44) : 0;
 
     stats.supportiveSkillsBattleChant[0] = FORM_DATA.A_BATTLECHANT_SKILL0 === "on";
     stats.supportiveSkillsBattleChant[1] = FORM_DATA.A_BATTLECHANT_SKILL1 === "on";
@@ -412,12 +417,12 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     let wSPC_LUK = JobStatsBonusPerLevel[stats.job][stats.jobLevel - 1][5];
 
     if (stats.job == 0 && isRebirth) {
-        TenNovSTR = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
-        TenNovAGI = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1];
-        TenNovVIT = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1];
-        TenNovINT = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1];
-        TenNovDEX = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
-        TenNovLUK = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1];
+        let TenNovSTR = [0, 0, 0, 0, 0, 0, 0, 1, 1, 1];
+        let TenNovAGI = [0, 0, 0, 0, 1, 1, 1, 1, 1, 1];
+        let TenNovVIT = [0, 0, 0, 0, 0, 1, 1, 1, 1, 1];
+        let TenNovINT = [0, 0, 0, 0, 0, 0, 0, 0, 1, 1];
+        let TenNovDEX = [0, 0, 1, 1, 1, 1, 1, 1, 1, 1];
+        let TenNovLUK = [0, 1, 1, 1, 1, 1, 1, 1, 1, 1];
         wSPC_STR = TenNovSTR[stats.jobLevel - 1];
         wSPC_AGI = TenNovAGI[stats.jobLevel - 1];
         wSPC_VIT = TenNovVIT[stats.jobLevel - 1];
@@ -427,15 +432,15 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     }
 
 
-    let wSPCall = StPlusItem(ALL_STATS, stats);
-    wSPC_STR += StPlusItem(STR, stats) + wSPCall;
-    wSPC_AGI += StPlusItem(AGI, stats) + wSPCall;
-    wSPC_VIT += StPlusItem(VIT, stats) + wSPCall;
-    wSPC_VIT += StPlusItem(213, stats);
-    wSPC_INT += StPlusItem(INT, stats) + wSPCall;
-    wSPC_INT += StPlusItem(214, stats);
-    wSPC_DEX += StPlusItem(DEX, stats) + wSPCall;
-    wSPC_LUK += StPlusItem(LUK, stats) + wSPCall;
+    let wSPCall = GetEquipmentStats(ALL_STATS, stats);
+    wSPC_STR += GetEquipmentStats(STR, stats) + wSPCall;
+    wSPC_AGI += GetEquipmentStats(AGI, stats) + wSPCall;
+    wSPC_VIT += GetEquipmentStats(VIT, stats) + wSPCall;
+    wSPC_VIT += GetEquipmentStats(213, stats);
+    wSPC_INT += GetEquipmentStats(INT, stats) + wSPCall;
+    wSPC_INT += GetEquipmentStats(214, stats);
+    wSPC_DEX += GetEquipmentStats(DEX, stats) + wSPCall;
+    wSPC_LUK += GetEquipmentStats(LUK, stats) + wSPCall;
 
     wSPC_DEX += SkillSearch("Owl's Eye", stats);
     wSPC_STR += SkillSearch("Crazy Uproar", stats) * 4;
@@ -466,43 +471,43 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         wSPC_AGI = Math.floor((stats.agi + wSPC_AGI) * 103 / 100) - stats.agi;
     }
 
-    wSPC_AGI += StPlusItem(212, stats);
-    wSPC_DEX += StPlusItem(215, stats);
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Magistrate Hat", stats))
+    wSPC_AGI += GetEquipmentStats(212, stats);
+    wSPC_DEX += GetEquipmentStats(215, stats);
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Magistrate Hat", stats))
         wSPC_AGI += 1;
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Ayam", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Ayam", stats))
         wSPC_INT += 1;
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Bride Mask", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Bride Mask", stats))
         wSPC_LUK += 2;
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Mythical Lion Mask", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Mythical Lion Mask", stats))
         wSPC_DEX += 2;
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Hahoe Mask", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Hahoe Mask", stats))
         wSPC_LUK += 1;
-    if (stats.shoesHandDefPlus >= 9 && StPlusItem("Black Leather Boots", stats))
+    if (stats.equipments.shoes.refinement >= 9 && EquipNumSearch("Black Leather Boots", stats))
         wSPC_AGI += 2;
 
-    wSPCall = StPlusCard(ALL_STATS, stats);
-    wSPC_STR += StPlusCard(STR, stats) + wSPCall;
-    wSPC_AGI += StPlusCard(AGI, stats) + wSPCall;
-    wSPC_VIT += StPlusCard(VIT, stats) + wSPCall;
-    wSPC_INT += StPlusCard(INT, stats) + wSPCall;
-    wSPC_DEX += StPlusCard(DEX, stats) + wSPCall;
-    wSPC_LUK += StPlusCard(LUK, stats) + wSPCall;
+    wSPCall = GetCardStats(ALL_STATS, stats);
+    wSPC_STR += GetCardStats(STR, stats) + wSPCall;
+    wSPC_AGI += GetCardStats(AGI, stats) + wSPCall;
+    wSPC_VIT += GetCardStats(VIT, stats) + wSPCall;
+    wSPC_INT += GetCardStats(INT, stats) + wSPCall;
+    wSPC_DEX += GetCardStats(DEX, stats) + wSPCall;
+    wSPC_LUK += GetCardStats(LUK, stats) + wSPCall;
 
 
     if (n_A_JobSearch(stats.job) == 3)
         wSPC_INT += CardNumSearch("Rideword", stats);
-    if (CardNumSearch("Despero of Thanatos", stats)) wSPC_INT += stats.shieldHandDefPlus;
-    if (CardNumSearch("Green Maiden", stats)) wSPC_LUK += stats.shoulderDefPlus;
-    if (CardNumSearch("Odium of Thanatos", stats)) wSPC_AGI += stats.shoesHandDefPlus;
-    if (stats.cards[8] == 180) wSPC_STR += stats.headDefPlus;
+    if (CardNumSearch("Despero of Thanatos", stats)) wSPC_INT += stats.equipments.shield.refinement;
+    if (CardNumSearch("Green Maiden", stats)) wSPC_LUK += stats.equipments.shoulder.refinement;
+    if (CardNumSearch("Odium of Thanatos", stats)) wSPC_AGI += stats.equipments.shoes.refinement;
+    if (stats.equipments.upperHeadgear.cards[0] == 180) wSPC_STR += stats.equipments.upperHeadgear.refinement;
 
-    if (CardNumSearch("Obsidian", stats)) wSPC_VIT += Math.floor(SU_DEX / 18);
-    if (CardNumSearch("Egnigem Cenia", stats)) wSPC_STR += Math.floor(SU_INT / 18);
-    if (CardNumSearch("Venatu", stats)) wSPC_LUK += Math.floor(SU_AGI / 18);
-    if (CardNumSearch("Ancient Mimic", stats)) wSPC_AGI += Math.floor(SU_LUK / 18);
-    if (CardNumSearch("Mistress of Shelter", stats)) wSPC_INT += Math.floor(SU_STR / 18);
-    if (CardNumSearch("Dame of Sentinel", stats)) wSPC_DEX += Math.floor(SU_VIT / 18);
+    if (CardNumSearch("Obsidian", stats)) wSPC_VIT += Math.floor(stats.baseDex / 18);
+    if (CardNumSearch("Egnigem Cenia", stats)) wSPC_STR += Math.floor(stats.baseInt / 18);
+    if (CardNumSearch("Venatu", stats)) wSPC_LUK += Math.floor(stats.baseAgi / 18);
+    if (CardNumSearch("Ancient Mimic", stats)) wSPC_AGI += Math.floor(stats.baseLuk / 18);
+    if (CardNumSearch("Mistress of Shelter", stats)) wSPC_INT += Math.floor(stats.baseStr / 18);
+    if (CardNumSearch("Dame of Sentinel", stats)) wSPC_DEX += Math.floor(stats.baseVit / 18);
 
 
     if (CardNumSearch("Aliot", stats)) {
@@ -512,12 +517,12 @@ function CalculateAllStats(FORM_DATA, targetStats) {
             wSPC_INT += 2;
     }
 
-    wSPC_STR += stats.supportiveSkills[0];
-    wSPC_INT += stats.supportiveSkills[0];
-    wSPC_DEX += stats.supportiveSkills[0];
-    if (stats.supportiveSkills[1] > 0)
-        wSPC_AGI += stats.supportiveSkills[1] + 2;
-    wSPC_LUK += (stats.supportiveSkills[3] * 30);
+    wSPC_STR += stats.supportiveSkills[0].level;
+    wSPC_INT += stats.supportiveSkills[0].level;
+    wSPC_DEX += stats.supportiveSkills[0].level;
+    if (stats.supportiveSkills[1].level > 0)
+        wSPC_AGI += stats.supportiveSkills[1].level + 2;
+    wSPC_LUK += (stats.supportiveSkills[3].level * 30);
     if (stats.job == 24 && SkillSearch("True Sight", stats)) {
         wSPC_STR += 5;
         wSPC_AGI += 5;
@@ -627,12 +632,12 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     stats.int += wSPC_INT;
     stats.dex += wSPC_DEX;
     stats.luk += wSPC_LUK;
-    stats.bstr = wSPC_STR;
-    stats.bagi = wSPC_AGI;
-    stats.bvit = wSPC_VIT;
-    stats.bint = wSPC_INT;
-    stats.bdex = wSPC_DEX;
-    stats.bluk = wSPC_LUK;
+    stats.bonusStr = wSPC_STR;
+    stats.bonusAgi = wSPC_AGI;
+    stats.bonusVit = wSPC_VIT;
+    stats.bonusInt = wSPC_INT;
+    stats.bonusDex = wSPC_DEX;
+    stats.bonusLuk = wSPC_LUK;
 
 
     // if (wSPC_STR >= 0)
@@ -662,7 +667,7 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     let baseATK_w;
 
-    if (isNonRangeWeapon()) {
+    if (isNonRangeWeapon(stats.equipments.weapon.type)) {
         baseATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
         stats.baseATK = stats.str + baseATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
     } else {
@@ -671,19 +676,19 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     }
 
 
-    w = StPlusCard(ATK, stats);
-    w += StPlusItem(ATK, stats);
+    w = GetCardStats(ATK, stats);
+    w += GetEquipmentStats(ATK, stats);
 
-    if (SU_STR >= 80 && CardNumSearch("Giant Whisper", stats))
+    if (stats.baseStr >= 80 && CardNumSearch("Giant Whisper", stats))
         w += 20;
-    if (SU_STR >= 95 && StPlusItem("Doom Slayer", stats))
+    if (stats.baseStr >= 95 && EquipNumSearch("Doom Slayer", stats))
         w += 340;
-    if (SU_STR >= 44 && StPlusItem("Holgren's Refining Hammer", stats))
+    if (stats.baseStr >= 44 && EquipNumSearch("Holgren's Refining Hammer", stats))
         w += 44;
-    if (StPlusItem("Mythical Lion Mask", stats))
-        w += stats.headDefPlus * 2;
+    if (EquipNumSearch("Mythical Lion Mask", stats))
+        w += stats.equipments.upperHeadgear.refinement * 2;
 
-    if (stats.groundSupportiveSkills[0] == 0 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Pasana", stats) || stats.equipments[6] == 428 || stats.equipments[6] == 604))
+    if (stats.groundSupportiveSkills[0] == 0 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Pasana", stats) || stats.equipments.body.index == 428 || stats.equipments.body.index == 604))
         w += stats.groundSupportiveSkills[1] * 10;
 
     if (stats.foodBoxBonus[2])
@@ -734,12 +739,12 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
 
     if (stats.job == 44) {
-        NinHP = new Array(131, 137, 144, 151, 159, 167, 175, 184, 193, 202, 212, 222, 232, 243, 254, 265, 277, 289, 301, 316, 331, 346, 364, 382, 400, 420, 440, 460, 482, 504, 526, 548, 572, 596, 620, 646, 672, 698, 726, 754, 784, 814, 844, 876, 908, 940, 975, 1010, 1100, 1140, 1180, 1220, 1260, 1300, 1340, 1385, 1430, 1475, 1520, 1565, 1615, 1665, 1715, 1765, 1815, 1880, 1935, 1990, 2045, 2100, 2160, 2200, 2280, 2340, 2400, 2460, 2520, 2580, 2640, 2705, 2770, 2835, 2900, 2965, 3030, 3100, 3170, 3240, 3310, 3380, 3455, 3530, 3605, 3680, 3760, 3840, 3920, 4000, 4080);
+        let NinHP = new Array(131, 137, 144, 151, 159, 167, 175, 184, 193, 202, 212, 222, 232, 243, 254, 265, 277, 289, 301, 316, 331, 346, 364, 382, 400, 420, 440, 460, 482, 504, 526, 548, 572, 596, 620, 646, 672, 698, 726, 754, 784, 814, 844, 876, 908, 940, 975, 1010, 1100, 1140, 1180, 1220, 1260, 1300, 1340, 1385, 1430, 1475, 1520, 1565, 1615, 1665, 1715, 1765, 1815, 1880, 1935, 1990, 2045, 2100, 2160, 2200, 2280, 2340, 2400, 2460, 2520, 2580, 2640, 2705, 2770, 2835, 2900, 2965, 3030, 3100, 3170, 3240, 3310, 3380, 3455, 3530, 3605, 3680, 3760, 3840, 3920, 4000, 4080);
         stats.maxHp = NinHP[stats.baseLevel - 1];
     }
 
     if (stats.job == 45 && stats.baseLevel >= 10) {
-        GunHP = new Array(202, 212, 222, 232, 243, 254, 265, 277, 289, 301, 316, 331, 346, 364, 382, 400, 420, 440, 460, 490, 520, 550, 580, 610, 650, 680, 710, 740, 770, 800, 830, 860, 890, 920, 950, 990, 1020, 1050, 1080, 1110, 1140, 1180, 1230, 1280, 1330, 1395, 1455, 1515, 1575, 1635, 1695, 1760, 1820, 1885, 1950, 2015, 2080, 2145, 2210, 2275, 2340, 2410, 2480, 2550, 2620, 2690, 2760, 2830, 2900, 2970, 3040, 3115, 3190, 3265, 3340, 3415, 3490, 3565, 3640, 3715, 3790, 3870, 3950, 4030, 4110, 4190, 4270, 4350, 4430, 4510);
+        let GunHP = new Array(202, 212, 222, 232, 243, 254, 265, 277, 289, 301, 316, 331, 346, 364, 382, 400, 420, 440, 460, 490, 520, 550, 580, 610, 650, 680, 710, 740, 770, 800, 830, 860, 890, 920, 950, 990, 1020, 1050, 1080, 1110, 1140, 1180, 1230, 1280, 1330, 1395, 1455, 1515, 1575, 1635, 1695, 1760, 1820, 1885, 1950, 2015, 2080, 2145, 2210, 2275, 2340, 2410, 2480, 2550, 2620, 2690, 2760, 2830, 2900, 2970, 3040, 3115, 3190, 3265, 3340, 3415, 3490, 3565, 3640, 3715, 3790, 3870, 3950, 4030, 4110, 4190, 4270, 4350, 4430, 4510);
         stats.maxHp = GunHP[stats.baseLevel - 10];
     }
 
@@ -763,7 +768,7 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     }
 
     if (stats.job == 42 && stats.baseLevel >= 70) {
-        wKenseiHP = [3455, 3524, 3593, 3663, 3834, 3806, 3878, 3951, 4025, 4500];
+        let wKenseiHP = [3455, 3524, 3593, 3663, 3834, 3806, 3878, 3951, 4025, 4500];
         if (stats.baseLevel <= 79)
             stats.maxHp = Math.floor((2670 + 10 * (stats.baseLevel - 70)) * (100 + stats.vit) / 100);
         else if (stats.baseLevel <= 89)
@@ -780,20 +785,20 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     let bkHP = stats.maxHp;
     w = 0;
 
-    w += StPlusItem(MAXHP, stats);
-    w += StPlusItem(VIT, stats);
+    w += GetEquipmentStats(MAXHP, stats);
+    w += GetEquipmentStats(VIT, stats);
 
 
-    w += StPlusCard(MAXHP, stats);
-    if (stats.bodyDefPlus >= 9 && CardNumSearch("Apocalypse", stats))
+    w += GetCardStats(MAXHP, stats);
+    if (stats.equipments.body.refinement >= 9 && CardNumSearch("Apocalypse", stats))
         w += 800;
 
     //Temporary remover card code.
     if (CardNumSearch("Remover", stats))
-        w -= stats.bodyDefPlus * 40;
+        w -= stats.equipments.body.refinement * 40;
 
-    if (stats.equipments[8] == 536) {
-        wHPVS = n_A_JobSearch(stats.job);
+    if (stats.equipments.shoes.index == 536) {
+        let wHPVS = n_A_JobSearch(stats.job);
         if (wHPVS == 3 || wHPVS == 4 || wHPVS == 5)
             w += 5 * stats.baseLevel;
     }
@@ -802,30 +807,30 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w = 0;
 
-    w += StPlusItem(MAXHP_PERCENTAGE, stats);
+    w += GetEquipmentStats(MAXHP_PERCENTAGE, stats);
 
-    w += StPlusCard(MAXHP_PERCENTAGE, stats);
+    w += GetCardStats(MAXHP_PERCENTAGE, stats);
 
-    if (SU_VIT >= 80 && CardNumSearch("Giant Whisper", stats))
+    if (stats.baseVit >= 80 && CardNumSearch("Giant Whisper", stats))
         w += 3;
 
     if (CardNumSearch("Aliot", stats)) {
         if (n_A_JobSearch(stats.job) == 1 || n_A_JobSearch(stats.job) == 2 || n_A_JobSearch(stats.job) == 6)
             w += 5;
     }
-    if (stats.shoesHandDefPlus >= 9 && CardNumSearch("Firelock Soldier", stats))
+    if (stats.equipments.shoes.refinement >= 9 && CardNumSearch("Firelock Soldier", stats))
         w += 10;
-    if (stats.shoesHandDefPlus <= 4 && CardNumSearch("Gold Acidus", stats))
+    if (stats.equipments.shoes.refinement <= 4 && CardNumSearch("Gold Acidus", stats))
         w += 4;
     if (stats.supportiveSkillsBattleChant[1])
         w += 100;
-    if (StPlusItem("Variant Shoes", stats))
-        w -= stats.shoesHandDefPlus;
+    if (EquipNumSearch("Variant Shoes", stats))
+        w -= stats.equipments.shoes.refinement;
 
     stats.maxHp = stats.maxHp * (100 + w) / 100;
 
-    if (stats.groundSupportiveSkills[0] == 1 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Swordfish", stats) || stats.equipments[6] == 429 || stats.equipments[6] == 605)) {
-        dHP = [5, 9, 12, 14, 15];
+    if (stats.groundSupportiveSkills[0] == 1 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Swordfish", stats) || stats.equipments.body.index == 429 || stats.equipments.body.index == 605)) {
+        let dHP = [5, 9, 12, 14, 15];
         stats.maxHp = stats.maxHp * (100 + dHP[stats.groundSupportiveSkills[1] - 1]) / 100;
     }
     if (SkillSearch("Frenzy", stats))
@@ -909,26 +914,26 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w = 0;
 
-    w += StPlusItem(MAXSP, stats);
-    w += StPlusItem(INT, stats);
+    w += GetEquipmentStats(MAXSP, stats);
+    w += GetEquipmentStats(INT, stats);
 
-    w += StPlusCard(MAXSP, stats);
-    if (stats.headDefPlus >= 9 && stats.cards[8] == 298)
+    w += GetCardStats(MAXSP, stats);
+    if (stats.equipments.upperHeadgear.refinement >= 9 && stats.equipments.upperHeadgear.cards[0] == 298)
         w += 150;
-    if (stats.headDefPlus <= 4 && stats.cards[8] == 179)
+    if (stats.equipments.upperHeadgear.refinement <= 4 && stats.equipments.upperHeadgear.cards[0] == 179)
         w += 40;
-    if (stats.cards[9] == 179)
+    if (stats.equipments.middleHeadgear.cards[0] == 179)
         w += 40;
 
     if (SkillSearch("Kaina", stats))
         w += 30 * SkillSearch("Kaina", stats);
 
-    if (stats.equipments[8] == 536) {
+    if (stats.equipments.shoes.index == 536) {
         wSPVS = n_A_JobSearch(stats.job);
         if (wSPVS == 1 || wSPVS == 2 || wSPVS == 6)
             w += 2 * stats.jobLevel;
     }
-    if (weaponRefinementLevel >= 9 && StPlusItem("Lich's Bone Wand", stats))
+    if (weaponRefinementLevel >= 9 && EquipNumSearch("Lich's Bone Wand", stats))
         w += 300;
 
 
@@ -936,12 +941,12 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w = 0;
 
-    w += StPlusItem(MAXSP_PERCENTAGE, stats);
+    w += GetEquipmentStats(MAXSP_PERCENTAGE, stats);
 
-    w += StPlusCard(MAXSP_PERCENTAGE, stats);
-    if (stats.shoesHandDefPlus >= 9 && CardNumSearch("Firelock Soldier", stats))
+    w += GetCardStats(MAXSP_PERCENTAGE, stats);
+    if (stats.equipments.shoes.refinement >= 9 && CardNumSearch("Firelock Soldier", stats))
         w += 10;
-    if (stats.shoesHandDefPlus <= 4 && CardNumSearch("Gold Acidus", stats))
+    if (stats.equipments.shoes.refinement <= 4 && CardNumSearch("Gold Acidus", stats))
         w += 4;
 
     if (CardNumSearch("Aliot", stats)) {
@@ -955,8 +960,8 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     w += SkillSearch("Soul Drain", stats) * 2;
     if (stats.supportiveSkillsBattleChant[2])
         w += 100;
-    if (StPlusItem("Variant Shoes", stats))
-        w -= stats.shoesHandDefPlus;
+    if (EquipNumSearch("Variant Shoes", stats))
+        w -= stats.equipments.shoes.refinement;
 
     stats.maxSp = Math.floor(stats.maxSp * (100 + w) / 100);
 
@@ -970,19 +975,25 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     //     myInnerHtml("A_MaxSP", " " + stats.maxSp, 0);
 
 
-    stats.def = StPlusItem(DEF, stats);
+    stats.def = GetEquipmentStats(DEF, stats);
 
-    for (let i = 2; i <= 10; i++) {
-        stats.def += ItemOBJ[stats.equipments[i]][3];
-    }
+    stats.def += stats.equipments.upperHeadgear.index ? ItemOBJ[stats.equipments.upperHeadgear.index][3] : 0;
+    stats.def += stats.equipments.middleHeadgear.index ? ItemOBJ[stats.equipments.middleHeadgear.index][3] : 0;
+    stats.def += stats.equipments.lowerHeadgear.index ? ItemOBJ[stats.equipments.lowerHeadgear.index][3] : 0;
+    stats.def += stats.equipments.shield.index ? ItemOBJ[stats.equipments.shield.index][3] : 0;
+    stats.def += stats.equipments.body.index ? ItemOBJ[stats.equipments.body.index][3] : 0;
+    stats.def += stats.equipments.shoulder.index ? ItemOBJ[stats.equipments.shoulder.index][3] : 0;
+    stats.def += stats.equipments.shoes.index ? ItemOBJ[stats.equipments.shoes.index][3] : 0;
+    stats.def += stats.equipments.accessory1.index ? ItemOBJ[stats.equipments.accessory1.index][3] : 0;
+    stats.def += stats.equipments.accessory2.index ? ItemOBJ[stats.equipments.accessory2.index][3] : 0;
 
-    stats.def += StPlusCard(DEF, stats);
+    stats.def += GetCardStats(DEF, stats);
 
-    if (stats.shieldHandDefPlus <= 5 && CardNumSearch("Arcluse", stats))
+    if (stats.equipments.shield.refinement <= 5 && CardNumSearch("Arcluse", stats))
         stats.def += 2;
-    if (stats.bodyDefPlus <= 5 && CardNumSearch("Goat", stats))
+    if (stats.equipments.body.refinement <= 5 && CardNumSearch("Goat", stats))
         stats.def += 2;
-    if (stats.equipments[0] == 521) {
+    if (stats.equipments.weapon.index == 521) {
         if (weaponRefinementLevel <= 5)
             stats.def += 2;
         else if (weaponRefinementLevel >= 9)
@@ -990,22 +1001,22 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         else
             stats.def += 3;
     }
-    if (StPlusItem("Gatekeeper-DD", stats))
+    if (EquipNumSearch("Gatekeeper-DD", stats))
         stats.def += weaponRefinementLevel;
-    if (StPlusItem("Variant Shoes", stats))
-        stats.def += stats.shoesHandDefPlus;
-    if (StPlusItem("0", stats) && n_A_JobSearch(stats.job) == 1)
+    if (EquipNumSearch("Variant Shoes", stats))
+        stats.def += stats.equipments.shoes.refinement;
+    if (GetEquipmentStats(0, stats) && n_A_JobSearch(stats.job) == 1)
         stats.def += 6;
 
-    if (StPlusItem("0", stats))
-        stats.totalGearDefPlus -= (stats.headDefPlus + stats.shieldHandDefPlus);
+    if (GetEquipmentStats(0, stats))
+        stats.totalGearRefinement -= (stats.equipments.upperHeadgear.refinement + stats.equipments.shield.refinement);
 
-    stats.totalDef = stats.def + Math.round(stats.totalGearDefPlus * 7 / 10);
+    stats.totalDef = stats.def + Math.round(stats.totalGearRefinement * 7 / 10);
 
-    if (StPlusItem(REDUCE_DEFENSE, stats) + StPlusCard(REDUCE_DEFENSE, stats))
-        stats.totalDef = Math.floor(stats.totalDef / StPlusItem(REDUCE_DEFENSE, stats), stats);
-    if (StPlusItem(LOWER_DEFENCE_PERCENTAGE, stats) + StPlusCard(LOWER_DEFENCE_PERCENTAGE, stats))
-        stats.totalDef -= Math.floor(stats.totalDef * (StPlusItem(LOWER_DEFENCE_PERCENTAGE, stats) + StPlusCard(LOWER_DEFENCE_PERCENTAGE, stats)) / 100, stats);
+    if (GetEquipmentStats(REDUCE_DEFENSE, stats) + GetCardStats(REDUCE_DEFENSE, stats))
+        stats.totalDef = Math.floor(stats.totalDef / GetEquipmentStats(REDUCE_DEFENSE, stats), stats);
+    if (GetEquipmentStats(LOWER_DEFENCE_PERCENTAGE, stats) + GetCardStats(LOWER_DEFENCE_PERCENTAGE, stats))
+        stats.totalDef -= Math.floor(stats.totalDef * (GetEquipmentStats(LOWER_DEFENCE_PERCENTAGE, stats) + GetCardStats(LOWER_DEFENCE_PERCENTAGE, stats)) / 100, stats);
 
     if (SkillSearch("Spear Dynamo", stats))
         stats.totalDef = Math.floor(stats.totalDef * (1 - 0.05 * SkillSearch("Spear Dynamo", stats)));
@@ -1037,22 +1048,22 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         for (let i = 0; i <= 2; i++)
             stats.vitDEF[i] = Math.floor(stats.vitDEF[i] * 0.45);
     } else {
-        if (stats.supportiveSkills[12]) {
+        if (stats.supportiveSkills[12].level) {
             for (let i = 0; i <= 2; i++)
                 stats.vitDEF[i] = Math.floor(stats.vitDEF[i] * 0.9);
         }
     }
-    if (StPlusItem(REDUCE_DEFENSE, stats)) {
+    if (GetEquipmentStats(REDUCE_DEFENSE, stats)) {
         for (let i = 0; i <= 2; i++)
-            stats.vitDEF[i] = Math.floor(stats.vitDEF[i] / StPlusItem(24), stats);
+            stats.vitDEF[i] = Math.floor(stats.vitDEF[i] / GetEquipmentStats(24), stats);
     }
     if (SkillSearch("Spear Dynamo", stats)) {
         for (let i = 0; i <= 2; i++)
             stats.vitDEF[i] = Math.floor(stats.vitDEF[i] * (1 - 0.05 * SkillSearch("Spear Dynamo", stats)));
     }
-    if (stats.supportiveSkills[4]) {
+    if (stats.supportiveSkills[4].level) {
         for (let i = 0; i <= 2; i++)
-            stats.vitDEF[i] = Math.floor(stats.vitDEF[i] * (1 + 0.05 * stats.supportiveSkills[4]));
+            stats.vitDEF[i] = Math.floor(stats.vitDEF[i] * (1 + 0.05 * stats.supportiveSkills[4].level));
     }
     if (SkillSearch("Frenzy", stats)) {
         for (let i = 0; i <= 2; i++)
@@ -1060,55 +1071,55 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     }
 
 
-    let n_A_MDEF = StPlusItem(MDEF, stats);
+    stats.mdef = GetEquipmentStats(MDEF, stats);
 
 
-    n_A_MDEF += StPlusCard(MDEF, stats);
+    stats.mdef += GetCardStats(MDEF, stats);
 
     if (n_A_JobSearch(stats.job) == 3)
-        n_A_MDEF += CardNumSearch("Rideword", stats);
-    if (stats.shieldHandDefPlus >= 9 && CardNumSearch("Sting", stats))
-        n_A_MDEF += 5;
-    if (stats.headDefPlus <= 5 && stats.cards[8] == 213)
-        n_A_MDEF += 5;
-    if (stats.cards[9] == 213)
-        n_A_MDEF += 5;
-    if (stats.shieldHandDefPlus <= 5 && CardNumSearch("Arcluse", stats))
-        n_A_MDEF += 3;
-    if (stats.bodyDefPlus <= 5 && CardNumSearch("Goat", stats))
-        n_A_MDEF += 5;
-    if (stats.shoesHandDefPlus <= 5 && CardNumSearch("Megalith", stats))
-        n_A_MDEF += 7;
-    if (stats.shoulderDefPlus <= 5 && CardNumSearch("Kappa", stats))
-        n_A_MDEF += 8;
-    if (StPlusItem("0", stats))
-        n_A_MDEF += (stats.headDefPlus + stats.shieldHandDefPlus);
+        stats.mdef += CardNumSearch("Rideword", stats);
+    if (stats.equipments.shield.refinement >= 9 && CardNumSearch("Sting", stats))
+        stats.mdef += 5;
+    if (stats.equipments.upperHeadgear.refinement <= 5 && stats.equipments.upperHeadgear.cards[0] == 213)
+        stats.mdef += 5;
+    if (stats.equipments.middleHeadgear.cards[0] == 213)
+        stats.mdef += 5;
+    if (stats.equipments.shield.refinement <= 5 && CardNumSearch("Arcluse", stats))
+        stats.mdef += 3;
+    if (stats.equipments.body.refinement <= 5 && CardNumSearch("Goat", stats))
+        stats.mdef += 5;
+    if (stats.equipments.shoes.refinement <= 5 && CardNumSearch("Megalith", stats))
+        stats.mdef += 7;
+    if (stats.equipments.shoulder.refinement <= 5 && CardNumSearch("Kappa", stats))
+        stats.mdef += 8;
+    if (GetEquipmentStats(0, stats))
+        stats.mdef += (stats.equipments.upperHeadgear.refinement + stats.equipments.shield.refinement);
 
     if (SkillSearch("Spear Dynamo", stats))
-        n_A_MDEF += 1;
+        stats.mdef += 1;
     if (SkillSearch("Endure", stats))
-        n_A_MDEF += SkillSearch("Endure", stats);
+        stats.mdef += SkillSearch("Endure", stats);
 
 
     if (SkillSearch("Mental Strength", stats))
-        n_A_MDEF = 90;
+        stats.mdef = 90;
     if (SkillSearch("Frenzy", stats))
-        n_A_MDEF = 0;
+        stats.mdef = 0;
 
-    // myInnerHtml("A_MDEF", n_A_MDEF, 0);
+    // myInnerHtml("A_MDEF", stats.mdef, 0);
 
 
-    stats.mdef = n_A_MDEF;
+    stats.mdef = stats.mdef;
     stats.hit = stats.baseLevel + stats.dex;
 
 
-    stats.hit += StPlusItem(HIT, stats);
+    stats.hit += GetEquipmentStats(HIT, stats);
 
 
-    stats.hit += StPlusCard(HIT, stats);
+    stats.hit += GetCardStats(HIT, stats);
 
-    if (StPlusItem("Jungle Carbine", stats))
-        w -= Math.floor(SU_DEX / 3);
+    if (EquipNumSearch("Jungle Carbine", stats))
+        w -= Math.floor(stats.baseDex / 3);
 
 
     stats.hit += 1 * SkillSearch("Vulture's Eye", stats);
@@ -1123,10 +1134,10 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         stats.hit += 20;
     stats.hit += 2 * SkillSearch("Single Action", stats);
 
-    if (StPlusItem("Western Outlaw", stats))
-        stats.hit += Math.floor(SU_AGI / 5);
+    if (EquipNumSearch("Western Outlaw", stats))
+        stats.hit += Math.floor(stats.baseAgi / 5);
 
-    if (stats.skillToUseName == "Rapid Smiting")
+    if (stats.skillToUse.name == "Rapid Smiting")
         stats.hit += 20;
 
     if (stats.supportiveSkillsBattleChant[4])
@@ -1144,23 +1155,23 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
 
     stats.flee = stats.baseLevel + stats.agi;
-    stats.flee += StPlusItem(FLEE, stats);
-    stats.flee += StPlusCard(FLEE, stats);
+    stats.flee += GetEquipmentStats(FLEE, stats);
+    stats.flee += GetCardStats(FLEE, stats);
 
     if (n_A_JobSearch(stats.job) == 2 && CardNumSearch("Wanderer", stats))
         stats.flee += 20;
-    if (stats.shoulderDefPlus >= 9 && CardNumSearch("Ninetails", stats))
+    if (stats.equipments.shoulder.refinement >= 9 && CardNumSearch("Ninetails", stats))
         stats.flee += 20;
-    if (stats.shoulderDefPlus <= 4 && CardNumSearch("Kavach Icarus", stats))
+    if (stats.equipments.shoulder.refinement <= 4 && CardNumSearch("Kavach Icarus", stats))
         stats.flee += 10;
-    if (stats.shoulderDefPlus >= 9 && CardNumSearch("Orc Baby", stats))
+    if (stats.equipments.shoulder.refinement >= 9 && CardNumSearch("Orc Baby", stats))
         stats.flee += 5;
 
-    if (stats.groundSupportiveSkills[0] == 2 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Dokkebi", stats) || stats.equipments[6] == 430 || stats.equipments[6] == 606))
+    if (stats.groundSupportiveSkills[0] == 2 && stats.groundSupportiveSkills[1] >= 1 && (CardNumSearch("Dokkebi", stats) || stats.equipments.body.index == 430 || stats.equipments.body.index == 606))
         stats.flee += stats.groundSupportiveSkills[1] * 3;
 
-    if (stats.equipments[0] == 483)
-        stats.flee -= (stats.baseLevel + SU_AGI);
+    if (stats.equipments.weapon.index == 483)
+        stats.flee -= (stats.baseLevel + stats.baseAgi);
 
 
     if (stats.job == 8 || stats.job == 14 || stats.job == 22 || stats.job == 28)
@@ -1179,8 +1190,8 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     if (stats.job == 24)
         stats.flee += Math.round(SkillSearch("Wind Walk", stats) / 2);
-    if (stats.supportiveSkills[9] && SkillSearch("Wind Walk", stats) == 0)
-        stats.flee += Math.round(stats.supportiveSkills[9] / 2);
+    if (stats.supportiveSkills[9].level && SkillSearch("Wind Walk", stats) == 0)
+        stats.flee += Math.round(stats.supportiveSkills[9].level / 2);
 
 
     if (SkillSearch("Close Confine", stats))
@@ -1210,26 +1221,26 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     stats.perfectDodge = 1 + stats.luk * 0.1;
 
 
-    stats.perfectDodge += StPlusItem(PERFECT_DODGE, stats);
+    stats.perfectDodge += GetEquipmentStats(PERFECT_DODGE, stats);
 
-    stats.perfectDodge += StPlusCard(PERFECT_DODGE, stats);
+    stats.perfectDodge += GetCardStats(PERFECT_DODGE, stats);
 
     if (n_A_JobSearch(stats.job) == 2)
         stats.perfectDodge += 5 * CardNumSearch("Wild Rose", stats);
 
     if (n_A_JobSearch(stats.job) == 1)
         stats.perfectDodge += 4 * CardNumSearch("Heater", stats);
-    if (stats.shoulderDefPlus <= 4 && CardNumSearch("Kavach Icarus", stats))
+    if (stats.equipments.shoulder.refinement <= 4 && CardNumSearch("Kavach Icarus", stats))
         stats.perfectDodge += 1;
-    if (stats.equipments[7] == 535) {
-        wHPVS = n_A_JobSearch(stats.job);
+    if (stats.equipments.shoulder.index == 535) {
+        let wHPVS = n_A_JobSearch(stats.job);
         if (wHPVS == 3 || wHPVS == 4 || wHPVS == 5) {
             stats.perfectDodge += 5;
-            stats.perfectDodge += stats.shoulderDefPlus * 2;
+            stats.perfectDodge += stats.equipments.shoulder.refinement * 2;
         }
     }
 
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Hahoe Mask", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Hahoe Mask", stats))
         stats.perfectDodge += 2;
 
     stats.perfectDodge = Math.round(stats.perfectDodge * 10) / 10;
@@ -1239,40 +1250,40 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     stats.crit = 1 + stats.luk * 0.3;
 
-    stats.crit += StPlusItem(CRIT, stats);
+    stats.crit += GetEquipmentStats(CRIT, stats);
 
     w = 0;
-    w += StPlusCard(CRIT, stats);
+    w += GetCardStats(CRIT, stats);
 
-    w += StPlusCard(CRITICAL_AGAINST_RACE_PERCENTAGE + targetStats.race, stats);
+    w += GetCardStats(CRITICAL_AGAINST_RACE_PERCENTAGE + targetStats.race, stats);
 
     if (CardNumSearch("Green Maiden", stats))
-        w += stats.shoulderDefPlus;
+        w += stats.equipments.shoulder.refinement;
     if (n_A_JobSearch(stats.job) == 2)
         w += 4 * CardNumSearch("Mobster", stats);
     if (n_A_JobSearch(stats.job) == 3) {
         if (targetStats.race == 1 || targetStats.race == 6)
             w += 9 * CardNumSearch("Fur Seal", stats);
     }
-    if (SU_LUK >= 80 && CardNumSearch("Giant Whisper", stats))
+    if (stats.baseLuk >= 80 && CardNumSearch("Giant Whisper", stats))
         w += 3;
-    if (StPlusItem("Giant Encyclopedia", stats))
-        w += Math.floor(SU_LUK / 5);
-    if (StPlusItem("Sniping Suit", stats))
-        w += Math.floor(SU_LUK / 5);
-    if (StPlusItem("Sniping Suit *", stats))
+    if (EquipNumSearch("Giant Encyclopedia", stats))
+        w += Math.floor(stats.baseLuk / 5);
+    if (EquipNumSearch("Sniping Suit", stats))
+        w += Math.floor(stats.baseLuk / 5);
+    if (EquipNumSearch("Sniping Suit *", stats))
         w += Math.floor(stats.luk / 5);
 
-    if (StPlusItem("Sabath", stats) && 90 <= targetStats.element)
+    if (EquipNumSearch("Sabath", stats) && 90 <= targetStats.element)
         w += 50;
 
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Bride Mask", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Bride Mask", stats))
         w += 5;
-    if (StPlusItem("Heart Breaker", stats))
+    if (EquipNumSearch("Heart Breaker", stats))
         w += weaponRefinementLevel;
 
 
-    if (stats.weaponType == WEAPON_TYPE_BOW && stats.arrow == 15)
+    if (stats.equipments.weapon.type == WEAPON_TYPE_BOW && stats.arrow == 15)
         w += 20;
 
 
@@ -1288,7 +1299,7 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         stats.crit += 10 + stats.performanceSkills[5] + Math.floor(stats.performanceSkills[35] / 2) + Math.floor(stats.performanceSkills[25] / 10);
 
 
-    if (stats.weaponType == WEAPON_TYPE_KATAR)
+    if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR)
         stats.crit *= 2;
 
     stats.crit = Math.round(stats.crit * 10) / 10;
@@ -1308,22 +1319,22 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     let w_MATK = 100;
 
-    w_MATK += StPlusItem(MATK_PERCENTAGE, stats);
+    w_MATK += GetEquipmentStats(MATK_PERCENTAGE, stats);
 
-    if (weaponRefinementLevel >= 9 && StPlusItem("Lich's Bone Wand", stats))
+    if (weaponRefinementLevel >= 9 && EquipNumSearch("Lich's Bone Wand", stats))
         w_MATK += 3;
-    if (StPlusItem("Staff of Destruction", stats))
+    if (EquipNumSearch("Staff of Destruction", stats))
         w_MATK += Math.floor(weaponRefinementLevel / 2);
-    if (StPlusItem("0", stats) || EquipNumSearch("0", stats))
+    if (GetEquipmentStats(0, stats) || EquipNumSearch("0", stats))
         w_MATK += weaponRefinementLevel;
     if (stats.groundSupportiveSkills[2])
         w_MATK += 10;
 
     if (n_A_JobSearch(stats.job) == 5 && CardNumSearch("0", stats))
         w_MATK += 3;
-    if (stats.headDefPlus >= 9 && stats.cards[8] == 177)
+    if (stats.equipments.upperHeadgear.refinement >= 9 && stats.equipments.upperHeadgear.cards[0] == 177)
         w_MATK += 2;
-    if (stats.equipments[0] == 484 && SU_INT >= 70)
+    if (stats.equipments.weapon.index == 484 && stats.baseInt >= 70)
         w_MATK += 5;
     stats.matk[0] = Math.floor(stats.matk[0] * w_MATK / 100);
     stats.matk[2] = Math.floor(stats.matk[2] * w_MATK / 100);
@@ -1339,7 +1350,7 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w_MATK = 100;
 
-    w_MATK += StPlusItem(MATK_BASED_ON_STAFF_PERCENTAGE, stats);
+    w_MATK += GetEquipmentStats(MATK_BASED_ON_STAFF_PERCENTAGE, stats);
 
     stats.matk[0] = Math.floor(stats.matk[0] * w_MATK / 100);
     stats.matk[2] = Math.floor(stats.matk[2] * w_MATK / 100);
@@ -1348,42 +1359,41 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     // myInnerHtml("A_MATK", stats.matk[0] + " ~ " + stats.matk[2], 0);
 
     if (SkillSearch("Mystical Amplification", stats)) {
-        AmpMinMatkBK = stats.matk[0];
-        AmpMaxMatkBK = stats.matk[2];
+        let AmpMinMatkBK = stats.matk[0];
+        let AmpMaxMatkBK = stats.matk[2];
         stats.matk[0] = Math.floor(stats.matk[0] * (1 + 0.05 * SkillSearch("Mystical Amplification", stats)));
         stats.matk[2] = Math.floor(stats.matk[2] * (1 + 0.05 * SkillSearch("Mystical Amplification", stats)));
 
-        myInnerHtml("A_MATK", stats.matk[0] + " ~ " + stats.matk[2], 0);
-        if (stats.skillToUseName == "Stave Crasher") {
+        if (stats.skillToUse.name == "Stave Crasher") {
             stats.matk[0] = AmpMinMatkBK;
             stats.matk[2] = AmpMaxMatkBK;
         }
     }
 
-
-    if (stats.matk[0] != stats.matk[2])
-        stats.matk[2] -= 1;
+    // Commented as can't find this formula in wiki
+    // if (stats.matk[0] != stats.matk[2])
+    //     stats.matk[2] -= 1;
 
     stats.matk[1] = (stats.matk[2] + stats.matk[0]) / 2;
 
     let wASPD;
 
-    if (hasLeftHand == 1)
-        wASPD = (200 - (JobASPD[stats.job][stats.weaponType] + JobASPD[stats.job][stats.weapon2IndexType]) / 2) * 1.4;
+    if (stats.equipments.weaponLeftHand)
+        wASPD = (200 - (JobASPD[stats.job][stats.equipments.weapon.type] + JobASPD[stats.job][stats.equipments.weaponLeftHand.type]) / 2) * 1.4;
     else
-        wASPD = 200 - JobASPD[stats.job][stats.weaponType];
+        wASPD = 200 - JobASPD[stats.job][stats.equipments.weapon.type];
 
 
-    if (hasLeftHand == 1 && stats.weaponType == WEAPON_TYPE_UNARMED && stats.weapon2IndexType != 0)
-        wASPD = 200 - JobASPD[stats.job][stats.weapon2IndexType];
+    if (stats.equipments.weaponLeftHand && stats.equipments.weapon.type == WEAPON_TYPE_UNARMED && stats.equipments.weaponLeftHand.type != 0)
+        wASPD = 200 - JobASPD[stats.job][stats.equipments.weaponLeftHand.type];
 
     stats.aspd = 200 - wASPD + (Math.floor(wASPD * stats.agi * 4 / 100) + Math.floor(wASPD * stats.dex / 100)) / 10;
 
-    if (stats.equipments[0] == 47)
+    if (stats.equipments.weapon.index == 47)
         stats.aspd += 2;
 
 
-    if (SkillSearch("Cavalier Mastery", stats) && (stats.skillToUseName == "Basic Attack" || stats.skillToUseName == "Martyr's Reconing", stats))
+    if (SkillSearch("Cavalier Mastery", stats) && (stats.skillToUse.name == "Basic Attack" || stats.skillToUse.name == "Martyr's Reconing", stats))
         stats.aspd -= (6 - SkillSearch("Cavalier Mastery", stats)) * 10;
 
     stats.aspd += Math.round(SkillSearch("Single Action", stats) / 2);
@@ -1391,15 +1401,15 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w = 0;
     let ASPDch = 0;
-    if (stats.weaponType == WEAPON_TYPE_TWO_HANDED_SWORD && SkillSearch("Twohand Quicken", stats)) {
+    if (stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SWORD && SkillSearch("Twohand Quicken", stats)) {
         w += 30;
         ASPDch = 1;
     }
-    if (stats.weaponType == WEAPON_TYPE_SWORD && SkillSearch("One Hand Quicken (Soul Linked)", stats)) {
+    if (stats.equipments.weapon.type == WEAPON_TYPE_SWORD && SkillSearch("One Hand Quicken (Soul Linked)", stats)) {
         w += 30;
         ASPDch = 1;
     }
-    if (6 <= stats.weaponType && stats.weaponType <= 8 && SkillSearch("Andrenaline Rush", stats)) {
+    if (6 <= stats.equipments.weapon.type && stats.equipments.weapon.type <= 8 && SkillSearch("Andrenaline Rush", stats)) {
         w += 30;
         ASPDch = 1;
     }
@@ -1407,19 +1417,19 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         w += 30;
         ASPDch = 1;
     }
-    if (stats.weaponType == WEAPON_TYPE_TWO_HANDED_SPEAR && SkillSearch("Spear Quicken", stats)) {
+    if (stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SPEAR && SkillSearch("Spear Quicken", stats)) {
         w += SkillSearch("Spear Quicken", stats) + 20;
         ASPDch = 1;
     }
-    if (StPlusItem("Western Outlaw", stats))
-        w += Math.floor(SU_AGI / 5);
-    if (stats.equipments[0] == 484 && SU_STR >= 50)
+    if (EquipNumSearch("Western Outlaw", stats))
+        w += Math.floor(stats.baseAgi / 5);
+    if (stats.equipments.weapon.index == 484 && stats.baseStr >= 50)
         w += 5;
-    if (SU_STR >= 95 && StPlusItem("Doom Slayer", stats))
+    if (stats.baseStr >= 95 && EquipNumSearch("Doom Slayer", stats))
         w -= 40;
-    if (StPlusItem("Hurricane Fury", stats))
+    if (EquipNumSearch("Hurricane Fury", stats))
         w += (weaponRefinementLevel * 2);
-    if (StPlusItem("Book of the Dead", stats))
+    if (EquipNumSearch("Book of the Dead", stats))
         w += weaponRefinementLevel;
     if (SkillSearch("Frenzy", stats))
         w += 30;
@@ -1437,22 +1447,22 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         ASPDch = 1;
         w += 3 * SkillSearch("Solar, Lunar, and Stellar Shadow", stats);
     }
-    if (ASPDch == 0 && stats.weaponType != WEAPON_TYPE_BOW && stats.supportiveSkills[6] == 2) {
+    if (ASPDch == 0 && stats.equipments.weapon.type != WEAPON_TYPE_BOW && stats.supportiveSkills[6].level == 2) {
         w += 25;
         ASPDch = 1;
-    } else if (ASPDch == 0 && 6 <= stats.weaponType && stats.weaponType <= 8 && stats.supportiveSkills[6] == 1) {
+    } else if (ASPDch == 0 && 6 <= stats.equipments.weapon.type && stats.equipments.weapon.type <= 8 && stats.supportiveSkills[6].level == 1) {
         w += 25;
         ASPDch = 1;
-    } else if (ASPDch == 0 && 6 <= stats.weaponType && stats.weaponType <= 8 && stats.supportiveSkills[6] == 3) {
+    } else if (ASPDch == 0 && 6 <= stats.equipments.weapon.type && stats.equipments.weapon.type <= 8 && stats.supportiveSkills[6].level == 3) {
         w += 30;
         ASPDch = 1;
     }
-    if (stats.performanceSkills[1] && stats.weaponType != WEAPON_TYPE_BOW && ASPDch == 0)
+    if (stats.performanceSkills[1] && stats.equipments.weapon.type != WEAPON_TYPE_BOW && ASPDch == 0)
         w += 5 + stats.performanceSkills[1] + Math.floor(stats.performanceSkills[31] / 2) + Math.floor(stats.performanceSkills[21] / 20);
 
 
-    w += StPlusItem(ASPD_PERCENTAGE, stats);
-    w += StPlusCard(ASPD_PERCENTAGE, stats);
+    w += GetEquipmentStats(ASPD_PERCENTAGE, stats);
+    w += GetCardStats(ASPD_PERCENTAGE, stats);
 
 
     if (SkillSearch("Mental Strength", stats))
@@ -1472,7 +1482,7 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     }
     stats.aspd += (200 - stats.aspd) * (w / 100);
 
-    if (stats.weaponType == WEAPON_TYPE_BOOK && SkillSearch("Study", stats))
+    if (stats.equipments.weapon.type == WEAPON_TYPE_BOOK && SkillSearch("Study", stats))
         stats.aspd += (200 - stats.aspd - (SkillSearch("Study", stats) * 5 / 10)) * ((SkillSearch("Study", stats) * 5 / 10) / 100);
 
 
@@ -1493,16 +1503,16 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     stats.aspdForDisplay = stats.aspd;
     stats.aspd = (200 - stats.aspd) / 50;
     let n_A_ATK_w, n_A_ATK;
-    if (isNonRangeWeapon(stats.weaponType)) {
+    if (isNonRangeWeapon(stats.equipments.weapon.type)) {
         n_A_ATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
         n_A_ATK = stats.str + n_A_ATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
     } else {
         n_A_ATK_w = Math.round(Math.floor(stats.dex / 10) * Math.floor(stats.dex / 10));
         n_A_ATK = stats.dex + n_A_ATK_w + Math.floor(stats.str / 5) + Math.floor(stats.luk / 5)
     }
-    let impositioMagnus = stats.supportiveSkills[2] * 5;
-    let ATK_LEFT = Math.floor(impositioMagnus + stats.weapon1ATK + stats.weapon2_ATK + n_A_ATK);
-    let ATK_RIGHT = Math.floor(stats.weapon1LV_upgradeBonusATK + stats.weapon2LV_upgradeBonusATK);
+    let impositioMagnus = stats.supportiveSkills[2].level * 5;
+    let ATK_LEFT = Math.floor(impositioMagnus + stats.equipments.weapon.atk + (stats.equipments.weaponLeftHand ? stats.equipments.weaponLeftHand.atk : 0) + n_A_ATK);
+    let ATK_RIGHT = Math.floor(stats.equipments.weapon.upgradeBonusATK + (stats.equipments.weaponLeftHand ? stats.equipments.weaponLeftHand.overUpgradeBonusATK : 0));
     // myInnerHtml("A_ATK_2", ATK_LEFT + "+" + ATK_RIGHT, 0),
     stats.atkLeft = ATK_LEFT;
     stats.atkRight = ATK_RIGHT;
@@ -1526,18 +1536,18 @@ function CalculateAllStats(FORM_DATA, targetStats) {
         w -= 15;
     if ((stats.job == 18 || stats.job == 32) && CardNumSearch("0", stats))
         w -= 15;
-    if (StPlusItem("0", stats) || EquipNumSearch("0", stats))
+    if (GetEquipmentStats(0, stats) || EquipNumSearch("0", stats))
         w -= weaponRefinementLevel;
-    if (stats.cards[8] == 177)
-        w -= stats.headDefPlus;
+    if (stats.equipments.upperHeadgear.cards[0] == 177)
+        w -= stats.equipments.upperHeadgear.refinement;
 
-    w += StPlusItem(CAST_TIME_PERCENTAGE, stats);
-    w += StPlusCard(CAST_TIME_PERCENTAGE, stats);
+    w += GetEquipmentStats(CAST_TIME_PERCENTAGE, stats);
+    w += GetCardStats(CAST_TIME_PERCENTAGE, stats);
 
     stats.cast *= w / 100;
 
-    if (stats.supportiveSkills[13])
-        stats.cast *= (100 - 15 * stats.supportiveSkills[13]) / 100;
+    if (stats.supportiveSkills[13].level)
+        stats.cast *= (100 - 15 * stats.supportiveSkills[13].level) / 100;
     if (SkillSearch("Forsight", stats))
         stats.cast = stats.cast / 2;
 
@@ -1546,14 +1556,14 @@ function CalculateAllStats(FORM_DATA, targetStats) {
     if (n_A_HPR < 1)
         n_A_HPR = 1;
     w = 100;
-    w += StPlusItem(HP_REGEN_PERCENTAGE, stats);
-    w += StPlusCard(HP_REGEN_PERCENTAGE, stats);
-    if (SU_LUK >= 77)
+    w += GetEquipmentStats(HP_REGEN_PERCENTAGE, stats);
+    w += GetCardStats(HP_REGEN_PERCENTAGE, stats);
+    if (stats.baseLuk >= 77)
         w += 100 * CardNumSearch("Arc Angeling", stats);
 
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Magistrate Hat", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Magistrate Hat", stats))
         w += 3;
-    if (stats.shoesHandDefPlus <= 4 && CardNumSearch("Gold Acidus", stats))
+    if (stats.equipments.shoes.refinement <= 4 && CardNumSearch("Gold Acidus", stats))
         w += 5;
 
     n_A_HPR = Math.floor(n_A_HPR * w / 100);
@@ -1566,19 +1576,19 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 
     w += SkillSearch("Mediatio", stats) * 3;
 
-    w += StPlusItem(SP_REGEN_PERCENTAGE, stats);
-    w += StPlusCard(SP_REGEN_PERCENTAGE, stats);
+    w += GetEquipmentStats(SP_REGEN_PERCENTAGE, stats);
+    w += GetCardStats(SP_REGEN_PERCENTAGE, stats);
 
-    if (SU_LUK >= 77)
+    if (stats.baseLuk >= 77)
         w += 100 * CardNumSearch("Arc Angeling", stats);
 
-    if (n_A_JobSearch(stats.job) == 41 && StPlusItem("Ayam", stats))
+    if (n_A_JobSearch(stats.job) == 41 && EquipNumSearch("Ayam", stats))
         w += 3;
-    if (stats.shieldHandDefPlus <= 4 && stats.cards[8] == 179)
+    if (stats.equipments.shield.refinement <= 4 && stats.equipments.upperHeadgear.cards[0] == 179)
         w += 5;
-    if (stats.cards[9] == 179)
+    if (stats.equipments.middleHeadgear.cards[0] == 179)
         w += 5;
-    if (stats.shoesHandDefPlus <= 4 && CardNumSearch("Gold Acidus", stats))
+    if (stats.equipments.shoes.refinement <= 4 && CardNumSearch("Gold Acidus", stats))
         w += 5;
 
     n_A_SPR = Math.floor(n_A_SPR * w / 100);
@@ -1593,24 +1603,28 @@ function CalculateAllStats(FORM_DATA, targetStats) {
 }
 
 
-function StPlusItem(nSTP2, stats) {
+function GetEquipmentStats(nSTP2, stats) {
     let wSTP2 = 0;
-    for (let STP2i = 0; STP2i <= 20; STP2i++) {
-        for (let STP2j = 0; ItemOBJ[stats.equipments[STP2i]][STP2j + 11] != 0; STP2j += 2) {
-            if (nSTP2 == ItemOBJ[stats.equipments[STP2i]][STP2j + 11])
-                wSTP2 += ItemOBJ[stats.equipments[STP2i]][STP2j + 12];
+    for (let equipment of Object.values(stats.equipments)) {
+        for (let STP2j = 0; ItemOBJ[equipment.index][STP2j + 11] != 0; STP2j += 2) {
+            if (nSTP2 == ItemOBJ[equipment.index][STP2j + 11])
+                wSTP2 += ItemOBJ[equipment.index][STP2j + 12];
         }
     }
     return wSTP2;
 }
 
 
-function StPlusCard(nSTP2, stats) {
+function GetCardStats(nSTP2, stats) {
     let wSTP2 = 0;
-    for (let STP2i = 0; STP2i <= 25; STP2i++) {
-        for (let STP2j = 0; cardOBJ[stats.cards[STP2i]][STP2j + 4] != 0; STP2j += 2) {
-            if (nSTP2 == cardOBJ[stats.cards[STP2i]][STP2j + 4])
-                wSTP2 += cardOBJ[stats.cards[STP2i]][STP2j + 5];
+
+    for (let equipment of Object.values(stats.equipments)) {
+        if (!equipment.cards) continue;
+        for (let card of equipment.cards) {
+            for (let STP2j = 0; cardOBJ[card.index][STP2j + 4] != 0; STP2j += 2) {
+                if (nSTP2 == cardOBJ[card.index][STP2j + 4])
+                    wSTP2 += cardOBJ[card.index][STP2j + 5];
+            }
         }
     }
     return wSTP2;
@@ -1618,18 +1632,22 @@ function StPlusCard(nSTP2, stats) {
 
 function CardNumSearch(nCNS, stats) {
     let wCNS = 0;
-    for (let CNSi = 0; CNSi <= 25; CNSi++) {
-        let cardName = cardOBJ[stats.cards[CNSi]][2];
-        if (nCNS === cardName)
-            wCNS += 1;
+
+    for (let equipment of Object.values(stats.equipments)) {
+        if (!equipment.cards) continue;
+        for (let card of equipment.cards) {
+            let cardName = cardOBJ[card.index][2];
+            if (nCNS === cardName)
+                wCNS += 1;
+        }
     }
     return wCNS;
 }
 
 function EquipNumSearch(nENS, stats) {
     let wENS = 0;
-    for (let ENSi = 0; ENSi <= 20; ENSi++) {
-        let itemName = ItemOBJ[stats.equipments[ENSi]][8];
+    for (let equipment of Object.values(stats.equipments)) {
+        let itemName = ItemOBJ[equipment.index][8];
         if (nENS === itemName)
             wENS += 1;
     }
@@ -1641,64 +1659,59 @@ function n_A_JobSet(FORM_DATA) {
     let job = eval(FORM_DATA.A_JOB);
     let isRebirth = 0;
     if (21 <= job && job <= 40) {
-        let isRebirth = 1;
+        isRebirth = 1;
         if (34 <= job && job <= 40)
             job -= 34;
     }
     return {job, isRebirth}
 }
 
-function SetEquip(stats) {
-    const start = Date.now();
-
-    for (let SEi = 11; SEi <= 20; SEi++)
-        stats.equipments[SEi] = 736;
-
+function SetEquipmentCombo(stats) {
     let w_SE_num = 11;
     let w_SE_ch = 0;
-    for (let SEk = 0; SEk <= SE_MAXnum; SEk++) {
-        for (let SEj = 1; w_SE[SEk][SEj] != "NULL" && (w_SE_ch == 1 || (w_SE_ch == 0 && SEj == 1)); SEj++) {
+    for (let SEk = 0; SEk < equipmentsSetCombo.length; SEk++) {
+        for (let SEj = 1; equipmentsSetCombo[SEk][SEj] != "NULL" && (w_SE_ch == 1 || (w_SE_ch == 0 && SEj == 1)); SEj++) {
             w_SE_ch = 0;
-            for (let SEi = 0; SEi <= 10 && w_SE_ch == 0; SEi++) {
-                if (stats.equipments[SEi] == w_SE[SEk][SEj])
+            for (let equipment of Object.values(stats.equipments)) {
+                if (equipment.index == equipmentsSetCombo[SEk][SEj])
                     w_SE_ch = 1;
             }
         }
         if (w_SE_ch == 1) {
-            stats.equipments[w_SE_num] = w_SE[SEk][0];
+            stats.equipments["SET_" + w_SE_num] = {index: equipmentsSetCombo[SEk][0]};
             w_SE_num++;
         }
     }
 }
 
-function SetCard(stats) {
-    for (let SEi = 16; SEi <= 25; SEi++)
-        stats.cards[SEi] = 0;
+function SetCardCombo(stats) {
 
     let w_SE_num = 16;
     let w_SE_ch = 0;
-    for (let SEk = 0; SEk <= SC_MAXnum; SEk++) {
-        for (let SEj = 1; w_SC[SEk][SEj] != "NULL" && (w_SE_ch == 1 || (w_SE_ch == 0 && SEj == 1)); SEj++) {
+    let comboEquipment = null;
+    for (let SEk = 0; SEk < cardSetCombo.length; SEk++) {
+        for (let SEj = 1; cardSetCombo[SEk][SEj] != "NULL" && (w_SE_ch == 1 || (w_SE_ch == 0 && SEj == 1)); SEj++) {
             w_SE_ch = 0;
-            for (let SEi = 0; SEi <= 15 && w_SE_ch == 0; SEi++) {
-                if (stats.cards[SEi] == w_SC[SEk][SEj])
-                    w_SE_ch = 1;
+            for (let equipment of Object.values(stats.equipments)) {
+                if (!equipment.cards) continue;
+                for (let card of equipment.cards) {
+                    if (card.index == cardSetCombo[SEk][SEj])
+                        w_SE_ch = 1;
+                    comboEquipment = equipment;
+                }
             }
         }
         if (w_SE_ch == 1) {
-            stats.cards[w_SE_num] = w_SC[SEk][0];
+            equipment.cards["SET_" + w_SE_num] = {index: cardSetCombo[SEk][0]};
             w_SE_num++;
         }
     }
 }
 
 function SkillSearch(n, stats) {
-    for (let k = 0; k <= 14; k++) {
-        let passiveSkillToUseName;
-        if (JobSkillPassOBJ[stats.job][k] != 999)
-            passiveSkillToUseName = SkillOBJ[JobSkillPassOBJ[stats.job][k]][2];
-        if (passiveSkillToUseName === n) {
-            return stats.passiveSkills[k];
+    for (let skill of stats.passiveSkills) {
+        if (skill.name === n) {
+            return skill.level
         }
     }
     return 0;
@@ -1709,14 +1722,14 @@ function tPlusDamCut(stats, targetStats, wPDC, InWarOfEmperium) {
     if (wBTw1 == 0) {
         if (targetStats.lexAeterna && wLAch == 0)//LA
             wPDC *= 2;
-        if (targetStats.fiberLock && stats.weapon1Element == 3)//ƒXƒpƒCƒ_ƒEƒFƒu
+        if (targetStats.fiberLock && stats.equipments.weapon.element == 3)//ƒXƒpƒCƒ_ƒEƒFƒu
             wPDC *= 2;
         let baizok = [110, 114, 117, 119, 120];
-        if (stats.groundSupportiveSkills[0] == 0 && stats.groundSupportiveSkills[1] >= 1 && stats.weapon1Element == 3)//‰Î
+        if (stats.groundSupportiveSkills[0] == 0 && stats.groundSupportiveSkills[1] >= 1 && stats.equipments.weapon.element == 3)//‰Î
             wPDC = Math.floor(wPDC * baizok[stats.groundSupportiveSkills[1] - 1] / 100);
-        if (stats.groundSupportiveSkills[0] == 1 && stats.groundSupportiveSkills[1] >= 1 && stats.weapon1Element == 1)//…
+        if (stats.groundSupportiveSkills[0] == 1 && stats.groundSupportiveSkills[1] >= 1 && stats.equipments.weapon.element == 1)//…
             wPDC = Math.floor(wPDC * baizok[stats.groundSupportiveSkills[1] - 1] / 100);
-        if (stats.groundSupportiveSkills[0] == 2 && stats.groundSupportiveSkills[1] >= 1 && stats.weapon1Element == 4)//•—
+        if (stats.groundSupportiveSkills[0] == 2 && stats.groundSupportiveSkills[1] >= 1 && stats.equipments.weapon.element == 4)//•—
             wPDC = Math.floor(wPDC * baizok[stats.groundSupportiveSkills[1] - 1] / 100);
     }
 
@@ -1726,7 +1739,7 @@ function tPlusDamCut(stats, targetStats, wPDC, InWarOfEmperium) {
 function tPlusEnemyClick(InWarOfEmperium) {
     if (InWarOfEmperium) {
         n_B = new Array();
-        for (i = 0; i <= 26; i++)
+        for (let i = 0; i <= 26; i++)
             n_B[i] = MonsterOBJ[document.calcForm.B_Enemy.value][i];
 
         document.calcForm.B_LV.value = n_B[5];
@@ -1745,7 +1758,7 @@ function tPlusTaiseiSyokia() {
 function tPlusLucky(wPL, InWarOfEmperium) {
     if (InWarOfEmperium) {
         w = eval(document.calcForm.B_TAISEI6.value);
-        w += (targetStatsArray[TARGET_STAT_LUK] / 10);
+        w += (targetStats.luk / 10);
 
         w = wPL * (100 - w) / 100;
         return w;
@@ -1757,10 +1770,10 @@ function tPlusLucky(wPL, InWarOfEmperium) {
 function tPlusAG(InWarOfEmperium) {
     if (InWarOfEmperium) {
         if (n_Enekyori != 2) {
-            wPAG = w_AG[eval(document.calcForm.B_TAISEI10.value)];
-            w_Maxatk *= (wPAG / 100);
-            w_Minatk *= (wPAG / 100);
-            w_Aveatk *= (wPAG / 100);
+            let wPAG = w_AG[eval(document.calcForm.B_TAISEI10.value)];
+            let w_Maxatk = (wPAG / 100);
+            let w_Minatk = (wPAG / 100);
+            let w_Aveatk = (wPAG / 100);
         }
     }
 }
@@ -1795,8 +1808,8 @@ function isNonRangeWeapon(weaponType) {
     return weaponType != WEAPON_TYPE_BOW && weaponType != WEAPON_TYPE_INSTRUMENT && weaponType != WEAPON_TYPE_WHIP && weaponType != WEAPON_TYPE_HANDGUN && weaponType != WEAPON_TYPE_RIFLE && weaponType != WEAPON_TYPE_SHOTGUN && weaponType != WEAPON_TYPE_GATLING_GUN && weaponType != WEAPON_TYPE_GRENADE_LAUNCHER;
 }
 
-function isRangedWeapon(weaponType) {
-    return !(isNonRangeWeapon(weaponType));
+function isRangedWeapon(n_A_WeaponType) {
+    return n_A_WeaponType == WEAPON_TYPE_BOW || n_A_WeaponType == WEAPON_TYPE_HANDGUN || n_A_WeaponType == WEAPON_TYPE_RIFLE || n_A_WeaponType == WEAPON_TYPE_SHOTGUN || n_A_WeaponType == WEAPON_TYPE_GATLING_GUN || n_A_WeaponType == WEAPON_TYPE_GRENADE_LAUNCHER;
 }
 
 
@@ -1821,7 +1834,7 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
     // TARGET_STAT_MDEF = 25;
     // TARGET_STAT_MDEF = 26;
     // TARGET_STAT_MDEF = 27;
-    console.log(eval(FORM_DATA.B_Enemy))
+
     let mob = MonsterOBJ.find(m => m[0] === eval(FORM_DATA.B_Enemy));
     let targetStats = {
         mobIndex: mob[0],
@@ -1835,7 +1848,7 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
         int: mob[9],
         dex: mob[10],
         luk: mob[11],
-        atk: mob[12],
+        atk1: mob[12],
         atk2: mob[13],
         def: mob[14],
         mdef: mob[15],
@@ -1883,16 +1896,16 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
         // myInnerHtml("B_HP", targetStats.hp, 0);
 
 
-        n_B_DEF2[2] = Math.floor(targetStats.vit * 0.5) + Math.floor(targetStats.vit * 0.3);
-        n_B_DEF2[0] = Math.floor(targetStats.vit * 0.5) + Math.floor(targetStats.vit * targetStats.vit / 150) - 1;
-        if (n_B_DEF2[2] > n_B_DEF2[0])
-            n_B_DEF2[0] = n_B_DEF2[2];
+        targetStats.def2[2] = Math.floor(targetStats.vit * 0.5) + Math.floor(targetStats.vit * 0.3);
+        targetStats.def2[0] = Math.floor(targetStats.vit * 0.5) + Math.floor(targetStats.vit * targetStats.vit / 150) - 1;
+        if (targetStats.def2[2] > targetStats.def2[0])
+            targetStats.def2[0] = targetStats.def2[2];
         w = eval(document.calcForm.B_TAISEI4.value);
         if (w) {
-            n_B_DEF2[2] *= (1 + 0.05 * w);
-            n_B_DEF2[0] *= (1 + 0.05 * w);
+            targetStats.def2[2] *= (1 + 0.05 * w);
+            targetStats.def2[0] *= (1 + 0.05 * w);
         }
-        n_B_DEF2[1] = Math.floor((n_B_DEF2[2] + n_B_DEF2[0]) / 2);
+        targetStats.def2[1] = Math.floor((targetStats.def2[2] + targetStats.def2[0]) / 2);
     } else {
 
         def2Min = targetStats.vit;
@@ -1918,7 +1931,6 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
         agilityDown: eval(FORM_DATA.TargetStatusFlag10),
         signumCrucis: eval(FORM_DATA.TargetStatusFlag11),
         divestWeapon: false,
-        divestWeapon: false,
         divestShield: false,
         divestArmor: false,
         divestHelm: false,
@@ -1934,39 +1946,36 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
         sageChangeElement: false,
         flying: 0,
     };
-    if (MonsterStats) {
-        targetStatusFlag = {
-            provoke: eval(FORM_DATA.TargetStatusFlag0),
-            quagmire: eval(FORM_DATA.TargetStatusFlag1),
-            poison: FORM_DATA.TargetStatusFlag2 == "on",
-            blind: FORM_DATA.TargetStatusFlag3 == "on",
-            frozen: FORM_DATA.TargetStatusFlag4 == "on",
-            blessing: FORM_DATA.TargetStatusFlag5 == "on",
-            lexAerterna: FORM_DATA.TargetStatusFlag6 == "on",
-            stun: FORM_DATA.TargetStatusFlag7 == "on",
-            sleep: FORM_DATA.TargetStatusFlag8 == "on",
-            stone: FORM_DATA.TargetStatusFlag9 == "on",
-            curse: FORM_DATA.TargetStatusFlag10 == "on",
-            agilityDown: eval(FORM_DATA.TargetStatusFlag10),
-            signumCrucis: eval(FORM_DATA.TargetStatusFlag11),
-            divestWeapon: FORM_DATA.TargetStatusFlag12 == "on",
-            divestWeapon: FORM_DATA.TargetStatusFlag13 == "on",
-            divestShield: FORM_DATA.TargetStatusFlag14 == "on",
-            divestArmor: FORM_DATA.TargetStatusFlag15 == "on",
-            divestHelm: FORM_DATA.TargetStatusFlag16 == "on",
-            fiberLock: FORM_DATA.TargetStatusFlag17 == "on",
-            mindBreaker: eval(FORM_DATA.TargetStatusFlag18),
-            slowGrace: FORM_DATA.TargetStatusFlag19 == "on",
-            downTtempo: FORM_DATA.TargetStatusFlag20 == "on",
-            powerUp: FORM_DATA.TargetStatusFlag21 == "on",
-            agilityUp: FORM_DATA.TargetStatusFlag22 == "on",
-            eska: FORM_DATA.TargetStatusFlag23 == "on",
-            eske: FORM_DATA.TargetStatusFlag24 == "on",
-            monsterChangeElement: eval(FORM_DATA.TargetStatusFlag25),
-            sageChangeElement: eval(FORM_DATA.TargetStatusFlag26),
-            flying: eval(FORM_DATA.TargetStatusFlag27),
-        };
-    }
+    targetStatusFlag = {
+        provoke: eval(FORM_DATA.TargetStatusFlag0) ? eval(FORM_DATA.TargetStatusFlag0) : 0,
+        quagmire: eval(FORM_DATA.TargetStatusFlag1) ? eval(FORM_DATA.TargetStatusFlag1) : 0,
+        poison: FORM_DATA.TargetStatusFlag2 === "on",
+        blind: FORM_DATA.TargetStatusFlag3 === "on",
+        frozen: FORM_DATA.TargetStatusFlag4 == "on",
+        blessing: FORM_DATA.TargetStatusFlag5 == "on",
+        lexAerterna: FORM_DATA.TargetStatusFlag6 == "on",
+        stun: FORM_DATA.TargetStatusFlag7 == "on",
+        sleep: FORM_DATA.TargetStatusFlag8 == "on",
+        stone: FORM_DATA.TargetStatusFlag9 == "on",
+        curse: FORM_DATA.TargetStatusFlag10 == "on",
+        agilityDown: eval(FORM_DATA.TargetStatusFlag11) ? eval(FORM_DATA.TargetStatusFlag11) : 0,
+        signumCrucis: eval(FORM_DATA.TargetStatusFlag12) ? eval(FORM_DATA.TargetStatusFlag12) : 0,
+        divestWeapon: FORM_DATA.TargetStatusFlag13 == "on",
+        divestShield: FORM_DATA.TargetStatusFlag14 == "on",
+        divestArmor: FORM_DATA.TargetStatusFlag15 == "on",
+        divestHelm: FORM_DATA.TargetStatusFlag16 == "on",
+        fiberLock: FORM_DATA.TargetStatusFlag17 == "on",
+        mindBreaker: eval(FORM_DATA.TargetStatusFlag18) ? eval(FORM_DATA.TargetStatusFlag18) : 0,
+        slowGrace: FORM_DATA.TargetStatusFlag19 == "on",
+        downTtempo: FORM_DATA.TargetStatusFlag20 == "on",
+        powerUp: FORM_DATA.TargetStatusFlag21 == "on",
+        agilityUp: FORM_DATA.TargetStatusFlag22 == "on",
+        eska: FORM_DATA.TargetStatusFlag23 == "on",
+        eske: FORM_DATA.TargetStatusFlag24 == "on",
+        monsterChangeElement: eval(FORM_DATA.TargetStatusFlag25) ? eval(FORM_DATA.TargetStatusFlag25) : 0,
+        sageChangeElement: eval(FORM_DATA.TargetStatusFlag26) ? eval(FORM_DATA.TargetStatusFlag26) : 0,
+        flying: eval(FORM_DATA.TargetStatusFlag27) ? eval(FORM_DATA.TargetStatusFlag27) : 0,
+    };
 
     if (targetStatusFlag.monsterChangeElement)
         targetStats.element = targetStatusFlag.monsterChangeElement
@@ -1982,6 +1991,7 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
         targetStats.agi = targetStats.agi * 3;
 
     if (targetStatusFlag.quagmire) {
+        let w2;
         if (InWarOfEmperium) {
             w2 = targetStatusFlag.quagmire * 5;
             w = Math.floor(targetStats.agi / 4);
@@ -2127,8 +2137,8 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
 
     // TODO move exp reward somewhere else
     // if (InWarOfEmperium == 0) {
-    //     let w1_Exp = StPlusCard(120 + targetStats.race, stats);
-    //     w1_Exp += StPlusItem(120 + targetStats.race, stats);
+    //     let w1_Exp = GetCardStats(120 + targetStats.race, stats);
+    //     w1_Exp += GetEquipmentStats(120 + targetStats.race, stats);
     //     if (n_A_JobSearch() == 3 && CardNumSearch(452) && (targetStats.race == 1 || targetStats.race == 6))
     //         w1_Exp += 5;
     //     if (targetStats.race == 2 && n_A_JobSearch() == 4 && CardNumSearch(453))
@@ -2149,13 +2159,14 @@ function CalculateEnemyStats(FORM_DATA, InWarOfEmperium) {
     // }
 
     //
-    // n_B_DEF2 = [0, 0, 0];
-    // n_B_DEF2[2] = targetStats.def2Min;
-    // n_B_DEF2[0] = targetStats.def2Max;
-    // n_B_DEF2[1] = Math.floor((n_B_DEF2[2] + n_B_DEF2[0]) / 2);
-    // n_B_MDEF2 = targetStats.mdef2;
+    // targetStats.def2 = [0, 0, 0];
+    // targetStats.def2[2] = targetStats.def2Min;
+    // targetStats.def2[0] = targetStats.def2Max;
+    // targetStats.def2[1] = Math.floor((targetStats.def2[2] + targetStats.def2[0]) / 2);
+    // targetStats.mdef2 = targetStats.mdef2;
     // targetStats.hit = targetStats.hit;
     // targetStats.flee = targetStats.flee;
+    targetStats.def2 = [targetStats.def2Max, targetStats.def2Avg, targetStats.def2Min]
     return {
         ...targetStats,
         ...targetStatusFlag
@@ -2168,62 +2179,69 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
         battleHit: 0, // BattleHit
         battleFlee: 0, // BattleFlee
         critChance: 0, // CRInum
-        critAtk: [],  // CRIATK
+        battleCritAtk: [],  // CRIATK
         baseAttackCalc: 0,  // BaseAttackCalc
         minWeaponAttackCalc: 0, // MinWeaponAttackCalc
         maxWeaponAttackCalc: 0,  // AvgWeaponAttackCalc
         avgWeaponAttackCalc: 0,  // MaxWeaponAttackCalc
-        bonusSub: "", // bSUB
-        bonusSubName: "", // bSUBname
-        bonusSub2: "", // bSUB2
-        bonusSub2Name: "", // bSUB2name
-        critAtkName: "Critical Damage", // CRIATKname
-        critChanceName: "Critical Rate", // CRInumname
-        atk00: "", // ATK_00
-        atk02: "", // ATK_02
-        atk01: "", // ATK_01
-        battleHit: 0, // BattleHIT
+        cast: 0,
+        afterCastDelay: 0,
+        minDmg: 0,
+        maxDmg: 0,
+        avgDmg: 0,
         dps: 0, // DPS
-        minAtkNum: 0, // MinATKnum
-        maxAtkNum: 0, // MaxATKnum
-        avgAtkNum: 0, // AveATKnum
-        battleTime: 0, // BattleTime
         averageReceivedDamage: 0, // AverageReceivedDamageIncludingDodge
+        display: {
+            bonusSub: "", // bSUB
+            bonusSubName: "", // bSUBname
+            bonusSub2: "", // bSUB2
+            bonusSub2Name: "", // bSUB2name
+            critAtkName: "Critical Damage", // CRIATKname
+            critChanceName: "Critical Rate", // CRInumname
+            atk00: "", // ATK_00
+            atk02: "", // ATK_02
+            atk01: "", // ATK_01
+            minAtkNum: 0, // MinATKnum
+            maxAtkNum: 0, // MaxATKnum
+            avgAtkNum: 0, // AveATKnum
+            battleTime: 0, // BattleTime
+        }
     }
-    let sizeModifier = weaponsize[stats.weaponType][targetStats.size];
+    b = 0;
+    let sizeModifier = weaponsize[stats.equipments.weapon.type][targetStats.size];
     if (SkillSearch("Cavalier Mastery", stats)) {
-        if ((stats.weaponType == WEAPON_TYPE_SPEAR || stats.weaponType == WEAPON_TYPE_TWO_HANDED_SPEAR) && targetStats.size == 1)
+        if ((stats.equipments.weapon.type == WEAPON_TYPE_SPEAR || stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SPEAR) && targetStats.size == 1)
             sizeModifier = 1;
     }
-    if (SkillSearch("Weapon Perfection", stats) || stats.supportiveSkills[7])
+    if (SkillSearch("Weapon Perfection", stats) || stats.supportiveSkills[7].level)
         sizeModifier = 1;
 
-    if (cardOBJ[stats.cards[0]][0] == 32 || cardOBJ[stats.cards[1]][0] == 32 || cardOBJ[stats.cards[2]][0] == 32 || cardOBJ[stats.cards[3]][0] == 32 || cardOBJ[stats.cards[4]][0] == 32 || cardOBJ[stats.cards[5]][0] == 32 || cardOBJ[stats.cards[6]][0] == 32 || cardOBJ[stats.cards[7]][0] == 32)
+    if (cardOBJ[stats.equipments.weapon.cards[0].index][0] == 32 || cardOBJ[stats.equipments.weapon.cards[1].index][0] == 32 || cardOBJ[stats.equipments.weapon.cards[2].index][0] == 32 || cardOBJ[stats.equipments.weapon.cards[3].index][0] == 32 || (stats.equipments.weaponLeftHand && (cardOBJ[stats.equipments.weaponLeftHand.cards[0].index][0] == 32 || cardOBJ[stats.equipments.weaponLeftHand.cards[1].index][0] == 32 || cardOBJ[stats.equipments.weaponLeftHand.cards[2].index][0] == 32 || cardOBJ[stats.equipments.weaponLeftHand.cards[3].index][0] == 32)))
         sizeModifier = 1;
 
 
-    let impositioMagnus = stats.supportiveSkills[2] * 5;
+    let impositioMagnus = stats.supportiveSkills[2].level * 5;
 
 
     let hitRate = stats.hit + 80 - (targetStats.flee);
     if (SkillSearch("Weaponry Research", stats))
         hitRate = Math.floor(hitRate * (100 + 2 * SkillSearch("Weaponry Research", stats)) / 100);
-    if (stats.skillToUseName == "Pierce" || stats.skillToUseName == "Bash") {
-        hitRate *= 1 + stats.skillToUseLV * 0.05;
+    if (stats.skillToUse.name == "Pierce" || stats.skillToUse.name == "Bash") {
+        hitRate *= 1 + stats.skillToUse.level * 0.05;
     }
-    if ((stats.skillToUseName == "Sonic Blow" || stats.skillToUseName == "Sonic Blow (Soul Linked)") && SkillSearch("Sonic Acceleration", stats)) {
+    if ((stats.skillToUse.name == "Sonic Blow" || stats.skillToUse.name == "Sonic Blow (Soul Linked)") && SkillSearch("Sonic Acceleration", stats)) {
         hitRate *= 1.5;
     }
-    if (stats.skillToUseName == "Magnum Break") {
-        hitRate *= 1 + stats.skillToUseLV * 0.1;
+    if (stats.skillToUse.name == "Magnum Break") {
+        hitRate *= 1 + stats.skillToUse.level * 0.1;
     }
-    if (stats.skillToUseName == "Sharp Shooting (Temp)") {
-        hitRate *= (1 + stats.skillToUseLV * 0.1);
+    if (stats.skillToUse.name == "Sharp Shooting (Temp)") {
+        hitRate *= (1 + stats.skillToUse.level * 0.1);
     }
-    if (stats.skillToUseName == "Counter Kick") {
+    if (stats.skillToUse.name == "Counter Kick") {
         hitRate = 100;
     }
-    if (stats.skillToUseName == "Shield Boomerang (SoulLinked)") {
+    if (stats.skillToUse.name == "Shield Boomerang (SoulLinked)") {
         hitRate = 100;
     }
     if (SkillSearch("Solar, Lunar, and Stellar Union", stats)) {
@@ -2234,14 +2252,14 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
     } else if (hitRate < 5) {
         hitRate = 5;
     }
-    if (StPlusItem("INCREASE_HIT_PERCENTAGE", stats) + StPlusCard("INCREASE_HIT_PERCENTAGE", stats))
-        hitRate = hitRate + (100 - hitRate) * (StPlusItem("INCREASE_HIT_PERCENTAGE", stats) + StPlusCard("INCREASE_HIT_PERCENTAGE", stats)) / 100;
+    if (GetEquipmentStats(INCREASE_HIT_PERCENTAGE, stats) + GetCardStats(INCREASE_HIT_PERCENTAGE, stats))
+        hitRate = hitRate + (100 - hitRate) * (GetEquipmentStats(INCREASE_HIT_PERCENTAGE, stats) + GetCardStats(INCREASE_HIT_PERCENTAGE, stats)) / 100;
 
     hitRate = Math.floor(hitRate * 100) / 100;
     battleResult.battleHit = hitRate;
     // myInnerHtml("BattleHIT", hitRate, 0);
 
-    if (stats.skillToUseName == "Sharp Shooting (Temp)") {
+    if (stats.skillToUse.name == "Sharp Shooting (Temp)") {
         stats.crit += 20;
     }
     let criticalRate = stats.crit - targetStats.luk * 0.2 - 0.1;
@@ -2252,7 +2270,7 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
     } else if (criticalRate > 100) {
         criticalRate = 100;
     }
-    battleResult.critChance = Math.round(criticalRate * 10) / 10 + SubName[0];
+    battleResult.critChance = Math.round(criticalRate * 10) / 10;
     // myInnerHtml("CRInum", Math.round(criticalRate * 10) / 10 + SubName[0], 0);
 
 
@@ -2262,27 +2280,28 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
 
 
     let doubleAttackChanceRate = SkillSearch("Double Attack", stats) * 5;
-    if (stats.weaponType != WEAPON_TYPE_DAGGER)
+    if (stats.equipments.weapon.type != WEAPON_TYPE_DAGGER)
         doubleAttackChanceRate = 0;
-    if (cardOBJ[stats.cards[0]][0] == 43 || cardOBJ[stats.cards[1]][0] == 43 || cardOBJ[stats.cards[2]][0] == 43 || cardOBJ[stats.cards[3]][0] == 43 || cardOBJ[stats.cards[4]][0] == 43 || cardOBJ[stats.cards[5]][0] == 43 || cardOBJ[stats.cards[6]][0] == 43 || cardOBJ[stats.cards[7]][0] == 43) {
+    if (cardOBJ[stats.equipments.weapon.cards[0].index][0] == 43 || cardOBJ[stats.equipments.weapon.cards[1].index][0] == 43 || cardOBJ[stats.equipments.weapon.cards[2].index][0] == 43 || cardOBJ[stats.equipments.weapon.cards[3].index][0] == 43
+        || (stats.equipments.weaponLeftHand && (cardOBJ[stats.equipments.weaponLeftHand.cards[0].index][0] == 43 || cardOBJ[stats.equipments.weaponLeftHand.cards[1].index][0] == 43 || cardOBJ[stats.equipments.weaponLeftHand.cards[2].index][0] == 43 || cardOBJ[stats.equipments.weaponLeftHand.cards[3].index][0] == 43))) {
         if (SkillSearch("Double Attack", stats) > 1)
             doubleAttackChanceRate = SkillSearch("Double Attack", stats) * 5;
         else
             doubleAttackChanceRate = 5;
     }
-    if (ItemOBJ[stats.equipments[2]][0] == 570) {
+    if (ItemOBJ[stats.equipments.upperHeadgear.index][0] == 570) {
         if (SkillSearch("Double Attack", stats) > 1)
             doubleAttackChanceRate = SkillSearch("Double Attack", stats) * 5;
         else
             doubleAttackChanceRate = 10;
     }
-    if (ItemOBJ[stats.equipments[0]][0] == 399 || ItemOBJ[stats.equipments[1]][0] == 399)
+    if (ItemOBJ[stats.equipments.weapon.index][0] == 399 || (stats.equipments.weaponLeftHand && ItemOBJ[stats.equipments.weaponLeftHand.index][0] == 399))
         doubleAttackChanceRate = 25;
-    if (stats.weaponType == WEAPON_TYPE_HANDGUN)
+    if (stats.equipments.weapon.type == WEAPON_TYPE_HANDGUN)
         doubleAttackChanceRate = SkillSearch("Single Action", stats) * 5;
 
     let hitRateDoubleAttack = hitRate;
-    if (doubleAttackChanceRate != 0 && stats.weaponType != WEAPON_TYPE_HANDGUN) {
+    if (doubleAttackChanceRate != 0 && stats.equipments.weapon.type != WEAPON_TYPE_HANDGUN) {
         hitRateDoubleAttack = hitRateDoubleAttack * (100 + SkillSearch("Double Attack", stats)) / 100;
         if (hitRateDoubleAttack >= 100)
             hitRateDoubleAttack = 100;
@@ -2302,36 +2321,35 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
     let w998L = 100 - w998K;
 
 
-    stats.flee = stats.flee + 20 - (targetStats.hit);
-    if (stats.flee > 95) {
-        stats.flee = 95;
-    } else if (stats.flee < 5) {
-        stats.flee = 5;
+    battleResult.battleFlee = stats.flee + 20 - (targetStats.hit);
+    if (battleResult.battleFlee > 95) {
+        battleResult.battleFlee = 95;
+    } else if (battleResult.battleFlee < 5) {
+        battleResult.battleFlee = 5;
     }
     if (InWarOfEmperium == 0) ;
     // myInnerHtml("BattleFLEE", stats.flee, 0);
-    battleResult.battleFlee = stats.flee;
 
-    let workDex = Math.floor(stats.dex * (1 + (stats.weapon1Lv - 1) * 0.2));
+    let workDex = Math.floor(stats.dex * (1 + (stats.equipments.weapon.level - 1) * 0.2));
 
     let n_A_DMG = [0, 0, 0];
     let weaponAttack = [0, 0, 0];
 
 
-    if (workDex >= stats.weapon1ATK || SkillSearch("Power Maximize", stats)) // 155 = power maximize
-        weaponAttack[2] = stats.weapon1LV_overUpgradeBonusATK + Math.floor((stats.weapon1ATK + impositioMagnus) * sizeModifier);
+    if (workDex >= stats.equipments.weapon.atk || SkillSearch("Power Maximize", stats)) // 155 = power maximize
+        weaponAttack[2] = stats.equipments.weapon.overUpgradeBonusATK + Math.floor((stats.equipments.weapon.atk + impositioMagnus) * sizeModifier);
     else
-        weaponAttack[2] = stats.weapon1LV_overUpgradeBonusATK + Math.floor((stats.weapon1ATK - 1 + impositioMagnus) * sizeModifier);
+        weaponAttack[2] = stats.equipments.weapon.overUpgradeBonusATK + Math.floor((stats.equipments.weapon.atk - 1 + impositioMagnus) * sizeModifier);
 
-    if (isRangedWeapon(stats.weaponType))
+    if (isRangedWeapon(stats.equipments.weapon.type))
         weaponAttack[2] += Math.floor((ArrowOBJ[stats.arrow][0] - 1) * sizeModifier);
 
 
-    if (isRangedWeapon(stats.weaponType)) {
-        w1 = stats.weapon1LV_overUpgradeBonusATK + Math.floor(stats.weapon1ATK * stats.weapon1ATK / 100 * sizeModifier) + Math.floor(impositioMagnus * sizeModifier);
-        w2 = stats.weapon1LV_overUpgradeBonusATK + Math.floor(stats.weapon1ATK * workDex / 100 * sizeModifier) + Math.floor(impositioMagnus * sizeModifier);
+    if (isRangedWeapon(stats.equipments.weapon.type)) {
+        let w1 = stats.equipments.weapon.overUpgradeBonusATK + Math.floor(stats.equipments.weapon.atk * stats.equipments.weapon.atk / 100 * sizeModifier) + Math.floor(impositioMagnus * sizeModifier);
+        let w2 = stats.equipments.weapon.overUpgradeBonusATK + Math.floor(stats.equipments.weapon.atk * workDex / 100 * sizeModifier) + Math.floor(impositioMagnus * sizeModifier);
 
-        w = Math.floor((ArrowOBJ[stats.arrow][0] - 1) * sizeModifier);
+        let w = Math.floor((ArrowOBJ[stats.arrow][0] - 1) * sizeModifier);
         w1 += w;
         w2 += w;
         if (w1 > w2) w1 = w2;
@@ -2339,18 +2357,18 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
     }
 
 
-    if (isRangedWeapon(stats.weaponType)) {
-        weaponAttack[0] = stats.weapon1LV_Minplus + Math.floor((stats.weapon1ATK * stats.weapon1ATK / 100 + impositioMagnus) * sizeModifier);
-        w = stats.weapon1LV_Minplus + Math.floor((stats.weapon1ATK * workDex / 100 + impositioMagnus) * sizeModifier);
+    if (isRangedWeapon(stats.equipments.weapon.type)) {
+        weaponAttack[0] = stats.equipments.weapon.minPlus + Math.floor((stats.equipments.weapon.atk * stats.equipments.weapon.atk / 100 + impositioMagnus) * sizeModifier);
+        let w = stats.equipments.weapon.minPlus + Math.floor((stats.equipments.weapon.atk * workDex / 100 + impositioMagnus) * sizeModifier);
         if (weaponAttack[0] > w) weaponAttack[0] = w;
     } else {
-        if (workDex >= stats.weapon1ATK)
-            weaponAttack[0] = stats.weapon1LV_Minplus + Math.floor((stats.weapon1ATK + impositioMagnus) * sizeModifier);
+        if (workDex >= stats.equipments.weapon.atk)
+            weaponAttack[0] = stats.equipments.weapon.minPlus + Math.floor((stats.equipments.weapon.atk + impositioMagnus) * sizeModifier);
         else {
 
             if (SkillSearch("Power Maximize", stats))
-                workDex = stats.weapon1ATK;
-            weaponAttack[0] = stats.weapon1LV_Minplus + Math.floor((workDex + impositioMagnus) * sizeModifier);
+                workDex = stats.equipments.weapon.atk;
+            weaponAttack[0] = stats.equipments.weapon.minPlus + Math.floor((workDex + impositioMagnus) * sizeModifier);
         }
     }
 
@@ -2370,12 +2388,12 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
 
     n_Enekyori = 0;
     stats.critATK = [0, 0, 0];
-    stats.critATK[1] = stats.baseATK + (stats.weapon1LV_Minplus + stats.weapon1LV_overUpgradeBonusATK) / 2 + Math.floor((stats.weapon1ATK + impositioMagnus) * sizeModifier);
-    stats.critATK[0] = stats.baseATK + stats.weapon1LV_Minplus + Math.floor((stats.weapon1ATK + impositioMagnus) * sizeModifier);
-    stats.critATK[2] = stats.baseATK + stats.weapon1LV_overUpgradeBonusATK + Math.floor((stats.weapon1ATK + impositioMagnus) * sizeModifier);
+    stats.critATK[1] = stats.baseATK + (stats.equipments.weapon.minPlus + stats.equipments.weapon.overUpgradeBonusATK) / 2 + Math.floor((stats.equipments.weapon.atk + impositioMagnus) * sizeModifier);
+    stats.critATK[0] = stats.baseATK + stats.equipments.weapon.minPlus + Math.floor((stats.equipments.weapon.atk + impositioMagnus) * sizeModifier);
+    stats.critATK[2] = stats.baseATK + stats.equipments.weapon.overUpgradeBonusATK + Math.floor((stats.equipments.weapon.atk + impositioMagnus) * sizeModifier);
 
 
-    if (stats.weaponType == WEAPON_TYPE_BOW) {
+    if (stats.equipments.weapon.type === WEAPON_TYPE_BOW) {
         n_Enekyori = 1;
         stats.critATK[1] += Math.floor((ArrowOBJ[stats.arrow][0]) * sizeModifier);
         stats.critATK[0] += Math.floor((ArrowOBJ[stats.arrow][0]) * sizeModifier);
@@ -2399,74 +2417,2061 @@ function CalculateBattle(stats, targetStats, InWarOfEmperium) {
 
 
     let n_A_EDP_DMG = [0, 0, 0];
-    n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2);
-    n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0);
-    n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1);
+    n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+    n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+    n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
 
-    if (stats.weaponType == WEAPON_TYPE_KATAR) {
-        wk = Math.floor(stats.critATK[1] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-        wk2 = Math.floor((stats.critATK[1] + n_A_EDP_DMG[1]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-        battleResult.critAtk = [];
-        if (stats.weapon1LV_Minplus == stats.weapon1LV_overUpgradeBonusATK && n_A_EDP_DMG[0] == n_A_EDP_DMG[2]) {
-            battleResult.critAtk[0] = stats.critATK[1] + wk2 + n_A_EDP_DMG[1];
+    if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR) {
+        let wk = Math.floor(stats.critATK[1] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+        let wk2 = Math.floor((stats.critATK[1] + n_A_EDP_DMG[1]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+        battleResult.battleCritAtk = [];
+        if (stats.equipments.weapon.minPlus == stats.equipments.weapon.overUpgradeBonusATK && n_A_EDP_DMG[0] == n_A_EDP_DMG[2]) {
+            battleResult.battleCritAtk[0] = stats.critATK[1] + wk2 + n_A_EDP_DMG[1];
             // myInnerHtml("CRIATK", (stats.critATK[1] + wk2 + n_A_EDP_DMG[1]) + "(" + (stats.critATK[1] + n_A_EDP_DMG[1]) + "+" + wk2 + ")", 0);
         } else {
-            w1 = Math.floor((stats.critATK[0] + n_A_EDP_DMG[0]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            w2 = Math.floor((stats.critATK[2] + n_A_EDP_DMG[2]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            battleResult.critAtk[0] = stats.critATK[0] + w1 + n_A_EDP_DMG[0];
-            battleResult.critAtk[1] = stats.critATK[2] + w2 + n_A_EDP_DMG[2];
+            let w1 = Math.floor((stats.critATK[0] + n_A_EDP_DMG[0]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            let w2 = Math.floor((stats.critATK[2] + n_A_EDP_DMG[2]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            battleResult.battleCritAtk[0] = stats.critATK[0] + w1 + n_A_EDP_DMG[0];
+            battleResult.battleCritAtk[1] = stats.critATK[2] + w2 + n_A_EDP_DMG[2];
             // myInnerHtml("CRIATK", (stats.critATK[0] + w1 + n_A_EDP_DMG[0]) + " ~ " + (stats.critATK[2] + w2 + n_A_EDP_DMG[2]) + "(" + (stats.critATK[0] + n_A_EDP_DMG[0]) + " ~ " + (stats.critATK[2] + n_A_EDP_DMG[2]) + "+" + w1 + " ~ " + w2 + ")", 0);
         }
         stats.critATK[1] += wk;
     } else {
-        battleResult.critAtk = [];
-        if (stats.weapon1LV_Minplus == stats.weapon1LV_overUpgradeBonusATK && n_A_EDP_DMG[0] == n_A_EDP_DMG[2]) {
-            battleResult.critAtk[0] = stats.critATK[1] + n_A_EDP_DMG[1];
+        battleResult.battleCritAtk = [];
+        if (stats.equipments.weapon.minPlus == stats.equipments.weapon.overUpgradeBonusATK && n_A_EDP_DMG[0] == n_A_EDP_DMG[2]) {
+            battleResult.battleCritAtk[0] = stats.critATK[1] + n_A_EDP_DMG[1];
             //     myInnerHtml("CRIATK", stats.critATK[1] + n_A_EDP_DMG[1], 0);
         } else {
-            battleResult.critAtk[0] = stats.critATK[0] + n_A_EDP_DMG[0];
-            battleResult.critAtk[1] = stats.critATK[2] + n_A_EDP_DMG[2];
+            battleResult.battleCritAtk[0] = stats.critATK[0] + n_A_EDP_DMG[0];
+            battleResult.battleCritAtk[1] = stats.critATK[2] + n_A_EDP_DMG[2];
             //     myInnerHtml("CRIATK", (stats.critATK[0] + n_A_EDP_DMG[0]) + " ~ " + (stats.critATK[2] + n_A_EDP_DMG[2]), 0);
         }
     }
 
 
-    stats.critATK[2] += HitEDPplus(n_A_EDP_DMG[2]);
-    stats.critATK[0] += HitEDPplus(n_A_EDP_DMG[0]);
-    stats.critATK[1] += HitEDPplus(n_A_EDP_DMG[1]);
+    stats.critATK[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+    stats.critATK[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+    stats.critATK[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
 
-    let battleResult999 = BattleCalc999(stats, targetStats, InWarOfEmperium, hitRate, criticalRate, n_A_DMG, n_A_EDP_DMG, w998B, w998E, w998G, w998I, w998L);
-    battleResult = Object.assign(battleResult, battleResult999);
+    let skillModifier = 1;
+    let wCast = 0;
+    let wDelay = 0;
+    let swDelay = 0;
+
+    if (stats.skillToUse.name != "Basic Attack" && stats.skillToUse.name != "Martyr's Reconing") {
+        wDelay = Math.floor(stats.aspd * 100) / 100;
+        if (stats.skillToUse.name == "Envenom" || stats.skillToUse.name == "")
+            wDelay = Math.floor(stats.aspd * 75) / 100;
+        let minimumDelayBetweenActiveSkills = 10;
+        // wA_ASPD = eval(FORM_DATA.Conf01) / 100;
+        let wA_ASPD = eval(minimumDelayBetweenActiveSkills) / 100;
+        if (wDelay < wA_ASPD)
+            wDelay = wA_ASPD;
+    }
+
+    let hitCount = 1;
+    let isRangedAttack = 0;
+
+    let finalDamages = [0, 0, 0];
+    let not_use_card = 0;
+    let cast_kotei = 0;
+
+
+    // myInnerHtml("bSUBname", "", 0);
+    // myInnerHtml("bSUB", "", 0);
+    // myInnerHtml("bSUB2name", "", 0);
+    // myInnerHtml("bSUB2", "", 0);
+
+
+    if (stats.skillToUse.name != "Basic Attack" && stats.skillToUse.name != "Sharp Shooting (Temp)" && (stats.skillToUse.name != "Poison React (Counter)" || (targetStats.element < 50 && 60 <= targetStats.element))) {
+        // myInnerHtml("CRIATK", "", 0);
+        // myInnerHtml("CRInum", "", 0);
+        // myInnerHtml("CRIATKname", "", 0);
+        // myInnerHtml("CRInumname", "", 0);
+    }
+
+    if ((stats.equipments.weapon.type == WEAPON_TYPE_BOW || stats.equipments.weapon.type == WEAPON_TYPE_HANDGUN || stats.equipments.weapon.type == WEAPON_TYPE_RIFLE || stats.equipments.weapon.type == WEAPON_TYPE_SHOTGUN || stats.equipments.weapon.type == WEAPON_TYPE_GATLING_GUN || stats.equipments.weapon.type == WEAPON_TYPE_GRENADE_LAUNCHER) && stats.skillToUse.name === "Basic Attack")
+        isRangedAttack = 1;
+
+
+    if (stats.skillToUse.name === "Basic Attack" || (stats.skillToUse.name === "Poison React (Counter)" && (50 <= targetStats.element && targetStats.element < 60))) {
+        // myInnerHtml("CRIATKname", SubName[3], 0);
+        // myInnerHtml("CRInumname", SubName[4], 0);
+        battleResult.display.critAtkName = SubName[3];
+        battleResult.display.critChanceName = SubName[4];
+
+        if (stats.skillToUse.name === "Poison React (Counter)") {
+            n_SpSkill = 1;
+            if (stats.equipments.weapon.type != WEAPON_TYPE_KATAR)
+                ;
+            battleResult.display.bonusSub = "Damage Shown with 2x right hand damage";
+            // myInnerHtml("bSUB", '<Font size="2"><B>Damage Shown with 2x right hand damage.</B></Font>', 0);
+        }
+
+        if (stats.equipments.weaponLeftHand) {
+            let w_left_Maxatk = 1;
+            let w_left_Minatk = 1;
+            let w_left_Aveatk = 1;
+            TyouEnkakuSousa3dan = 0;
+
+            let workDex = Math.floor(stats.dex * (1 + (stats.equipments.weaponLeftHand.level - 1) * 0.2));
+            w_left_Maxatk = 0;
+            if (workDex >= stats.equipments.weaponLeftHand.atk)
+                w_left_Maxatk = stats.baseATK + stats.equipments.weaponLeftHand.level_overUpgradeBonusATK + Math.floor((stats.equipments.weaponLeftHand.atk + impositioMagnus) * sizeModifier);
+            else
+                w_left_Maxatk = stats.baseATK + stats.equipments.weaponLeftHand.level_overUpgradeBonusATK + Math.floor((stats.equipments.weaponLeftHand.atk - 1 + impositioMagnus) * sizeModifier);
+
+            w_left_Maxatk = BattleCalc4(stats, targetStats, w_left_Maxatk * skillModifier, 2, 1);
+
+            if (w_left_Maxatk < 1) w_left_Maxatk = 1;
+            w_left_Maxatk = Math.floor(w_left_Maxatk * element[targetStats.element][stats.equipments.weaponLeftHand.element]);
+
+
+            let w_left_star = 0;
+            if (stats.equipments.weaponLeftHand.starCrumb >= 3) {
+                w_left_star += 40;
+            } else {
+                w_left_star += 5 * stats.equipments.weaponLeftHand.starCrumb;
+            }
+            if (stats.equipments.weapon.craftedByTop10Smith)
+                w_left_star += 10;
+
+            w_left_Maxatk += w_left_star;
+            w_left_Maxatk = w_left_Maxatk * (3 + SkillSearch("Lefthand Mastery", stats)) / 10;
+            w_left_Maxatk = Math.floor(w_left_Maxatk);
+
+
+            if (workDex > stats.equipments.weaponLeftHand.atk)
+                workDex = stats.equipments.weaponLeftHand.atk;
+            w_left_Minatk = stats.baseATK + stats.equipments.weaponLeftHand.minPlus + Math.floor((workDex + impositioMagnus) * sizeModifier);
+            w_left_Minatk = BattleCalc4(stats, targetStats, w_left_Minatk * skillModifier, 0, 1);
+
+            if (w_left_Minatk < 1) w_left_Minatk = 1;
+            w_left_Minatk = Math.floor(w_left_Minatk * element[targetStats.element][stats.equipments.weaponLeftHand.element]);
+            w_left_Minatk += w_left_star;
+            w_left_Minatk *= (0.3 + SkillSearch("Lefthand Mastery", stats) / 10);
+            w_left_Minatk = Math.floor(w_left_Minatk);
+
+            w_left_Aveatk = (w_left_Maxatk + w_left_Minatk) / 2;
+
+
+            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+
+            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+            // myInnerHtml("ATK_02", finalDamages[2] + n_A_EDP_DMG[2] + "(" + w_left_Maxatk + ")", 0);
+            battleResult.display.atk02 = finalDamages[2] + n_A_EDP_DMG[2] + "(" + w_left_Maxatk + ")";
+
+            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[2] += BattleCalc3left(stats, targetStats, hitRate, w_left_Maxatk, InWarOfEmperium);
+            finalDamages[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+            // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0] + "(" + w_left_Minatk + ")", 0);
+            battleResult.minDmg = finalDamages[0] + n_A_EDP_DMG[0];
+            battleResult.display.atk00 = "(" + w_left_Minatk + ")";
+
+            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[0] += BattleCalc3left(stats, targetStats, hitRate, w_left_Minatk, InWarOfEmperium);
+            finalDamages[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+            // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1] + "(" + w_left_Aveatk + ")", 0);
+            battleResult.avgDmg = finalDamages[1] + n_A_EDP_DMG[1];
+            battleResult.display.atk01 = "(" + w_left_Aveatk + ")";
+
+            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[1] += BattleCalc3left(stats, targetStats, hitRate, w_left_Aveatk, InWarOfEmperium);
+            finalDamages[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
+
+            let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
+            battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+            delete battleVariousResult.display;
+            battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        } else if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR) {
+            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+            let wk = Math.floor(finalDamages[2] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            let wk2 = Math.floor((finalDamages[2] + n_A_EDP_DMG[2]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            // myInnerHtml("ATK_02", (finalDamages[2] + wk2 + n_A_EDP_DMG[2]) + "(" + (finalDamages[2] + n_A_EDP_DMG[2]) + "+" + wk2 + ")", 0);
+
+            battleResult.maxDmg = (finalDamages[2] + wk2 + n_A_EDP_DMG[2]);
+            battleResult.display.atk02 = "(" + (finalDamages[2] + n_A_EDP_DMG[2]) + "+" + wk2 + ")";
+
+            finalDamages[2] += wk;
+
+
+            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+            wk = Math.floor(finalDamages[0] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            wk2 = Math.floor((finalDamages[0] + n_A_EDP_DMG[0]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            // myInnerHtml("ATK_00", (finalDamages[0] + wk2 + n_A_EDP_DMG[0]) + "(" + (finalDamages[0] + n_A_EDP_DMG[0]) + "+" + wk2 + ")", 0);
+            battleResult.minDmg = (finalDamages[0] + wk2 + n_A_EDP_DMG[0]);
+            battleResult.display.atk00 = "(" + (finalDamages[0] + n_A_EDP_DMG[0]) + "+" + wk2 + ")";
+            finalDamages[0] += wk;
+
+            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+            wk = Math.floor(finalDamages[1] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            wk2 = Math.floor((finalDamages[1] + n_A_EDP_DMG[1]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
+            // myInnerHtml("ATK_01", (finalDamages[1] + wk2 + n_A_EDP_DMG[1]) + "(" + (finalDamages[1] + n_A_EDP_DMG[1]) + "+" + wk2 + ")", 0);
+            battleResult.avgDmg = (finalDamages[1] + wk2 + n_A_EDP_DMG[1]);
+            battleResult.display.atk01 = "(" + (finalDamages[1] + n_A_EDP_DMG[1]) + "+" + wk2 + ")";
+            finalDamages[1] += wk;
+
+            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
+
+            let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
+            battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+            delete battleVariousResult.display;
+            battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        } else {
+            let wTAKA = 0;
+            if (stats.equipments.weapon.type == WEAPON_TYPE_BOW && SkillSearch("Blitz Beat", stats) && stats.skillToUse.name != "Sharp Shooting (Temp)", stats) {
+                // myInnerHtml("bSUBname", "Bird Damage (Atk Rate))", 0);
+                battleResult.display.bonusSubName = "Bird Damage (Atk Rate))";
+                wBTw1 = Math.floor((stats.jobLevel - 1) / 10 + 1);
+                if (wBTw1 > 5) wBTw1 = 5;
+                let wBTw2 = SkillSearch("Blitz Beat", stats);
+                if (wBTw2 < wBTw1)
+                    wBTw1 = wBTw2;
+                let wBT = 80 + Math.floor(stats.dex / 10) * 2 + Math.floor(stats.int / 2) * 2 + SkillSearch("Steel Crow", stats) * 6;
+                wBT = Math.floor(wBT * element[targetStats.element][0]);
+                wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
+                let wBTw3 = Math.round((1 + stats.luk * 0.3) * 100) / 100;
+                if (targetStats.mobIndex == 44)
+                    wBT = 0;
+                // myInnerHtml("bSUB", wBT * wBTw1 + "(" + wBTw3 + "%)", 0);
+                battleResult.display.bonusSub = wBT * wBTw1 + "(" + wBTw3 + "%)";
+                wBT = wBT * wBTw1 * wBTw3 / 100;
+                wBT = wBT * (hitRate + ((100 - hitRate) * criticalRate / 100)) / 100;
+                wBTw1 = 0;
+                wTAKA = Math.round(wBT * 100) / 100;
+            }
+            TyouEnkakuSousa3dan = 0;
+            let san1, san2, san3 = 0;
+            if (SkillSearch("Raging Trifecta Blow", stats)) {
+                TyouEnkakuSousa3dan = -1;
+                let wBC3_3danAtkBairitu = .2 * SkillSearch("Raging Trifecta Blow", stats);
+
+                // myInnerHtml("bSUBname", "Trifecta Damage", 0);
+                battleResult.display.bonusSubName = "Trifecta Damage";
+                san1 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 0) / 3) * 3;
+                san2 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 1) / 3) * 3;
+                san3 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 2) / 3) * 3;
+                // myInnerHtml("bSUB", san1 + " ~ " + san3, 0);
+                // myInnerHtml("bSUB2name", "Trifecta Rate", 0);
+                // myInnerHtml("bSUB2", 30 - SkillSearch("Raging Trifecta Blow", stats) + "%", 0);
+                battleResult.display.bonusSub = san1 + " ~ " + san3;
+                battleResult.display.bonusSub2Name = "Trifecta Rate";
+                battleResult.display.bonusSub2 = 30 - SkillSearch("Raging Trifecta Blow", stats) + "%";
+                TyouEnkakuSousa3dan = 0;
+            }
+
+            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+            if (SkillSearch("Raging Trifecta Blow", stats))
+                TyouEnkakuSousa3dan = san3;
+
+            battleResult.maxDmg = (finalDamages[2] + n_A_EDP_DMG[2]);
+            // myInnerHtml("ATK_02", (finalDamages[2] + n_A_EDP_DMG[2]), 0);
+
+
+            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[2] += wTAKA;
+            finalDamages[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+            // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0], 0);
+            battleResult.minDmg = (finalDamages[0] + n_A_EDP_DMG[0]);
+            if (SkillSearch("Raging Trifecta Blow", stats))
+                TyouEnkakuSousa3dan = san1;
+
+            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[0] += wTAKA;
+            finalDamages[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+
+            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+            // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1], 0);
+            battleResult.avgDmg = (finalDamages[1] + n_A_EDP_DMG[1]);
+            if (SkillSearch("Raging Trifecta Blow", stats))
+                TyouEnkakuSousa3dan = san2;
+
+            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+            finalDamages[1] += wTAKA;
+            finalDamages[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
+
+            let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+            battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+            delete castAndDelayBattleResult.display;
+            battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+            let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+            battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+            delete battleVariousResult.display;
+            battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        }
+        return battleResult;
+    } else if (stats.skillToUse.name === "Sharp Shooting (Temp)") {
+        isRangedAttack = 1;
+        battleResult.display.critAtkName = "Defence Bypassing Damage";
+        battleResult.display.critChanceName = "Chance to Bypass Defence";
+        // myInnerHtml("CRIATKname", "Defence Bypassing Damage", 0);
+        // myInnerHtml("CRInumname", "Chance to Bypass Defence", 0);
+
+        skillModifier += (1 + 0.5 * stats.skillToUse.level);
+        wCast = 2 * stats.cast;
+        wDelay = 1.5;
+        swDelay = 1;
+
+
+        stats.critATK[1] = n_A_DMG[1];
+        stats.critATK[0] = n_A_DMG[0];
+        stats.critATK[2] = n_A_DMG[2];
+
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 1);
+
+        wCriTyuu = 1;
+        stats.critATK[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[1], 10, InWarOfEmperium);
+        stats.critATK[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[0], 10, InWarOfEmperium);
+        stats.critATK[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[2], 10, InWarOfEmperium);
+        wCriTyuu = 0;
+
+
+        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 0, InWarOfEmperium);
+        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 2, InWarOfEmperium);
+        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 3, InWarOfEmperium);
+
+        // myInnerHtml("CRIATK", (stats.critATK[0] + n_A_EDP_DMG[0]) + " ~ " + (stats.critATK[2] + n_A_EDP_DMG[2]), 0);
+        battleResult.battleCritAtk = [];
+        battleResult.battleCritAtk[0] = stats.critATK[0] + n_A_EDP_DMG[0];
+        battleResult.battleCritAtk[1] = stats.critATK[2] + n_A_EDP_DMG[2];
+
+
+        stats.critATK[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+        stats.critATK[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+        stats.critATK[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
+
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+        finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+        // myInnerHtml("ATK_02", (finalDamages[2] + n_A_EDP_DMG[2]), 0);
+        battleResult.maxDmg = (finalDamages[2] + n_A_EDP_DMG[2]);
+
+
+        finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+        finalDamages[2] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[2], InWarOfEmperium, w998E, w998K, hitRate);
+
+        finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+        // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0], 0);
+        battleResult.minDmg = (finalDamages[0] + n_A_EDP_DMG[0]);
+
+        finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+        finalDamages[0] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[0], InWarOfEmperium, w998E, w998K, hitRate);
+
+        finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+        // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1], 0);
+        battleResult.avgDmg = (finalDamages[1] + n_A_EDP_DMG[1]);
+
+        finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
+        finalDamages[1] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[1], InWarOfEmperium, w998E, w998K, hitRate);
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+        return battleResult;
+    }
+
+    // 6 -> bash
+    // 7 -> magnum break
+    let activeSkillIds = [6, 7, 19, 41, 44, 65, 71, 72, 73, 83, 84, 158, 161, 169, 171, 188, 189, 199, 207, 248, 260, 261, 264, 288, 289, 290, 292, 302, 303, 326, 331, 333, 335, 337, 339, 382, 388, 348, 349, 350, 419, 423, 428, 429, 430, 431, 432, 434, 435, 436, 437, "NULL"];
+    let activeSkillInUseIndex;
+    let wActiveHitNum = 0;
+    for (activeSkillInUseIndex = 0; activeSkillIds[activeSkillInUseIndex] != stats.skillToUse.index && activeSkillIds[activeSkillInUseIndex] != "NULL"; activeSkillInUseIndex++) ;
+    if (stats.skillToUse.index === activeSkillIds[activeSkillInUseIndex]) {
+        wActiveHitNum = 1;
+        if (stats.skillToUse.name === "Bash")
+            skillModifier += stats.skillToUse.level * 0.3;
+        else if (stats.skillToUse.name === "Solar Heat" || stats.skillToUse.name === "Lunar Heat" || stats.skillToUse.name === "Stellar Heat") {
+            //Heat
+
+            wDelay = 0.1;
+
+        } else if (stats.skillToUse.name === "Magnum Break") {
+            skillModifier += stats.skillToUse.level * 0.2;
+            stats.equipments.weapon.element = 3;
+            wDelay = 2;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Sand Attack") {
+            not_use_card = 1;
+            skillModifier += 0.3;
+            stats.equipments.weapon.element = 2;
+        } else if (stats.skillToUse.name === "Arrow Shower") {
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 0.05 - 0.25;
+            wDelay = 1;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Arrow Repel") {
+            isRangedAttack = 1;
+            wCast = 1.5;
+            skillModifier += 0.5;
+        } else if (stats.skillToUse.name === "Mammonite")
+            skillModifier += stats.skillToUse.level * 0.5;
+        else if (stats.skillToUse.name === "Spear Stab") {
+            skillModifier += stats.skillToUse.level * 0.2;
+            isRangedAttack = 1;
+        } else if (stats.skillToUse.name === "Grimtooth") {
+            if (stats.skillToUse.level >= 3)
+                isRangedAttack = 1;
+            skillModifier += 0.2 * stats.skillToUse.level;
+
+
+        } else if (stats.skillToUse.name === "Smite") {
+            skillModifier += stats.skillToUse.level * 0.2;
+
+        } else if (stats.skillToUse.name === "Holy Cross") {
+            skillModifier += stats.skillToUse.level * 0.35;
+            stats.equipments.weapon.element = 6;
+        } else if (stats.skillToUse.name === "Sightless Mind")
+            skillModifier += stats.skillToUse.level * 0.4;
+        else if (stats.skillToUse.name === "Spear Boomerang") {
+            skillModifier += stats.skillToUse.level * 0.5;
+            wDelay = 1;
+            swDelay = 1;
+            isRangedAttack = 1;
+        } else if (stats.skillToUse.name === "Brandish Spear") {
+            let w = (1 + stats.skillToUse.level * 0.2);
+            if (stats.skillToUse.level == 10) skillModifier += 4.625;
+            else if (stats.skillToUse.level >= 7) skillModifier += w + w / 2 + w / 4 - 1;
+            else if (stats.skillToUse.level >= 4) skillModifier += w + w / 2 - 1;
+            else skillModifier += w - 1;
+            wCast = 0.7;
+        } else if (stats.skillToUse.name === "Sonic Blow" || stats.skillToUse.name === "Sonic Blow (Soul Linked)") {
+            wActiveHitNum = 8;
+            skillModifier += stats.skillToUse.level * 0.5 + 2;
+            if (stats.skillToUse.name === "Sonic Blow (Soul Linked)" && InWarOfEmperium == 0)
+                skillModifier *= 2;
+            if (stats.skillToUse.name === "Sonic Blow (Soul Linked)" && InWarOfEmperium == 1)
+                skillModifier *= 1.25;
+            wDelay = 2;
+            swDelay = 2;
+        } else if (stats.skillToUse.name === "Back Stab") {
+            skillModifier += stats.skillToUse.level * 0.4 + 2;
+            wDelay = 0.5;
+            swDelay = 1;
+            // myInnerHtml("BattleHIT", 100, 0);
+            battleResult.battleHit = 100;
+        } else if (stats.skillToUse.name === "Raging Quadruple Blow") {
+            wActiveHitNum = 4;
+            skillModifier += 0.5 + stats.skillToUse.level * 0.5;
+            n_SpSkill = 1;
+        } else if (stats.skillToUse.name === "Raging Thrust") {
+            skillModifier += 1.4 + stats.skillToUse.level * 0.6;
+            n_SpSkill = 1;
+        } else if (stats.skillToUse.name === "Melody Strike" || stats.skillToUse.name === "Slinging Arrow") {
+            wCast = 1.5;
+            skillModifier += (stats.skillToUse.level * 0.4 - 0.4);
+            stats.equipments.weapon.element = ArrowOBJ[stats.arrow][1];
+            if (stats.equipments.weapon.element != 0)
+                stats.equipments.weapon.element = stats.equipments.weapon.element;
+            isRangedAttack = 1;
+        } else if (stats.skillToUse.name === "Bomb") {
+            not_use_card = 1;
+            stats.equipments.weapon.element = 3;
+            n_SpSkill = 1;
+            wCast = 1;
+            skillModifier += stats.skillToUse.level * 0.2;
+            hitRate = 100;
+            // myInnerHtml("BattleHIT", 100, 0);
+            battleResult.battleHit = 100;
+        } else if (stats.skillToUse.name === "Traumatic Blow") {
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 0.4;
+            wDelay = 0.5;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Vital Strike") {
+            isRangedAttack = 1;
+            skillModifier += (stats.skillToUse.level * 0.1 - 0.5);
+            if (stats.skillToUse.level > 5)
+                wDelay = 1;
+            else
+                wDelay = 0.8;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Meteor Assault") {
+            not_use_card = 1;
+            skillModifier += (stats.skillToUse.level * 0.4 - 0.6);
+            wCast = 0.5;
+            wDelay = 0.5;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Raging Palm Strike") {
+            skillModifier += (1 + stats.skillToUse.level);
+            wDelay = 0.3;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Glacier Fist") {
+            n_SpSkill = 1;
+            skillModifier += stats.skillToUse.level - 0.6;
+
+
+        } else if (stats.skillToUse.name === "Chain Crush Combo") {
+            n_SpSkill = 1;
+            skillModifier += (3 + stats.skillToUse.level);
+            if (stats.skillToUse.level > 6) wDelay = 1;
+            else wDelay = 0.8;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Arrow Vulcan") {
+            wActiveHitNum = 9;
+            skillModifier += 1 + stats.skillToUse.level;
+            stats.equipments.weapon.element = ArrowOBJ[stats.arrow][1];
+            if (stats.equipments.weapon.element != 0)
+                stats.equipments.weapon.element = stats.equipments.weapon.element;
+            isRangedAttack = 1;
+            wCast = 1.8 + stats.skillToUse.level * 0.2;
+            if (stats.skillToUse.level >= 6) wDelay = 1;
+            else wDelay = 0.8;
+            wDelay = 3;
+            swDelay = 2;
+        } else if (stats.skillToUse.name === "Tomahawk Throwing") {
+            isRangedAttack = 1;
+            not_use_card = 1;
+            stats.equipments.weapon.element = 4;
+        } else if (stats.skillToUse.name === "Pulse Strike (Temp)") {
+            skillModifier += (stats.skillToUse.level - 1) * 1;
+        } else if (stats.skillToUse.name === "High Speed Cart Ram") {
+            not_use_card = 1;
+            skillModifier += Math.floor((stats.skillToUse.additionalData / (16 - stats.skillToUse.level) / 100 - 1) * 100) / 100;
+        } else if (stats.skillToUse.name === "Excruciating Palm") {
+            not_use_card = 1;
+            skillModifier += 2;
+
+
+        } else if (stats.skillToUse.name === "Tornado Kick" || stats.skillToUse.name === "Heel Drop") {
+            n_SpSkill = 1;
+            skillModifier += (0.6 + stats.skillToUse.level * 0.2);
+        } else if (stats.skillToUse.name === "Roundouse" || stats.skillToUse.name === "Counter Kick") {
+            n_SpSkill = 1;
+            skillModifier += (0.9 + stats.skillToUse.level * 0.3);
+            if (stats.skillToUse.name === "Counter Kick")
+                wActiveHitNum = 3;
+        } else if (stats.skillToUse.name === "Flying Kick (Normal)") {
+            n_SpSkill = 1;
+            skillModifier += (-0.7 + stats.skillToUse.level * 0.1);
+        } else if (stats.skillToUse.name === "Bull's Eye") {
+            not_use_card = 1;
+            wCast = 0.5;
+            isRangedAttack = 1;
+            wActiveHitNum = 5;
+            if (targetStats.race == 2 || targetStats.race == 7)
+                skillModifier += 4;
+        } else if (stats.skillToUse.name === "Magical Bullet") {
+            isRangedAttack = 1;
+            stats.equipments.weapon.element = 8;
+            not_use_card = 1;
+        } else if (stats.skillToUse.name === "Trigger Happy Shot") {
+            isRangedAttack = 1;
+            wActiveHitNum = 5;
+            skillModifier += stats.skillToUse.level * 0.5 + 4;
+            wDelay = 1.7;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Desperado (Single Hit)") {
+            isRangedAttack = 0;
+            skillModifier += stats.skillToUse.level * 0.5 - 0.5;
+            wDelay = 1;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Tracking") {
+            wCast = 1 + 0.2 * stats.skillToUse.level;
+            cast_kotei = 1;
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 1 + 1;
+            wDelay = 1;
+            swDelay = 1;
+            hitRate = hitRate * 5 + 5;
+            if (hitRate > 100)
+                hitRate = 100;
+        } else if (stats.skillToUse.name === "Disarm") {
+            wCast = 2;
+            isRangedAttack = 1;
+        } else if (stats.skillToUse.name === "Wounding Shot") {
+            wCast = 1.5;
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 0.2;
+            wDelay = 0;
+            swDelay = 1;
+            hitRate = 100;
+        } else if (stats.skillToUse.name === "Crowd Control Shot") {
+            cast_kotei = 1;
+            wCast = 1;
+            isRangedAttack = 0;
+            skillModifier += stats.skillToUse.level * 0.5;
+            wDelay = 1;
+            swDelay = 2
+            hitRate = 100;
+        } else if (stats.skillToUse.name === "Full Blast") {
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 1 + 2;
+            wDelay = 1 + stats.skillToUse.level * 0.2;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Spread Shot") {
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 0.2 - 0.2;
+            wDelay = 1;
+            swDelay = 1;
+        } else if (stats.skillToUse.name === "Gunslinger Mine") {
+            isRangedAttack = 1;
+            not_use_card = 1;
+            wCast = 1;
+            wDelay = 1;
+            swDelay = 1;
+            hitRate = 100;
+        }
+
+
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+
+        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+
+        if (cast_kotei == 0)
+            wCast = wCast * stats.cast;
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (let b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            if (wActiveHitNum > 1)
+                finalDamages[b] = Math.floor(finalDamages[b] / wActiveHitNum) * wActiveHitNum;
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
+            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = (finalDamagesCopy[0] + n_A_EDP_DMG[0]);
+        battleResult.avgDmg = (finalDamagesCopy[1] + n_A_EDP_DMG[1]);
+        battleResult.maxDmg = (finalDamagesCopy[2] + n_A_EDP_DMG[2]);
+
+        if (cast_kotei == 0) {
+            let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+            battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+            delete castAndDelayBattleResult.display;
+            battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+            let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+            battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+            delete battleVariousResult.display;
+            battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        }
+    } else if (stats.skillToUse.name === "Stave Crasher") {
+        isRangedAttack = 1;
+        wCast = 0.3;
+        wDelay = 0.3;
+        swDelay = 1;
+        n_A_DMG[2] = stats.matk[2];
+        n_A_DMG[0] = stats.matk[0];
+        n_A_DMG[1] = (stats.matk[0] + stats.matk[2]) / 2;
+
+
+        for (b = 0; b <= 2; b++)
+            n_A_EDP_DMG[b] = BattleCalcEDP(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+
+        wCast = wCast * stats.cast;
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
+            finalDamages[b] = (finalDamages[b] * hitRate + (ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) + stats.equipments.weapon.upgradeBonusATK) * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = (finalDamagesCopy[0] + n_A_EDP_DMG[0]);
+        battleResult.avgDmg = (finalDamagesCopy[1] + n_A_EDP_DMG[1]);
+        battleResult.maxDmg = (finalDamagesCopy[2] + n_A_EDP_DMG[2]);
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+    } else if (stats.skillToUse.name === "Double Strafe" || stats.skillToUse.name === "Pierce" || stats.skillToUse.name === "Throw Spirit Spheres (# Hits = # of Spirit Spheres)" || stats.skillToUse.name === "Bowling Bash" || stats.skillToUse.name === "Triple Action" || stats.skillToUse.name === "Beast Strafing") {
+        var isBowlingBash = false;
+        if (stats.skillToUse.name === "Double Strafe") { // double strafe
+            isRangedAttack = 1;
+            skillModifier += stats.skillToUse.level * 0.1 - 0.1;
+            hitCount = 2;
+        } else if (stats.skillToUse.name === "Pierce") {
+            skillModifier += stats.skillToUse.level * 0.1;
+            hitCount = targetStats.size + 1;
+        } else if (stats.skillToUse.name === "Bowling Bash") {
+            skillModifier += stats.skillToUse.level * 0.4;
+            wCast = 0.7 * stats.cast;
+            hitCount = 2;
+            if (stats.skillToUse.level == 1)
+                hitCount = 1;
+            isBowlingBash = true;
+            if (targetStats.lexAeterna == 1) {
+                hitCount = 3;
+                if (stats.skillToUse.level == 1)
+                    hitCount = 2;
+            }
+        } else if (stats.skillToUse.name === "Throw Spirit Spheres (# Hits = # of Spirit Spheres)") {
+            skillModifier += stats.skillToUse.level * 0.5;
+            let w = 0;
+            if (stats.job == 15 || stats.job == 29)
+                w = SkillSearch("Summon Spirit Sphere", stats);
+            else
+                w = stats.supportiveSkills[10].level;
+            if (w > stats.skillToUse.level) {
+                w = stats.skillToUse.level;
+            }
+            hitCount = w;
+            wCast = (1 + w) * stats.cast;
+            wDelay = 0.5;
+            swDelay = 1;
+            isRangedAttack = 1;
+        } else if (stats.skillToUse.name === "Triple Action") {
+            isRangedAttack = 1;
+            skillModifier += 0.5;
+            hitCount = 3;
+        } else if (stats.skillToUse.name === "Beast Strafing") {
+            n_SpSkill = 1;
+            isRangedAttack = 1;
+            skillModifier += stats.str * 0.08 - 0.5;
+            hitCount = 2;
+        }
+
+
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] += n_A_EDP_DMG[b];
+            if (stats.skillToUse.name === "Beast Strafing" && targetStats.race != 2 && targetStats.race != 4)
+                finalDamages[b] = 0;
+            finalDamagesCopy[b] = finalDamages[b];
+            // if (targetStats.lexAeterna == 0 || !isBowlingBash)
+            //     myInnerHtml("ATK_0" + b, finalDamages[b] * hitCount + "(" + finalDamages[b] + SubName[8] + hitCount + "hit)", 0);
+            // else
+            //     myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] * 2 + " + " + finalDamages[b] + ")", 0);
+            finalDamages[b] -= n_A_EDP_DMG[b];
+            finalDamages[b] *= hitCount;
+            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * hitCount * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate) * hitCount;
+        }
+        if (targetStats.lexAeterna == 0 || !isBowlingBash) {
+            battleResult.minDmg = finalDamagesCopy[0] * hitCount;
+            battleResult.avgDmg = finalDamagesCopy[1] * hitCount;
+            battleResult.maxDmg = finalDamagesCopy[2] * hitCount;
+            battleResult.display.atk00 = "(" + finalDamagesCopy[0] + SubName[8] + hitCount + "hit)";
+            battleResult.display.atk01 = "(" + finalDamagesCopy[1] + SubName[8] + hitCount + "hit)";
+            battleResult.display.atk02 = "(" + finalDamagesCopy[2] + SubName[8] + hitCount + "hit)";
+        } else {
+            battleResult.minDmg = finalDamagesCopy[0] * 3;
+            battleResult.avgDmg = finalDamagesCopy[1] * 3;
+            battleResult.maxDmg = finalDamagesCopy[2] * 3;
+            battleResult.display.atk00 = "(" + finalDamagesCopy[0] * 2 + " + " + finalDamagesCopy[0] + ")";
+            battleResult.display.atk01 = "(" + finalDamagesCopy[1] * 2 + " + " + finalDamagesCopy[1] + ")";
+            battleResult.display.atk02 = "(" + finalDamagesCopy[2] * 2 + " + " + finalDamagesCopy[2] + ")";
+        }
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Blitz Beat" || stats.skillToUse.name === "Falcon Eyes") {
+        stats.equipments.weapon.element = 0;
+        isRangedAttack = 1;
+        let wBT = 80 + Math.floor(stats.dex / 10) * 2 + Math.floor(stats.int / 2) * 2 + SkillSearch("Steel Crow", stats) * 6;
+        if (stats.skillToUse.name === "Falcon Eyes") {
+            wBT = Math.floor(wBT * (150 + 70 * stats.skillToUse.level) / 100);
+            wBT = Math.floor(wBT * element[targetStats.element][0]);
+            wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
+            wBT *= 5;
+            wCast = 1 * stats.cast;
+            wDelay = 3;
+        } else {
+            wBT = Math.floor(wBT * element[targetStats.element][0]);
+            wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
+            wBT *= stats.skillToUse.level;
+            wCast = 1.5 * stats.cast;
+            wDelay = 1;
+        }
+        swDelay = 1;
+        // myInnerHtml("ATK_02", wBT, 0);
+        // myInnerHtml("ATK_00", wBT, 0);
+        // myInnerHtml("ATK_01", wBT, 0);
+        battleResult.minDmg = wBT;
+        battleResult.avgDmg = wBT;
+        battleResult.maxDmg = wBT;
+        finalDamages[0] = finalDamages[2] = finalDamages[1] = wBT;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Envenom" || (stats.skillToUse.name === "Poison React (Counter)" && (targetStats.element < 50 || 60 <= targetStats.element))) {
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+        stats.equipments.weapon.element = 5;
+
+
+        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
+        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
+        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
+
+        let wINV = Math.floor(ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][5]);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][5]);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
+            finalDamages[b] = (finalDamages[b] * hitRate + wINV * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = finalDamagesCopy[0] + n_A_EDP_DMG[0];
+        battleResult.avgDmg = finalDamagesCopy[1] + n_A_EDP_DMG[1];
+        battleResult.maxDmg = finalDamagesCopy[2] + n_A_EDP_DMG[2];
+
+        // myInnerHtml("bSUBname", '<Font color="#0000FF">Poison Damage</Font>', 0);
+        // myInnerHtml("bSUB", '<Font color="#0000FF">' + wINV + "</Font>", 0);
+        battleResult.display.bonusSubName = "Poison Damage";
+        battleResult.display.bonusSub = wINV + "";
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Shield Boomerang" || stats.skillToUse.name === "Shield Boomerang (SoulLinked)") {
+        isRangedAttack = 1;
+        stats.equipments.weapon.element = 0;
+        wDelay = 0.7;
+        if (stats.skillToUse.name === "Shield Boomerang (SoulLinked)")
+            wDelay = 0.35;
+        swDelay = 1;
+        let wSBr = stats.equipments.shield.refinement * 4;
+
+        let skillModifier2 = (1 + stats.skillToUse.level * 0.3);
+        if (stats.skillToUse.name === "Shield Boomerang (SoulLinked)")
+            skillModifier2 *= 2;
+
+        let baseATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
+        stats.baseATK = stats.str + baseATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = stats.baseATK * skillModifier + ItemOBJ[stats.equipments.shield.index][6] + wSBr;
+            finalDamages[b] = Math.floor(Math.floor(finalDamages[b] * (100 - targetStats.def) / 100 - targetStats.def2[b]) * skillModifier2);
+            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
+            if (finalDamages[b] < 1) finalDamages[b] = 1;
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+            finalDamages[b] = (finalDamages[b] * hitRate) / 100;
+        }
+        battleResult.minDmg = finalDamagesCopy[0];
+        battleResult.avgDmg = finalDamagesCopy[1];
+        battleResult.maxDmg = finalDamagesCopy[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Rapid Smiting") {
+        isRangedAttack = 1;
+        stats.equipments.weapon.element = 0;
+        wCast = 1 * stats.cast;
+        wDelay = 1;
+        swDelay = 1;
+        let wSBr = stats.equipments.shield.refinement;
+        let wSC = ItemOBJ[stats.equipments.shield.index][6];
+
+        let skillModifier2 = (1 + stats.skillToUse.level * 0.3);
+
+        let baseATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
+        stats.baseATK = stats.str + baseATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
+        stats.baseATK = stats.baseATK * skillModifier + wSC + wSBr * 4;
+
+        wSC -= 100;
+        if (wSC < 0)
+            wSC = 0;
+        let wSC2 = [0, 0, 0];
+        wSC2[2] = 100 + wSC + (wSBr * 2) * wSBr;
+        wSC2[1] = 100 + (wSC + (wSBr * 2) * wSBr) / 2;
+        wSC2[0] = 100
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = (stats.baseATK * (100 - targetStats.def) / 100 - targetStats.def2[b]) * skillModifier2;
+            finalDamages[b] += wSC2[b];
+            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
+            if (finalDamages[b] < 1) finalDamages[b] = 1;
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] * 5 + "(" + finalDamages[b] + SubName[8] + "5hit)", 0);
+            finalDamages[b] *= 5;
+            finalDamages[b] = (finalDamages[b] * hitRate) / 100;
+        }
+        battleResult.minDmg = finalDamagesCopy[0] * 5;
+        battleResult.avgDmg = finalDamagesCopy[1] * 5;
+        battleResult.maxDmg = finalDamagesCopy[2] * 5;
+        battleResult.display.atk00 = "(" + finalDamagesCopy[0] + SubName[8] + "5hit)";
+        battleResult.display.atk01 = "(" + finalDamagesCopy[1] + SubName[8] + "5hit)";
+        battleResult.display.atk02 = "(" + finalDamagesCopy[2] + SubName[8] + "5hit)";
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Clashing Spiral") {
+        isRangedAttack = 1;
+        if (stats.skillToUse.level == 5)
+            wCast = 1 * stats.cast;
+        else
+            wCast = (0.1 + 0.2 * stats.skillToUse.level) * stats.cast;
+        wDelay = 1 + 0.2 * stats.skillToUse.level;
+        swDelay = 1;
+
+        let wSPP = Math.floor(stats.str / 10);
+        finalDamages[2] = wSPP * wSPP + ItemOBJ[stats.equipments.weapon.index][6] * 0.8 * (1 + 0.5 * stats.skillToUse.level);
+        wSPP = 1.25 - (targetStats.size * 0.25);
+        finalDamages[2] = Math.floor(finalDamages[2] * wSPP + stats.equipments.weapon.upgradeBonusATK);
+        finalDamages[2] = finalDamages[2] * element[targetStats.element][stats.equipments.weapon.element];
+        finalDamages[2] = BaiCI(stats, targetStats, finalDamages[2], InWarOfEmperium);
+        // myInnerHtml("ATK_00", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
+        // myInnerHtml("ATK_01", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
+        // myInnerHtml("ATK_02", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
+        battleResult.minDmg = finalDamages[2] * 5;
+        battleResult.avgDmg = finalDamages[2] * 5;
+        battleResult.maxDmg = finalDamages[2] * 5;
+        battleResult.display.atk00 = "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
+        battleResult.display.atk01 = "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
+        battleResult.display.atk02 = "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
+        finalDamages[2] *= 5;
+        let wSPP2 = stats.equipments.weapon.upgradeBonusATK * element[targetStats.element][stats.equipments.weapon.element];
+        wSPP2 = BaiCI(stats, targetStats, wSPP2, InWarOfEmperium);
+        wSPP2 = tPlusDamCut(stats, targetStats, wSPP2, InWarOfEmperium);
+        finalDamages[2] = finalDamages[2] * hitRate / 100 + wSPP2 * 5 * (100 - hitRate) / 100;
+
+
+        finalDamages[0] = finalDamages[1] = finalDamages[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Venom Splasher") {
+        not_use_card = 1;
+        n_SpSkill = 1;
+        wCast = 1 * stats.cast;
+
+        if (targetStats.isNormal) {
+
+            skillModifier += (400 + 50 * stats.skillToUse.level + 20 * stats.skillToUse.additionalData) / 100;
+            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+
+            let finalDamagesCopy = [0, 0, 0];
+            for (b = 0; b <= 2; b++) {
+                finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+                finalDamages[b] = Math.floor(finalDamages[b]);
+                finalDamagesCopy[b] = finalDamages[b];
+                // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+            }
+            battleResult.minDmg = finalDamagesCopy[0];
+            battleResult.avgDmg = finalDamagesCopy[1];
+            battleResult.maxDmg = finalDamagesCopy[2];
+        }
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Soul Destroyer") {
+        not_use_card = 1;
+        isRangedAttack = 1;
+        wCast = 0.5 * stats.cast;
+        wDelay = 0.8 + 0.2 * stats.skillToUse.level;
+        swDelay = 1;
+
+        let w_SBr = new Array();
+        let w = stats.int * 5 * stats.skillToUse.level;
+        w_SBr[2] = w + 1000 - Math.floor((targetStats.def + targetStats.mdef + targetStats.mdef2 + targetStats.def2[2]) / 2);
+        w_SBr[1] = w + 750 - Math.floor((targetStats.def + targetStats.mdef + targetStats.mdef2 + targetStats.def2[1]) / 2);
+        w_SBr[0] = w + 500 - Math.floor((targetStats.def + targetStats.mdef + targetStats.mdef2 + targetStats.def2[0]) / 2);
+        for (let i = 0; i <= 2; i++)
+            w_SBr[i] = tPlusDamCut(stats, targetStats, w_SBr[i], InWarOfEmperium);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] *= stats.skillToUse.level;
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + w_SBr[b] + "(" + finalDamages[b] + "+" + w_SBr[b] + ")", 0);
+            finalDamagesCopy[b] = finalDamages[b];
+            finalDamages[b] = ((finalDamages[b] + w_SBr[b]) * hitRate + (ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) + w_SBr[b]) * (100 - hitRate)) / 100;
+        }
+        battleResult.minDmg = finalDamagesCopy[0] + w_SBr[0];
+        battleResult.avgDmg = finalDamagesCopy[1] + w_SBr[1];
+        battleResult.maxDmg = finalDamagesCopy[2] + w_SBr[2];
+        battleResult.display.atk00 = "(" + finalDamagesCopy[0] + "+" + w_SBr[0] + ")";
+        battleResult.display.atk01 = "(" + finalDamagesCopy[1] + "+" + w_SBr[1] + ")";
+        battleResult.display.atk02 = "(" + finalDamagesCopy[2] + "+" + w_SBr[2] + ")";
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Grand Cross") {
+
+        // myInnerHtml("CRIATKname", '<Font color="#FF0000">HP Casting Cost</Font>', 0);
+        // myInnerHtml("CRIATK", '<Font color="#FF0000">' + Math.floor(stats.maxHp / 5) + "</Font>", 0);
+        //
+        // myInnerHtml("CRInumname", '<Font color="#FF0000">Reflect Damage</Font>', 0);
+        battleResult.display.critAtkName = "HP Casting Cost";
+        battleResult.battleCritAtk = [];
+        battleResult.battleCritAtk[0] = Math.floor(stats.maxHp / 5);
+        battleResult.display.critChanceName = "Reflect Damage";
+
+
+        let wGXhito = 100 - GetCardStats(DAMAGE_INC_DEC_RACE_DEMIHUMAN_PERCENTAGE, stats);
+        wGXhito -= GetEquipmentStats(DAMAGE_INC_DEC_RACE_DEMIHUMAN_PERCENTAGE, stats);
+
+        let wGXsei = 100 - SkillSearch("Faith", stats) * 5;
+        wGXsei -= GetCardStats(DAMAGE_INC_DEC_ELEMENT_HOLY_PERCENTAGE, stats);
+        wGXsei -= GetEquipmentStats(DAMAGE_INC_DEC_ELEMENT_HOLY_PERCENTAGE, stats);
+
+        let wGXen = GetCardStats(RESISTANCE_RANGE_ATTACK_PERCENTAGE, stats);
+        wGXen += GetEquipmentStats(RESISTANCE_RANGE_ATTACK_PERCENTAGE, stats);
+
+
+        let work_A_VITDEF = [0, 0, 0];
+        work_A_VITDEF[0] = stats.vitDEF[2];
+        work_A_VITDEF[1] = stats.vitDEF[1];
+        work_A_VITDEF[2] = stats.vitDEF[0];
+        stats.intMDEF = stats.int + Math.floor(stats.vit / 2);
+
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = BK_n_A_DMG[b] * (100 - stats.def) / 100 - work_A_VITDEF[b] + stats.equipments.weapon.upgradeBonusATK;
+            finalDamages[b] = Math.floor(finalDamages[b] * (skillModifier + stats.skillToUse.level * 0.4));
+
+            let w = stats.matk[b] * (100 - stats.mdef) / 100 - stats.intMDEF;
+            w = Math.floor(w * (stats.skillToUse.level * 0.4 + 1));
+
+            finalDamages[b] += w;
+            finalDamages[b] = Math.floor(finalDamages[b] * wGXhito / 100);
+            finalDamages[b] = Math.floor(finalDamages[b] * wGXsei / 100);
+            finalDamages[b] = Math.floor(finalDamages[b] * (100 - wGXen) / 100);
+
+            if (CardNumSearch("Bathory", stats))
+                finalDamages[b] = Math.floor(finalDamages[b] * 125 / 100);
+
+            if (CardNumSearch("Evil Druid", stats))
+                finalDamages[b] = Math.floor(finalDamages[b] * 150 / 100);
+
+            if (CardNumSearch("Angeling", stats) || CardNumSearch("0", stats))
+                finalDamages[b] = Math.floor(finalDamages[b] * 0 / 100);
+            finalDamages[b] = Math.floor(finalDamages[b] / 2);
+        }
+        battleResult.critChance = finalDamages[0] + "~3hit ~ " + finalDamages[1] + "~3hit";
+        // myInnerHtml("CRInum", '<Font color="#FF0000">' + finalDamages[0] + "�~3hit ~ " + finalDamages[1] + "�~3hit</Font>", 0);
+
+
+        isRangedAttack = 2;
+        stats.equipments.weapon.element = 6;
+        wCast = 3 * stats.cast;
+        wDelay = 1.5;
+        swDelay = 1;
+
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = BK_n_A_DMG[b] * (100 - targetStats.def) / 100 - targetStats.def2[b] + stats.equipments.weapon.upgradeBonusATK;
+            finalDamages[b] *= skillModifier + stats.skillToUse.level * 0.4;
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][6]);
+            let w = stats.matk[b] * (100 - targetStats.mdef) / 100 - targetStats.mdef2;
+            w *= (stats.skillToUse.level * 0.4 + 1);
+            w = Math.floor(w * element[targetStats.element][6]);
+            finalDamages[b] = tPlusDamCut(stats, targetStats, Math.floor((w + finalDamages[b], InWarOfEmperium) * element[targetStats.element][6]));
+            if (finalDamages[b] < 1) finalDamages[b] = 1;
+            if (60 <= targetStats.element && targetStats.element <= 69) finalDamages[b] = 0;
+        }
+
+
+        let finalDamagesCopy = [0, 0, 0];
+        if (targetStats.lexAeterna == 0) {
+            for (b = 0; b <= 2; b++) {
+                // myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] + SubName[8] + "3hit)", 0);
+                finalDamagesCopy[b] = finalDamages[b];
+                finalDamages[b] *= 3;
+            }
+            battleResult.minDmg = finalDamages[0];
+            battleResult.avgDmg = finalDamages[1];
+            battleResult.maxDmg = finalDamages[2];
+            battleResult.display.atk00 = "(" + finalDamagesCopy[0] + SubName[8] + "3hit)";
+            battleResult.display.atk01 = "(" + finalDamagesCopy[1] + SubName[8] + "3hit)";
+            battleResult.display.atk02 = "(" + finalDamagesCopy[2] + SubName[8] + "3hit)";
+        } else {
+            for (b = 0; b <= 2; b++) {
+                // myInnerHtml("ATK_0" + b, finalDamages[b] * 4 + "(" + finalDamages[b] * 2 + " + " + finalDamages[b] + SubName[8] + "2hit)", 0);
+                finalDamagesCopy[b] = finalDamages[b];
+                finalDamages[b] *= 4;
+            }
+            battleResult.minDmg = finalDamages[0];
+            battleResult.avgDmg = finalDamages[1];
+            battleResult.maxDmg = finalDamages[2];
+            battleResult.display.atk00 = "(" + finalDamagesCopy[0] * 2 + " + " + finalDamagesCopy[0] + SubName[8] + "2hit)";
+            battleResult.display.atk01 = "(" + finalDamagesCopy[1] * 2 + " + " + finalDamagesCopy[1] + SubName[8] + "2hit)";
+            battleResult.display.atk02 = "(" + finalDamagesCopy[2] * 2 + " + " + finalDamagesCopy[2] + SubName[8] + "2hit)";
+        }
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Cart Revolution") {
+        let wCR = 100;
+
+        if (SkillSearch("Maximum Power-Thust", stats)) {
+            wCR += 20 * SkillSearch("Maximum Power-Thust", stats);
+        } else {
+            if (SkillSearch("Power-Thrust", stats))
+                wCR += SkillSearch("Power-Thrust", stats) * 5;
+            if (SkillSearch("Power-Thrust", stats) == 0 && stats.supportiveSkills[8].level)
+                wCR += stats.supportiveSkills[8].level * 5 / 10;
+        }
+        let CR_n_A_DMG = [0, 0, 0];
+
+        let CRbai = stats.skillToUse.additionalData / 8000;
+        for (b = 0; b <= 2; b++)
+            CR_n_A_DMG[b] = Math.floor(n_A_DMG[b] * wCR / 100);
+
+        skillModifier += 0.5;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] += Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, CR_n_A_DMG[b], b, InWarOfEmperium) * CRbai);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+
+            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * 2 * (100 - hitRate)) / 100;
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+        }
+        battleResult.minDmg = finalDamagesCopy[0];
+        battleResult.avgDmg = finalDamagesCopy[1];
+        battleResult.maxDmg = finalDamagesCopy[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Gloria Domini") {
+        finalDamages[2] = 500 + 300 * stats.skillToUse.level;
+        if (n_Ses)
+            finalDamages[2] = Math.floor(finalDamages[2] * 0.6);
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+        // myInnerHtml("ATK_02", finalDamages[2], 0);
+        // myInnerHtml("ATK_00", finalDamages[0], 0);
+        // myInnerHtml("ATK_01", finalDamages[1], 0);
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+
+        wCast = (1.5 + 0.5 * stats.skillToUse.level) * stats.cast;
+        wDelay = 1.5 + stats.skillToUse.level * 0.5;
+        swDelay = 1;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Martyr's Reconing") {
+        stats.equipments.weapon.element = 0;
+        finalDamages[2] = Math.floor(stats.maxHp * 0.09 * (0.9 + 0.1 * stats.skillToUse.level));
+        finalDamages[2] = BaiCI(stats, targetStats, finalDamages[2], InWarOfEmperium);
+        finalDamages[2] = Math.floor(finalDamages[2] * element[targetStats.element][0]);
+        // myInnerHtml("ATK_02", finalDamages[2], 0);
+        // myInnerHtml("ATK_00", finalDamages[2], 0);
+        // myInnerHtml("ATK_01", finalDamages[2], 0);
+        battleResult.minDmg = (finalDamages[2]);
+        battleResult.maxDmg = (finalDamages[2]);
+        battleResult.avg = (finalDamages[2]);
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Occult Impaction") {
+        stats.equipments.weapon.element = 0;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+        skillModifier += stats.skillToUse.level * 0.75;
+
+
+        let work_B_DEF2 = [0, 0, 0];
+        work_B_DEF2[0] = targetStats.def2[2];
+        work_B_DEF2[1] = targetStats.def2[1];
+        work_B_DEF2[2] = targetStats.def2[0];
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = Math.floor(Math.floor(BK_n_A_DMG[b] * skillModifier) * (work_B_DEF2[b] + targetStats.def) / 50);
+            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+            finalDamagesCopy[b] = finalDamages[b];
+        }
+        battleResult.minDmg = finalDamagesCopy[0];
+        battleResult.avgDmg = finalDamagesCopy[1];
+        battleResult.maxDmg = finalDamagesCopy[2];
+
+        wCast = 1 * stats.cast;
+        wDelay = 0.5;
+        swDelay = 1;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Guillotine Fist" || stats.skillToUse.name === "Guillotine Fist (MaxSP-1)") {
+        stats.equipments.weapon.element = 0;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+        if (stats.skillToUse.name === "Guillotine Fist")
+            skillModifier += 7 + stats.skillToUse.additionalData / 10;
+        else
+            skillModifier += 7 + (stats.maxSp - 1) / 10;
+        let wASYU = 250 + stats.skillToUse.level * 150;
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = Math.floor(BK_n_A_DMG[b] * skillModifier) + wASYU;
+            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+            finalDamagesCopy[b] = finalDamages[b];
+        }
+        battleResult.minDmg = finalDamagesCopy[0];
+        battleResult.avgDmg = finalDamagesCopy[1];
+        battleResult.maxDmg = finalDamagesCopy[2];
+
+        wCast = (4.5 - 0.5 * stats.skillToUse.level) * stats.cast;
+        wDelay = 3.5 - 0.5 * stats.skillToUse.level;
+        swDelay = 1;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Throw Dagger") {
+        isRangedAttack = 1;
+        not_use_card = 1;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
+            finalDamagesCopy[b] = finalDamages[b];
+            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = finalDamagesCopy[0] + n_A_EDP_DMG[0];
+        battleResult.avgDmg = finalDamagesCopy[1] + n_A_EDP_DMG[1];
+        battleResult.maxDmg = finalDamagesCopy[2] + n_A_EDP_DMG[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Throw Kunai") {
+        isRangedAttack = 1;
+        not_use_card = 1;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+
+
+        if (stats.equipments.weapon.element == 0 && stats.equipments.weapon.type != WEAPON_TYPE_UNARMED && GetCardStats(20, stats) == 0)
+            stats.equipments.weapon.element = KunaiOBJ[stats.skillToUse.additionalData][1];
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] + SubName[8] + "3hit)", 0);
+            finalDamages[b] = (finalDamages[b] * 3 * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+        battleResult.display.atk00 = "(" + finalDamagesCopy[0] + SubName[8] + "3hit)";
+        battleResult.display.atk01 = "(" + finalDamagesCopy[1] + SubName[8] + "3hit)";
+        battleResult.display.atk02 = "(" + finalDamagesCopy[2] + SubName[8] + "3hit)";
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Throw Huuma Shuriken") {
+        skillModifier += (stats.skillToUse.level * 1.5 + 0.5);
+        isRangedAttack = 1;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+        wCast = 3 * stats.cast;
+        wDelay = 3;
+        swDelay = 1;
+        wActiveHitNum = 2 + Math.round(stats.skillToUse.level / 2);
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
+            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
+            if (wActiveHitNum > 1)
+                finalDamages[b] = Math.floor(finalDamages[b] / wActiveHitNum) * wActiveHitNum;
+            finalDamagesCopy[b] = finalDamages[b];
+            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
+            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
+            finalDamages[b] += HitEDPplus(stats, targetStats, n_A_EDP_DMG[b], InWarOfEmperium, w998E, w998K, hitRate);
+        }
+        battleResult.minDmg = finalDamagesCopy[0] + n_A_EDP_DMG[0];
+        battleResult.avgDmg = finalDamagesCopy[1] + n_A_EDP_DMG[1];
+        battleResult.maxDmg = finalDamagesCopy[2] + n_A_EDP_DMG[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+    } else if (stats.skillToUse.name === "Final Strike" || stats.skillToUse.name === "Final Strike (MaxHP-1)") {
+        stats.equipments.weapon.element = 0;
+        isRangedAttack = 1;
+        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
+        let w_1senHP;
+        if (stats.skillToUse.name === "Final Strike")
+            w_1senHP = stats.skillToUse.additionalData;
+        else
+            w_1senHP = stats.maxHp - 1;
+
+        finalDamages[0] = (stats.str + stats.skillToUse.level) * 40 + w_1senHP * (stats.baseLevel / 100) * stats.skillToUse.level / 10;
+        finalDamages[0] = finalDamages[0] * (100 - targetStats.def) / 100;
+        finalDamages[0] = BaiCI(stats, targetStats, finalDamages[0], InWarOfEmperium);
+        finalDamages[0] = Math.floor(finalDamages[0] * element[targetStats.element][0]);
+
+        finalDamages[2] = finalDamages[1] = finalDamages[0];
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[2];
+        battleResult.maxDmg = finalDamages[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Acid Terror") {
+        isRangedAttack = 1;
+        stats.equipments.weapon.element = 0;
+        skillModifier = (50 + stats.skillToUse.level * 50) / 100;
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = Math.floor((BK_n_A_DMG[b] - targetStats.def2[b]) * skillModifier);
+            finalDamages[b] = tPlusDamCut(stats, targetStats, Math.floor(finalDamages[b] * element[targetStats.element][0], InWarOfEmperium));
+            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
+            finalDamagesCopy[b] = finalDamages[b];
+        }
+        battleResult.minDmg = finalDamagesCopy[0];
+        battleResult.avgDmg = finalDamagesCopy[1];
+        battleResult.maxDmg = finalDamagesCopy[2];
+
+        wCast = 1 * stats.cast;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Acid Demonstration") {
+        isRangedAttack = 1;
+        stats.equipments.weapon.element = 0;
+        hitCount = stats.skillToUse.level;
+
+        let wAD = 0.7 * stats.int * stats.int * targetStats.vit / (stats.int + targetStats.vit);
+        finalDamages[2] = Math.floor(wAD);
+        finalDamages[2] = tPlusDamCut(stats, targetStats, Math.floor(finalDamages[2] * element[targetStats.element][0], InWarOfEmperium));
+        if (InWarOfEmperium == 1)
+            finalDamages[2] = Math.floor(finalDamages[2] / 2);
+        // myInnerHtml("ATK_02", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
+        // myInnerHtml("ATK_00", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
+        // myInnerHtml("ATK_01", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
+        battleResult.minDmg = finalDamages[2] * hitCount;
+        battleResult.avgDmg = finalDamages[2] * hitCount;
+        battleResult.maxDmg = finalDamages[2] * hitCount;
+        battleResult.display.atk00 = "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
+        battleResult.display.atk01 = "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
+        battleResult.display.atk02 = "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
+        finalDamages[2] *= hitCount;
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+
+        wCast = 1 * stats.cast;
+        wDelay = 1;
+        swDelay = 1;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Land Mine" || stats.skillToUse.name === "Blast Mine" || stats.skillToUse.name === "Claymore Trap") {
+        n_SpSkill = 1;
+        if (stats.skillToUse.name === "Land Mine") {
+            stats.equipments.weapon.element = 2;
+            finalDamages[2] = Math.floor((75 + stats.dex) * (1 + stats.int / 100) * stats.skillToUse.level * element[targetStats.element][2]);
+        } else if (stats.skillToUse.name === "Blast Mine") {
+            stats.equipments.weapon.element = 4;
+            finalDamages[2] = Math.floor((50 + stats.dex / 2) * (1 + stats.int / 100) * stats.skillToUse.level * element[targetStats.element][4]) * stats.skillToUse.additionalData;
+        } else if (stats.skillToUse.name === "Claymore Trap") {
+            stats.equipments.weapon.element = 3;
+            finalDamages[2] = Math.floor((75 + stats.dex / 2) * (1 + stats.int / 100) * stats.skillToUse.level * element[targetStats.element][3]) * stats.skillToUse.additionalData;
+        }
+
+        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+        // myInnerHtml("ATK_02", finalDamages[2], 0);
+        // myInnerHtml("ATK_00", finalDamages[0], 0);
+        // myInnerHtml("ATK_01", finalDamages[1], 0);
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Heal") {
+        stats.equipments.weapon.element = 6;
+        wDelay = 1;
+        swDelay = 1;
+        isRangedAttack = 2;
+        finalDamages[2] = HealCalc(stats, stats.skillToUse.level, 0);
+        finalDamages[2] = Math.floor(Math.floor(finalDamages[2] / 2) * element[targetStats.element][6]);
+        if (targetStats.element < 90) {
+            finalDamages[2] = 0;
+        }
+
+        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+        // myInnerHtml("ATK_02", finalDamages[2], 0);
+        // myInnerHtml("ATK_00", finalDamages[0], 0);
+        // myInnerHtml("ATK_01", finalDamages[1], 0);
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Sanctuary") {
+        stats.equipments.weapon.element = 6;
+        n_SpSkill = 1;
+        isRangedAttack = 2;
+        if (stats.skillToUse.level <= 6)
+            finalDamages[2] = 100 * stats.skillToUse.level;
+        else
+            finalDamages[2] = 777;
+        finalDamages[2] = Math.floor(Math.floor(finalDamages[2] / 2) * element[targetStats.element][6]);
+        if (targetStats.element < 90 && targetStats.race != 6)
+            finalDamages[2] = 0;
+        if (targetStats.race != 6 && targetStats.race != 1)
+            finalDamages[2] = 0;
+
+        let w_HEAL_BAI = 100;
+        if (EquipNumSearch("Staff of Recovery", stats))
+            w_HEAL_BAI += Math.floor(weaponRefinementLevel * 1.5)
+        if (CardNumSearch("White Lady", stats))
+            w_HEAL_BAI += 30 * CardNumSearch("White Lady", stats);
+        finalDamages[2] = Math.floor(finalDamages[2] * w_HEAL_BAI / 100);
+
+        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+        // myInnerHtml("ATK_02", finalDamages[2], 0);
+        // myInnerHtml("ATK_00", finalDamages[0], 0);
+        // myInnerHtml("ATK_01", finalDamages[1], 0);
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Turn Undead") {
+        stats.equipments.weapon.element = 6;
+        isRangedAttack = 2;
+        let w = 0;
+        if (targetStats.element < 90) {
+            finalDamages[2] = 0;
+            finalDamages[0] = 0;
+            finalDamages[1] = 0;
+        } else {
+            if (!targetStats.isMvp) {
+                w = (20 * stats.skillToUse.level + stats.baseLevel + stats.int + stats.luk) / 1000;
+                finalDamages[2] = targetStats.hp;
+            } else {
+                w = 0;
+                finalDamages[2] = 0;
+            }
+            finalDamages[0] = stats.baseLevel + stats.int + stats.skillToUse.level * 10;
+            finalDamages[0] = Math.floor(finalDamages[0] * element[targetStats.element][6]);
+            finalDamages[1] = Math.round((targetStats.hp * w + finalDamages[0] * (100 - w) / 100));
+        }
+        // myInnerHtml("ATK_02", Math.floor(finalDamages[2] * element[targetStats.element][6]) + "(Success Rate " + Math.round(w * 10000) / 100 + "%)", 0);
+        // myInnerHtml("ATK_00", finalDamages[0] + "(Failure Damage)", 0);
+        // myInnerHtml("ATK_01", finalDamages[1] + "(Certain One Hit Kill HP)", 0);
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = Math.floor(finalDamages[2] * element[targetStats.element][6]);
+        battleResult.display.atk00 = "(Failure Damage)";
+        battleResult.display.atk01 = "(Certain One Hit Kill HP)";
+        battleResult.display.atk02 = "(Success Rate " + Math.round(w * 10000) / 100 + "%)";
+
+        wCast = 1 * stats.cast;
+        wDelay = 3;
+        swDelay = 1;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else if (stats.skillToUse.name === "Gravity Field") {
+        stats.equipments.weapon.element = 0;
+        n_SpSkill = 1;
+        isRangedAttack = 2;
+        hitCount = 4 + stats.skillToUse.level;
+        finalDamages[2] = 200 + 200 * stats.skillToUse.level;
+
+        finalDamages[2] = Math.floor(finalDamages[2]);
+
+        let wStrG = finalDamages[2] * hitCount + "(" + finalDamages[2] + " x " + hitCount + "hit)"
+        // myInnerHtml("ATK_02", wStrG, 0);
+        // myInnerHtml("ATK_00", wStrG, 0);
+        // myInnerHtml("ATK_01", wStrG, 0);
+        battleResult.minDmg = wStrG;
+        battleResult.avgDmg = wStrG;
+        battleResult.maxDmg = wStrG;
+
+        finalDamages[2] = finalDamages[2] * hitCount;
+        finalDamages[0] = finalDamages[2];
+        finalDamages[1] = finalDamages[2];
+
+        wCast = 5 * stats.cast;
+        swDelay = 1;
+        wDelay = 2;
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    } else {
+        isRangedAttack = 2;
+        swDelay = 1;
+        skillModifier = 1;
+        if (stats.skillToUse.name === "Fire Bolt") {
+            stats.equipments.weapon.element = 3;
+            hitCount = stats.skillToUse.level;
+            wCast = 0.7 * stats.skillToUse.level;
+            wDelay = 0.8 + stats.skillToUse.level * 0.2;
+        } else if (stats.skillToUse.name === "Cold Bolt") {
+            stats.equipments.weapon.element = 1;
+            hitCount = stats.skillToUse.level;
+            wCast = 0.7 * stats.skillToUse.level;
+            wDelay = 0.8 + stats.skillToUse.level * 0.2;
+        } else if (stats.skillToUse.name === "Lightning Bolt") {
+            stats.equipments.weapon.element = 4;
+            hitCount = stats.skillToUse.level;
+            wCast = 0.7 * stats.skillToUse.level;
+            wDelay = 0.8 + stats.skillToUse.level * 0.2;
+        } else if (stats.skillToUse.name === "Fire Ball") {
+            stats.equipments.weapon.element = 3;
+            if (stats.skillToUse.level <= 5) {
+                wCast = 1.5;
+                wDelay = 1.5;
+            } else {
+                wCast = 1;
+                wDelay = 1;
+            }
+            skillModifier = 0.7 + stats.skillToUse.level * 0.1;
+        } else if (stats.skillToUse.name === "Fire Wall") {
+            stats.equipments.weapon.element = 3;
+            hitCount = 4 + stats.skillToUse.level;
+            wCast = 2.15 - (stats.skillToUse.level * 0.15);
+            wDelay = 0.1;
+            skillModifier = 0.5;
+        } else if (stats.skillToUse.name === "Frost Diver") {
+            stats.equipments.weapon.element = 1;
+            wCast = 0.8;
+            wDelay = 1.5;
+            skillModifier = 1 + stats.skillToUse.level * 0.1;
+        } else if (stats.skillToUse.name === "Thunder Storm") {
+            stats.equipments.weapon.element = 4;
+            hitCount = stats.skillToUse.level;
+            wCast = 1 * stats.skillToUse.level;
+            wDelay = 2;
+            skillModifier = 0.8;
+        } else if (stats.skillToUse.name === "Napalm Beat") {
+            stats.equipments.weapon.element = 8;
+            wCast = 0.5;
+            if (stats.skillToUse.level == 10)
+                wDelay = 0.5;
+            else if (stats.skillToUse.level == 9)
+                wDelay = 0.6;
+            else if (stats.skillToUse.level == 8)
+                wDelay = 0.7;
+            else if (stats.skillToUse.level >= 6)
+                wDelay = 0.8;
+            else if (stats.skillToUse.level >= 4)
+                wDelay = 0.9;
+            else
+                wDelay = 1;
+            skillModifier = 0.7 + stats.skillToUse.level * 0.1;
+        } else if (stats.skillToUse.name === "Soul Strike") {
+            stats.equipments.weapon.element = 8;
+            hitCount = Math.round(stats.skillToUse.level / 2);
+            wCast = 0.5;
+            if (stats.skillToUse.level % 2 == 0)
+                wDelay = 0.8 + stats.skillToUse.level / 2 * 0.2;
+            else
+                wDelay = 1 + (stats.skillToUse.level + 1) / 2 * 0.2;
+        } else if (stats.skillToUse.name === "Fire Pillar") {
+            stats.equipments.weapon.element = 3;
+            hitCount = stats.skillToUse.level + 2;
+            wCast = 3.3 - (0.3 * stats.skillToUse.level);
+            wDelay = 1;
+            skillModifier = 0.2;
+        } else if (stats.skillToUse.name === "Sightrasher") {
+            stats.equipments.weapon.element = 3;
+            wCast = 0.7;
+            wDelay = 2;
+            skillModifier = 1 + stats.skillToUse.level * 0.2;
+        } else if (stats.skillToUse.name === "Meteor Storm") {
+            stats.equipments.weapon.element = 3;
+            hitCount = Math.round(stats.skillToUse.level / 2) * (Math.floor(stats.skillToUse.level / 2) + 2);
+            wCast = 15;
+            wDelay = Math.floor(stats.skillToUse.level / 2) * 1 + 2;
+        } else if (stats.skillToUse.name === "Jupitel Thunder") {
+            stats.equipments.weapon.element = 4;
+            hitCount = stats.skillToUse.level + 2;
+            wCast = 2 + stats.skillToUse.level * 0.5;
+            wDelay = 0.01;
+        } else if (stats.skillToUse.name === "Lord of Vermillion") {
+            stats.equipments.weapon.element = 4;
+            hitCount = 4;
+            wCast = 15.5 - stats.skillToUse.level * 0.5;
+            wDelay = 5;
+            skillModifier = 0.8 + stats.skillToUse.level * 0.2;
+        } else if (stats.skillToUse.name === "Water Ball" || stats.skillToUse.name === "Water Ball") {
+            swDelay = 2;
+            stats.equipments.weapon.element = 1;
+            if (stats.skillToUse.level >= 4)
+                hitCount = 25
+            else if (stats.skillToUse.level >= 2)
+                hitCount = 9;
+            wCast = stats.skillToUse.level;
+            skillModifier = 1 + stats.skillToUse.level * 0.3;
+            wDelay = 0.1 * hitCount;
+        } else if (stats.skillToUse.name === "Frost Nova") {
+            skillModifier = 0.66 + stats.skillToUse.level * 0.066;
+            stats.equipments.weapon.element = 1;
+            wCast = 6 - Math.floor((stats.skillToUse.level - 1) / 2) * 0.5;
+            wDelay = 1;
+        } else if (stats.skillToUse.name === "Storm Gust") {
+            stats.equipments.weapon.element = 1;
+            hitCount = stats.skillToUse.additionalData;
+            wCast = 5 + stats.skillToUse.level;
+            wDelay = 5;
+            skillModifier = 1 + stats.skillToUse.level * 0.4;
+        } else if (stats.skillToUse.name === "Earth Spike" || stats.skillToUse.name === "Heaven's Drive") {
+            stats.equipments.weapon.element = 2;
+            hitCount = stats.skillToUse.level;
+            if (stats.skillToUse.name === "Earth Spike") {
+                wCast = stats.skillToUse.level * 0.7;
+                wDelay = 0.8 + stats.skillToUse.level * 0.2;
+            } else {
+                wCast = stats.skillToUse.level;
+                wDelay = 1;
+            }
+        } else if (stats.skillToUse.name === "Napalm Vulcan") {
+            hitCount = stats.skillToUse.level;
+            stats.equipments.weapon.element = 8;
+            wCast = 1;
+            wDelay = 1;
+            skillModifier = 0.7 + stats.skillToUse.level * 0.1;
+        } else if (stats.skillToUse.name === "Holy Light" || stats.skillToUse.name === "Holy Light (Soul Linked)") {
+            stats.equipments.weapon.element = 6;
+            wCast = 2;
+            skillModifier = 1.25;
+            if (stats.skillToUse.name === "Holy Light (Soul Linked)")
+                skillModifier *= 5;
+            wDelay = 0.01;
+        } else if (stats.skillToUse.name === "Magnus Exorcismus") {
+            n_SpSkill = 1;
+            stats.equipments.weapon.element = 6;
+            hitCount = stats.skillToUse.level;
+            wCast = 15;
+            wDelay = 4;
+            if (targetStats.race != 6 && targetStats.element < 90) {
+                stats.matk[2] = 0;
+                stats.matk[0] = 0;
+                stats.matk[1] = 0;
+            }
+        } else if (stats.skillToUse.name === "Estin") {
+            stats.equipments.weapon.element = stats.equipments.weapon.element;
+            wCast = 0.1;
+            wDelay = 0.5;
+            if (targetStats.size == 0)
+                skillModifier = stats.skillToUse.level * 0.1;
+            else
+                skillModifier = 0.01;
+            if (InWarOfEmperium == 1)
+                skillModifier = 0;
+        } else if (stats.skillToUse.name === "Estun") {
+            stats.equipments.weapon.element = stats.equipments.weapon.element;
+            wCast = 0.1;
+            wDelay = 0.5;
+
+            skillModifier = stats.skillToUse.level * 0.05;
+
+
+            if (InWarOfEmperium == 1)
+                skillModifier = 0;
+        } else if (stats.skillToUse.name === "Esma") {
+            stats.equipments.weapon.element = stats.equipments.weapon.element;
+            n_SpSkill = 1;
+            hitCount = stats.skillToUse.level;
+            wCast = 2;
+            wDelay = 0.5;
+            skillModifier = 0.4 + stats.baseLevel / 100;
+            if (InWarOfEmperium == 1)
+                skillModifier = 0;
+        } else if (stats.skillToUse.name === "Flaming Petals") {
+            stats.equipments.weapon.element = 3;
+            skillModifier = 0.9;
+            hitCount = stats.skillToUse.level;
+            wCast = 0.7 * stats.skillToUse.level;
+            wDelay = 0.01;
+        } else if (stats.skillToUse.name === "Blaze Shield") {
+            stats.equipments.weapon.element = 3;
+            skillModifier = 0.5;
+            hitCount = Math.round(stats.skillToUse.level / 2) + 4;
+            wCast = 6.5 - 0.5 * stats.skillToUse.level;
+            wDelay = 1;
+            n_SpSkill = 1;
+        } else if (stats.skillToUse.name === "Exploding Dragon") {
+            stats.equipments.weapon.element = 3;
+            skillModifier = 1.5 + stats.skillToUse.level * 1.5;
+            hitCount = 1;
+            wCast = 3;
+            wDelay = 3;
+        } else if (stats.skillToUse.name === "Freezing Spear") {
+            stats.equipments.weapon.element = 1;
+            skillModifier = 1;
+            hitCount = stats.skillToUse.level + 2;
+            wCast = stats.skillToUse.level * 0.7;
+            wDelay = 0.01;
+        } else if (stats.skillToUse.name === "Snow Flake Draft") {
+            stats.equipments.weapon.element = 1;
+            skillModifier = 1.0 + stats.skillToUse.level * 0.5;
+            hitCount = 1;
+            wCast = 3;
+            wDelay = 3;
+        } else if (stats.skillToUse.name === "Wind Blade") {
+            stats.equipments.weapon.element = 4;
+            skillModifier = 1.0;
+            hitCount = Math.floor(stats.skillToUse.level / 2) + 1;
+            wCast = Math.floor(stats.skillToUse.level / 2) + 1;
+            wDelay = 1;
+        } else if (stats.skillToUse.name === "Lightning Jolt") {
+            stats.equipments.weapon.element = 4;
+            skillModifier = 1.6 + 0.4 * stats.skillToUse.level;
+            hitCount = 1;
+            wCast = 4;
+            wDelay = 0.01;
+
+        } else if (stats.skillToUse.name === "First Wind") {
+            stats.equipments.weapon.element = 4;
+            skillModifier = 1.0 + stats.skillToUse.level * 1.0;
+            hitCount = 1;
+            wCast = 4;
+            wDelay = 0.01;
+        }
+
+        wCast *= stats.cast;
+
+        let finalDamagesCopy = [0, 0, 0];
+        for (b = 0; b <= 2; b++) {
+            finalDamages[b] = BattleMagicCalc(stats, targetStats, stats.matk[b] * skillModifier, InWarOfEmperium);
+            // myInnerHtml("ATK_0" + b, finalDamages[b] * hitCount + "(" + finalDamages[b] + SubName[8] + hitCount + "hit)", 0);
+            finalDamagesCopy[b] = finalDamages[b];
+            finalDamages[b] *= hitCount;
+        }
+        battleResult.minDmg = finalDamages[0];
+        battleResult.avgDmg = finalDamages[1];
+        battleResult.maxDmg = finalDamages[2];
+        battleResult.display.atk00 = "(" + finalDamagesCopy[0] + SubName[8] + hitCount + "hit)";
+        battleResult.display.atk01 = "(" + finalDamagesCopy[1] + SubName[8] + hitCount + "hit)";
+        battleResult.display.atk02 = "(" + finalDamagesCopy[2] + SubName[8] + hitCount + "hit)";
+
+        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
+        battleResult.display = Object.assign(battleResult.display, castAndDelayBattleResult.display);
+        delete castAndDelayBattleResult.display;
+        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
+
+
+        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
+        battleResult.display = Object.assign(battleResult.display, battleVariousResult.display);
+        delete battleVariousResult.display;
+        battleResult = Object.assign(battleResult, battleVariousResult);
+
+        // myInnerHtml("BattleHIT", 100, 0);
+        battleResult.battleHit = 100;
+    }
     return battleResult;
 }
 
-function HitEDPplus(wBCEDPp) {
+function HitEDPplus(stats, targetStats, wBCEDPp, InWarOfEmperium, w998E, w998K, hitRate) {
     if (wBCEDPp <= 0)
         return 0;
-    if (element[targetStatsArray[TARGET_STAT_ELEMENT]][n_A_Weapon_element] <= 0)
+    if (element[targetStats.element][stats.equipments.weapon.element] <= 0)
         return 0;
-    wBCEDPpDA = 1;
-    if (n_A_ActiveSkill == 0)
+    let wBCEDPpDA = 1;
+    if (stats.skillToUse.index == 0)
         wBCEDPpDA = (100 + w998E) / 100;
 
     wBCEDPch = 1;
-    wBCEDPpHOSI = ApplyWeaponryResearchAndDMGLevel(0);
+    let wBCEDPpHOSI = ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium);
     wBCEDPch = 0;
+    let www = 0;
     if (wBCEDPpHOSI >= 1) {
         www = hitRate;
 
-        if (SkillSearch(266))
-            wBCEDPpHOSI = Math.floor((wBCEDPpHOSI * element[targetStatsArray[TARGET_STAT_ELEMENT]][5]) / 4);
+        if (SkillSearch("Enchant Deadly Poison", stats))
+            wBCEDPpHOSI = Math.floor((wBCEDPpHOSI * element[targetStats.element][5]) / 4);
         if (n_A_PassSkill2[11])
-            wBCEDPpHOSI = Math.floor((wBCEDPpHOSI * element[targetStatsArray[TARGET_STAT_ELEMENT]][3]) / 5);
+            wBCEDPpHOSI = Math.floor((wBCEDPpHOSI * element[targetStats.element][3]) / 5);
     } else
         www = w998K * hitRate / 100;
 
-    if (n_A_WeaponType == WEAPON_TYPE_KATAR && n_A_ActiveSkill == 0)
-        wBCEDPp = Math.floor(wBCEDPp * (1.01 + SkillSearch(13) * 0.02));
+    if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR && stats.skillToUse.index == 0)
+        wBCEDPp = Math.floor(wBCEDPp * (1.01 + SkillSearch("Double Attack", stats) * 0.02));
 
 
-    if (n_A_ActiveSkill == 0) {
+    if (stats.skillToUse.index == 0) {
         wBCEDPp *= wBCEDPpDA;
         wBCEDPpHOSI *= wBCEDPpDA;
     }
@@ -2475,33 +4480,33 @@ function HitEDPplus(wBCEDPp) {
 
 function ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, w_atk, w_2, InWarOfEmperium) {
     if (w_2 == 10)
-        w_atk += stats.weapon1LV_upgradeBonusATK;
+        w_atk += stats.equipments.weapon.upgradeBonusATK;
     else
         w_atk = BattleCalc4(stats, targetStats, w_atk, w_2, 0);
 
     if (w_atk < 1) w_atk = 1;
 
 
-    if (stats.weaponType == WEAPON_TYPE_DAGGER || stats.weaponType == WEAPON_TYPE_SWORD) w_atk += 4 * SkillSearch(" Sword Mastery", stats);
-    else if (stats.weaponType == WEAPON_TYPE_TWO_HANDED_SWORD) w_atk += 4 * SkillSearch("Two-Hand Sword Mastery", stats);
-    else if (stats.weaponType == WEAPON_TYPE_SPEAR || stats.weaponType == WEAPON_TYPE_TWO_HANDED_SPEAR) {
+    if (stats.equipments.weapon.type == WEAPON_TYPE_DAGGER || stats.equipments.weapon.type == WEAPON_TYPE_SWORD) w_atk += 4 * SkillSearch(" Sword Mastery", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SWORD) w_atk += 4 * SkillSearch("Two-Hand Sword Mastery", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_SPEAR || stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SPEAR) {
         if (SkillSearch("Cavalier Mastery", stats) == 0)
             w_atk += 4 * SkillSearch("Spear Mastery", stats);
         else
             w_atk += 5 * SkillSearch("Spear Mastery", stats);
 
-    } else if (stats.weaponType == WEAPON_TYPE_KATAR) w_atk += 3 * SkillSearch("Katar Mastery", stats);
-    else if (stats.weaponType == WEAPON_TYPE_MACE) w_atk += 3 * SkillSearch("Mace Mastery", stats);
-    else if (stats.weaponType == WEAPON_TYPE_KNUCKLE || stats.weaponType == WEAPON_TYPE_UNARMED) w_atk += 3 * SkillSearch("Iron Fist", stats);
-    else if (stats.weaponType == WEAPON_TYPE_INSTRUMENT) w_atk += 3 * SkillSearch("Music Lessons", stats);
-    else if (stats.weaponType == WEAPON_TYPE_WHIP) w_atk += 3 * SkillSearch("Dance Lessons", stats);
-    else if (stats.weaponType == WEAPON_TYPE_BOOK) w_atk += 3 * SkillSearch("Study", stats);
-    else if (stats.weaponType == WEAPON_TYPE_AXE || stats.weaponType == WEAPON_TYPE_TWO_HANDED_AXE) w_atk += 3 * SkillSearch("Axe Mastery", stats);
+    } else if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR) w_atk += 3 * SkillSearch("Katar Mastery", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_MACE) w_atk += 3 * SkillSearch("Mace Mastery", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_KNUCKLE || stats.equipments.weapon.type == WEAPON_TYPE_UNARMED) w_atk += 3 * SkillSearch("Iron Fist", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_INSTRUMENT) w_atk += 3 * SkillSearch("Music Lessons", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_WHIP) w_atk += 3 * SkillSearch("Dance Lessons", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_BOOK) w_atk += 3 * SkillSearch("Study", stats);
+    else if (stats.equipments.weapon.type == WEAPON_TYPE_AXE || stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_AXE) w_atk += 3 * SkillSearch("Axe Mastery", stats);
 
-    if (stats.weaponType == WEAPON_TYPE_UNARMED && SkillSearch("Sprint (Unarmed Mastery)", stats))
+    if (stats.equipments.weapon.type == WEAPON_TYPE_UNARMED && SkillSearch("Sprint (Unarmed Mastery)", stats))
         w_atk += 10 * SkillSearch("Sprint (Unarmed Mastery)", stats);
 
-    if (stats.performanceSkills[10] && stats.weapon1Lv == 4)
+    if (stats.performanceSkills[10] && stats.equipments.weapon.level == 4)
         w_atk += 50 + 25 * stats.performanceSkills[10];
 
 
@@ -2532,69 +4537,66 @@ function ApplyWeaponryResearchAndDMGLevel(stats, targetStats, w999, InWarOfEmper
 
 
     if (wBCEDPch == 0)
-        w999 = w999 * element[targetStats.element][stats.weapon1Element];
+        w999 = w999 * element[targetStats.element][stats.equipments.weapon.element];
 
 
-    if (stats.weaponType == WEAPON_TYPE_UNARMED && SkillSearch("Sprint (Unarmed Mastery)", stats))
-        if (stats.skillToUseName == "Tornado Kick" || stats.skillToUseName == "Heel Drop" || stats.skillToUseName == "Roundouse" || stats.skillToUseName == "Counter Kick")
+    if (stats.equipments.weapon.type == WEAPON_TYPE_UNARMED && SkillSearch("Sprint (Unarmed Mastery)", stats))
+        if (stats.skillToUse.name == "Tornado Kick" || stats.skillToUse.name == "Heel Drop" || stats.skillToUse.name == "Roundouse" || stats.skillToUse.name == "Counter Kick")
             w999 += 10 * SkillSearch("Sprint (Unarmed Mastery)", stats);
 
 
     if (stats.job == 15 || stats.job == 29)
         w999 += 3 * SkillSearch("Summon Spirit Sphere", stats);
     else
-        w999 += 3 * stats.supportiveSkills[10];
+        w999 += 3 * stats.supportiveSkills[10].level;
 
     w999 += 3 * SkillSearch("Coin Flip", stats);
 
 
-    if (stats.weaponType != WEAPON_TYPE_UNARMED && w999_AB == 1)
+    if (stats.equipments.weapon.type != WEAPON_TYPE_UNARMED && w999_AB == 1)
         w999 += 20 * SkillSearch("Aura Blade", stats);
 
 
     if (wBCEDPch == 0) {
-        if (stats.skillToUseName == "Envenom" || stats.skillToUseName == "")
-            w999 += 15 * stats.skillToUseLV;
-        if (stats.skillToUseName == "Poison React (Counter)" && (targetStats.element < 50 || 60 <= targetStats.element))
+        if (stats.skillToUse.name == "Envenom" || stats.skillToUse.name == "")
+            w999 += 15 * stats.skillToUse.level;
+        if (stats.skillToUse.name == "Poison React (Counter)" && (targetStats.element < 50 || 60 <= targetStats.element))
             w999 += 75;
     }
-    if (stats.skillToUseName == "Magical Bullet")
-        w999 += Math.floor(stats.matk[b] * (100 - targetStatsArray[TARGET_STAT_MDEF]) / 100 - n_B_MDEF2);
-    if (stats.skillToUseName == "Gunslinger Mine")
-        w999 += stats.skillToUseLV * 50;
+    if (stats.skillToUse.name == "Magical Bullet")
+        w999 += Math.floor(stats.matk[b] * (100 - targetStats.mdef) / 100 - targetStats.mdef2);
+    if (stats.skillToUse.name == "Gunslinger Mine")
+        w999 += stats.skillToUse.level * 50;
 
 
-    if (cardOBJ[stats.cards[0]][0] == 106 && cardOBJ[stats.cards[1]][0] == 106 && cardOBJ[stats.cards[2]][0] == 106) {
+    if (stats.equipments.weapon.starCrumb >= 3) {
         w999 += 40;
     } else {
-        for (let i = 0; i <= 2; i++) {
-            if (cardOBJ[stats.cards[i]][0] == 106)
-                w999 += 5;
-        }
+        w999 += 5 * stats.equipments.weapon.starCrumb;
     }
-    if (stats.cards[3] == 106)
+    if (stats.equipments.weapon.craftedByTop10Smith)
         w999 += 10;
 
 
-    if (stats.skillToUseName == "Throw Dagger") {
-        w999 += SyurikenOBJ[eval(document.calcForm.SkillSubNum.value)][0];
+    if (stats.skillToUse.name == "Throw Dagger") {
+        w999 += SyurikenOBJ[stats.skillToUse.additionalData][0];
         w999 += 3 * SkillSearch("Dagger Throwing Practice", stats);
-        w999 += 4 * stats.skillToUseLV;
+        w999 += 4 * stats.skillToUse.level;
     }
 
-    if (stats.skillToUseName == "Throw Kunai")
-        w999 += KunaiOBJ[eval(document.calcForm.SkillSubNum.value)][0] * 3;
+    if (stats.skillToUse.name == "Throw Kunai")
+        w999 += KunaiOBJ[stats.skillToUse.additionalData][0] * 3;
 
     w999 = BaiCI(stats, targetStats, w999, InWarOfEmperium);
 
 
-    if (stats.skillToUseName == "Back Stab" && stats.weaponType == WEAPON_TYPE_BOW)
+    if (stats.skillToUse.name == "Back Stab" && stats.equipments.weapon.type == WEAPON_TYPE_BOW)
         w999 = Math.floor(w999 / 2);
 
 
-    if (hasLeftHand && stats.skillToUseName == "Basic Attack") {
+    if (stats.equipments.weaponLeftHand && stats.skillToUse.name == "Basic Attack") {
 
-        if (stats.weaponType != WEAPON_TYPE_UNARMED)
+        if (stats.equipments.weapon.type != WEAPON_TYPE_UNARMED)
             w999 = Math.floor(w999 * (50 + SkillSearch("Righthand Mastery", stats) * 10) / 100);
     }
 
@@ -2602,9 +4604,9 @@ function ApplyWeaponryResearchAndDMGLevel(stats, targetStats, w999, InWarOfEmper
     if (targetStats.isStaticPlant)
         return 1;
 
-    if (stats.skillToUseName == "Magical Bullet")
+    if (stats.skillToUse.name == "Magical Bullet")
         w999 = w999 * element[targetStats.element][8];
-    if (stats.skillToUseName == "Gunslinger Mine")
+    if (stats.skillToUse.name == "Gunslinger Mine")
         w999 = w999 * element[targetStats.element][0];
 
     return w999;
@@ -2617,8 +4619,8 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
     if (wBCEDPch == 0 && not_use_card == 0) {
 
         let w1 = 0;
-        w1 += StPlusCard(INCREASE_DAMAGE_RACE_PERCENTAGE + targetStats.race, stats);
-        w1 += StPlusItem(INCREASE_DAMAGE_RACE_PERCENTAGE + targetStats.race, stats);
+        w1 += GetCardStats(INCREASE_DAMAGE_RACE_PERCENTAGE + targetStats.race, stats);
+        w1 += GetEquipmentStats(INCREASE_DAMAGE_RACE_PERCENTAGE + targetStats.race, stats);
         if (targetStats.race == 6) {
             if (ArrowOBJ[stats.arrow][2] == "Holy Arrow")
                 w1 += 5;
@@ -2630,22 +4632,22 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
 
 
         w1 = 0;
-        w1 += StPlusCard(INCREASE_DAMAGE_ELEMENT_PERCENTAGE + Math.floor(targetStats.element / 10), stats);
-        w1 += StPlusItem(INCREASE_DAMAGE_ELEMENT_PERCENTAGE + Math.floor(targetStats.element / 10), stats);
+        w1 += GetCardStats(INCREASE_DAMAGE_ELEMENT_PERCENTAGE + Math.floor(targetStats.element / 10), stats);
+        w1 += GetEquipmentStats(INCREASE_DAMAGE_ELEMENT_PERCENTAGE + Math.floor(targetStats.element / 10), stats);
         wBaiCI = Math.floor(wBaiCI * (100 + w1) / 100);
 
 
         w1 = 0;
-        w1 += StPlusCard(INCREASE_DAMAGE_AGAINST_SIZE_PERCENTAGE + targetStats.size, stats);
-        w1 += StPlusItem(INCREASE_DAMAGE_AGAINST_SIZE_PERCENTAGE + targetStats.size, stats);
+        w1 += GetCardStats(INCREASE_DAMAGE_AGAINST_SIZE_PERCENTAGE + targetStats.size, stats);
+        w1 += GetEquipmentStats(INCREASE_DAMAGE_AGAINST_SIZE_PERCENTAGE + targetStats.size, stats);
         wBaiCI = Math.floor(wBaiCI * (100 + w1) / 100);
 
 
         if (n_Enekyori == 1) {
             if (TyouEnkakuSousa3dan != -1) {
                 w1 = 0;
-                w1 += StPlusCard("REDUCE_DEFENSE_PERCENTAGE", stats);
-                w1 += StPlusItem("REDUCE_DEFENSE_PERCENTAGE", stats);
+                w1 += GetCardStats(REDUCE_DEFENSE_PERCENTAGE, stats);
+                w1 += GetEquipmentStats(REDUCE_DEFENSE_PERCENTAGE, stats);
                 wBaiCI = Math.floor(wBaiCI * (100 + w1) / 100);
             }
         }
@@ -2653,8 +4655,8 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
 
         w1 = 0;
         if (targetStats.isMvp) {
-            w1 += StPlusCard("INCREASE_DAMAGE_AGAINST_BOSS_PERCENTAGE", stats);
-            w1 += StPlusItem("INCREASE_DAMAGE_AGAINST_BOSS_PERCENTAGE", stats);
+            w1 += GetCardStats(INCREASE_DAMAGE_AGAINST_BOSS_PERCENTAGE, stats);
+            w1 += GetEquipmentStats(INCREASE_DAMAGE_AGAINST_BOSS_PERCENTAGE, stats);
         }
         if (EquipNumSearch("The Sign", stats))
             w1 += EquipNumSearch("The Sign", stats) * 5;
@@ -2665,24 +4667,24 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
         wBaiCI = Math.floor(wBaiCI * (100 + w1) / 100);
 
 
-        if (wCriTyuu == 1 && stats.skillToUseName != "Sharp Shooting (Temp)")
-            wBaiCI = Math.floor(wBaiCI * (100 + StPlusCard("CRITICAL_DAMAGE_PERCENTAGE", stats)) / 100);
+        if (wCriTyuu == 1 && stats.skillToUse.name != "Sharp Shooting (Temp)")
+            wBaiCI = Math.floor(wBaiCI * (100 + GetCardStats(CRITICAL_DAMAGE_PERCENTAGE, stats)) / 100);
 
 
         if (108 <= targetStats.mobIndex && targetStats.mobIndex <= 115 || targetStats.mobIndex == 319)
-            wBaiCI = Math.floor(wBaiCI * (100 + StPlusCard("INCREASE_DAMAGE_GOBLIN_PERCENTAGE", stats)) / 100);
+            wBaiCI = Math.floor(wBaiCI * (100 + GetCardStats(INCREASE_DAMAGE_GOBLIN_PERCENTAGE, stats)) / 100);
 
         if (116 <= targetStats.mobIndex && targetStats.mobIndex <= 120)
-            wBaiCI = Math.floor(wBaiCI * (100 + StPlusCard("INCREASE_DAMAGE_KOBOLD_PERCENTAGE", stats)) / 100);
+            wBaiCI = Math.floor(wBaiCI * (100 + GetCardStats(INCREASE_DAMAGE_KOBOLD_PERCENTAGE, stats)) / 100);
 
         if (49 <= targetStats.mobIndex && targetStats.mobIndex <= 52 || 55 == targetStats.mobIndex || 221 == targetStats.mobIndex)
-            wBaiCI = Math.floor(wBaiCI * (100 + StPlusCard("INCREASE_DAMAGE_ORC_PERCENTAGE", stats)) / 100);
+            wBaiCI = Math.floor(wBaiCI * (100 + GetCardStats(INCREASE_DAMAGE_ORC_PERCENTAGE, stats)) / 100);
 
         if (106 == targetStats.mobIndex || 152 == targetStats.mobIndex || 308 == targetStats.mobIndex || 32 == targetStats.mobIndex)
-            wBaiCI = Math.floor(wBaiCI * (100 + StPlusCard("INCREASE_DAMAGE_GOLEM_PERCENTAGE", stats)) / 100);
+            wBaiCI = Math.floor(wBaiCI * (100 + GetCardStats(INCREASE_DAMAGE_GOLEM_PERCENTAGE, stats)) / 100);
 
 
-        wBaiCI = Math.floor(wBaiCI * (100 + StPlusItem(1000 + targetStats.mobIndex, stats) + StPlusCard(1000 + targetStats.mobIndex, stats)) / 100);
+        wBaiCI = Math.floor(wBaiCI * (100 + GetEquipmentStats(1000 + targetStats.mobIndex, stats) + GetCardStats(1000 + targetStats.mobIndex, stats)) / 100);
 
 
         if (EquipNumSearch("Burning Bow", stats) && stats.arrow == 2)
@@ -2704,11 +4706,11 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
             wBaiCI = wBaiCI * 2;
         if (SkillSearch("Enchant Deadly Poison", stats))
             wBaiCI = Math.floor(wBaiCI * (150 + 50 * SkillSearch("Enchant Deadly Poison", stats)) / 100);
-        if (stats.skillToUseName == "Poison React (Counter)" && (50 <= targetStats.element && targetStats.element < 60))
-            wBaiCI = Math.floor(wBaiCI * (100 + 30 * stats.skillToUseLV) / 100);
+        if (stats.skillToUse.name == "Poison React (Counter)" && (50 <= targetStats.element && targetStats.element < 60))
+            wBaiCI = Math.floor(wBaiCI * (100 + 30 * stats.skillToUse.level) / 100);
 
 
-        if (stats.weaponType == WEAPON_TYPE_KATAR && SkillSearch("Advanced Katar Mastery", stats) && stats.skillToUseName != "Soul Destroyer")
+        if (stats.equipments.weapon.type == WEAPON_TYPE_KATAR && SkillSearch("Advanced Katar Mastery", stats) && stats.skillToUse.name != "Soul Destroyer")
             wBaiCI = Math.floor(wBaiCI * (110 + 2 * SkillSearch("Advanced Katar Mastery", stats)) / 100);
 
         w1 = 0;
@@ -2740,17 +4742,17 @@ function BaiCI(stats, targetStats, wBaiCI, InWarOfEmperium) {
 
     let w1 = 0;
 
-    if (stats.skillToUseName == "Bash")
-        if (stats.shoesHandDefPlus >= 9 && CardNumSearch("Freezer"))
+    if (stats.skillToUse.name == "Bash")
+        if (stats.equipments.shoes.refinement >= 9 && CardNumSearch("Freezer", stats))
             w1 += 10;
 
     if (TyouEnkakuSousa3dan == -1 && EquipNumSearch("Barrage Fist", stats))
         w1 += 15;
 
-    if ((stats.skillToUseName == "Sonic Blow" || stats.skillToUseName == "Sonic Blow (Soul Linked)") && SkillSearch("Sonic Acceleration", stats))
+    if ((stats.skillToUse.name == "Sonic Blow" || stats.skillToUse.name == "Sonic Blow (Soul Linked)") && SkillSearch("Sonic Acceleration", stats))
         w1 += 10;
 
-    wBaiCI = wBaiCI * (100 + StPlusItem(5000 + stats.skillToUse, stats) + StPlusCard(5000 + stats.skillToUse, stats) + w1) / 100;
+    wBaiCI = wBaiCI * (100 + GetEquipmentStats(5000 + stats.skillToUse.index, stats) + GetCardStats(5000 + stats.skillToUse.index, stats) + w1) / 100;
 
     return wBaiCI;
 }
@@ -2769,18 +4771,15 @@ function BattleCalc3(stats, targetStats, w998, InWarOfEmperium, w998B, w998E, w9
 }
 
 
-function BattleCalc3left(w998) {
+function BattleCalc3left(stats, targetStats, hitRate, w998, InWarOfEmperium) {
 
-    wBC3L2 = 0;
-    for (i = 4; i <= 7; i++) {
-        if (cardOBJ[stats.cards[i]][0] == 106)
-            wBC3L2 += 5;
-    }
+    let wBC3L2 = 0;
+    wBC3L2 += 5 * stats.equipments.weaponLeftHand.starCrumb;
 
-    wBC3_Normal = w998 * hitRate / 100;
-    wBC3_Miss = wBC3L2 * (100 - hitRate) / 100;
+    let wBC3_Normal = w998 * hitRate / 100;
+    let wBC3_Miss = wBC3L2 * (100 - hitRate) / 100;
 
-    wBC3_X = wBC3_Normal + wBC3_Miss;
+    let wBC3_X = wBC3_Normal + wBC3_Miss;
 
     wBC3_X = tPlusDamCut(stats, targetStats, wBC3_X, InWarOfEmperium);
 
@@ -2791,43 +4790,42 @@ function BattleCalc3left(w998) {
 function BattleCalc4(stats, targetStats, wBC4, wBC4_2, wBC4_3) {
 
     if (wBC4_3 === undefined || wBC4_3 == 0)
-        wBC4_3 = stats.weapon1LV_upgradeBonusATK;
+        wBC4_3 = stats.equipments.weapon.upgradeBonusATK;
     else
-        wBC4_3 = stats.weapon2LV_upgradeBonusATK;
-    let n_B_DEF2 = [targetStats.def2Max, targetStats.def2Avg, targetStats.def2Min]
-    if ((StPlusItem("WEAPON_ATK_INCREASE_ON_TARGET_DEFENSE", stats) + StPlusCard("WEAPON_ATK_INCREASE_ON_TARGET_DEFENSE", stats)) == 0 || stats.skillToUseName == "Stave Crasher") {
-        if (stats.skillToUseName == "Wounding Shot")
+        wBC4_3 = stats.equipments.weaponLeftHand ? stats.equipments.weaponLeftHand.overUpgradeBonusATK : 0;
+    if ((GetEquipmentStats(WEAPON_ATK_INCREASE_ON_TARGET_DEFENSE, stats) + GetCardStats(WEAPON_ATK_INCREASE_ON_TARGET_DEFENSE, stats)) == 0 || stats.skillToUse.name == "Stave Crasher") {
+        if (stats.skillToUse.name == "Wounding Shot")
             return wBC4 + wBC4_3;
-        if (StPlusItem("BYPASS_DEFENSE_ON_RACE", stats) == targetStats.race && targetStats.race != 0)
+        if (GetEquipmentStats(BYPASS_DEFENSE_ON_RACE, stats) == targetStats.race && targetStats.race != 0)
             return wBC4 + wBC4_3;
-        if (StPlusItem("BYPASS_DEFENSE_ON_RACE", stats) == 99 && targetStats.isNormal)
+        if (GetEquipmentStats(BYPASS_DEFENSE_ON_RACE, stats) == 99 && targetStats.isNormal)
             return wBC4 + wBC4_3;
         if (SkillSearch("Solar, Lunar, and Stellar Union", stats))
             return wBC4 + wBC4_3;
         if (CardNumSearch("Samurai Specter", stats) && targetStats.isNormal)
             return wBC4 + wBC4_3;
-        wBC4 = Math.floor(wBC4 * (100 - targetStats.def) / 100) - n_B_DEF2[wBC4_2] + wBC4_3;
+        wBC4 = Math.floor(wBC4 * (100 - targetStats.def) / 100) - targetStats.def2[wBC4_2] + wBC4_3;
     } else {
         if (wBC4_2 == 0) {
-            wBC4 = Math.floor(wBC4 * (n_B_DEF2[2] + targetStats.def) / 100) + wBC4_3;
+            wBC4 = Math.floor(wBC4 * (targetStats.def2[2] + targetStats.def) / 100) + wBC4_3;
         } else if (wBC4_2 == 1) {
-            wBC4 = Math.floor(wBC4 * (n_B_DEF2[1] + targetStats.def) / 100) + wBC4_3;
+            wBC4 = Math.floor(wBC4 * (targetStats.def2[1] + targetStats.def) / 100) + wBC4_3;
         } else {
-            wBC4 = Math.floor(wBC4 * (n_B_DEF2[0] + targetStats.def) / 100) + wBC4_3;
+            wBC4 = Math.floor(wBC4 * (targetStats.def2[0] + targetStats.def) / 100) + wBC4_3;
         }
     }
     return wBC4;
 }
 
 
-function BattleCalcEDP(stats, targetStats, wBCEDP, wBCEDP2) {
+function BattleCalcEDP(stats, targetStats, wBCEDP, wBCEDP2, InWarOfEmperium) {
 
     if (wBCEDP <= 0)
         return 0;
-    if (element[targetStats.element][stats.weapon1Element] <= 0 && ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) == 0)
+    if (element[targetStats.element][stats.equipments.weapon.element] <= 0 && ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) == 0)
         return 0;
 
-    if (stats.skillToUseName == "Sand Attack" || stats.skillToUseName == "Soul Destroyer" || stats.skillToUseName == "Venom Splasher" || stats.skillToUseName == "Meteor Assault" || stats.skillToUseName == "Bomb")
+    if (stats.skillToUse.name == "Sand Attack" || stats.skillToUse.name == "Soul Destroyer" || stats.skillToUse.name == "Venom Splasher" || stats.skillToUse.name == "Meteor Assault" || stats.skillToUse.name == "Bomb")
         return 0;
     let wBCEDPch = 1;
     let wBCEDPx = 0;
@@ -2836,7 +4834,7 @@ function BattleCalcEDP(stats, targetStats, wBCEDP, wBCEDP2) {
         wBCEDPx = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, wBCEDP, wBCEDP2, InWarOfEmperium);
         wBCEDPx = Math.floor((wBCEDPx * element[targetStats.element][5]) / 4);
     }
-    if (stats.supportiveSkills[11]) {
+    if (stats.supportiveSkills[11].level) {
         wBCEDPy = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, wBCEDP, wBCEDP2, InWarOfEmperium);
         wBCEDPy = Math.floor((wBCEDPy * element[targetStats.element][3]) / 5);
     }
@@ -2844,1823 +4842,8 @@ function BattleCalcEDP(stats, targetStats, wBCEDP, wBCEDP2) {
     return wBCEDPx + wBCEDPy;
 }
 
-function BattleCalc999(stats, targetStats, InWarOfEmperium, hitRate, criticalRate, n_A_DMG, n_A_EDP_DMG, w998B, w998E, w998G, w998I, w998L) {
-    let skillModifier = 1;
-    let wCast = 0;
-    let wDelay = 0;
-    let swDelay = 0;
-    let battleResult = {
-        // bonusSub: "", // bSUB
-        // bonusSubName: "", // bSUBname
-        // bonusSub2: "", // bSUB2
-        // bonusSub2Name: "", // bSUB2name
-        // critAtk: [],  // CRIATK
-        // critChance: 0, // CRInum
-        // critAtkName: "", // CRIATKname
-        // critChanceName: "", // CRInumname
-        // atk00: "", // ATK_00
-        // atk02: "", // ATK_02
-        // atk01: "", // ATK_01
-        // battleHit: 0, // BattleHIT
-        // dps: 0, // DPS
-        // minAtkNum: 0, // MinATKnum
-        // maxAtkNum: 0, // MaxATKnum
-        // avgAtkNum: 0, // AveATKnum
-        // battleTime: 0, // BattleTime
-        // averageReceivedDamage: 0, // AverageReceivedDamageIncludingDodge
-    };
+function BattleCalc999(stats, targetStats, InWarOfEmperium, hitRate, criticalRate, n_A_DMG, n_A_EDP_DMG, w998B, w998E, w998G, w998I, w998L, impositioMagnus, sizeModifier) {
 
-    if (stats.skillToUseName != "Basic Attack" && stats.skillToUseName != "Martyr's Reconing") {
-        wDelay = Math.floor(stats.aspd * 100) / 100;
-        if (stats.skillToUseName == "Envenom" || stats.skillToUseName == "")
-            wDelay = Math.floor(stats.aspd * 75) / 100;
-        let minimumDelayBetweenActiveSkills = 10;
-        // wA_ASPD = eval(FORM_DATA.Conf01) / 100;
-        let wA_ASPD = eval(minimumDelayBetweenActiveSkills) / 100;
-        if (wDelay < wA_ASPD)
-            wDelay = wA_ASPD;
-    }
-
-    let hitCount = 1;
-    let isRangedAttack = 0;
-
-    let finalDamages = [0, 0, 0];
-    let not_use_card = 0;
-    let cast_kotei = 0;
-
-
-    // myInnerHtml("bSUBname", "", 0);
-    // myInnerHtml("bSUB", "", 0);
-    // myInnerHtml("bSUB2name", "", 0);
-    // myInnerHtml("bSUB2", "", 0);
-
-
-    if (stats.skillToUseName != "Basic Attack" && stats.skillToUseName != "Sharp Shooting (Temp)" && (stats.skillToUseName != "Poison React (Counter)" || (targetStats.element < 50 && 60 <= targetStats.element))) {
-        // myInnerHtml("CRIATK", "", 0);
-        // myInnerHtml("CRInum", "", 0);
-        // myInnerHtml("CRIATKname", "", 0);
-        // myInnerHtml("CRInumname", "", 0);
-    }
-
-    if ((stats.weaponType == WEAPON_TYPE_BOW || stats.weaponType == WEAPON_TYPE_HANDGUN || stats.weaponType == WEAPON_TYPE_RIFLE || stats.weaponType == WEAPON_TYPE_SHOTGUN || stats.weaponType == WEAPON_TYPE_GATLING_GUN || stats.weaponType == WEAPON_TYPE_GRENADE_LAUNCHER) && stats.skillToUseName === "Basic Attack")
-        isRangedAttack = 1;
-
-
-    if (stats.skillToUseName === "Basic Attack" || (stats.skillToUseName === "Poison React (Counter)" && (50 <= targetStats.element && targetStats.element < 60))) {
-        // myInnerHtml("CRIATKname", SubName[3], 0);
-        // myInnerHtml("CRInumname", SubName[4], 0);
-        battleResult.critAtkName = SubName[3];
-        battleResult.critChanceName = SubName[4];
-
-        if (stats.skillToUseName === "Poison React (Counter)") {
-            n_SpSkill = 1;
-            if (stats.weaponType != WEAPON_TYPE_KATAR)
-                ;
-            battleResult.bonusSub = "Damage Shown with 2x right hand damage";
-            // myInnerHtml("bSUB", '<Font size="2"><B>Damage Shown with 2x right hand damage.</B></Font>', 0);
-        }
-
-        if (hasLeftHand) {
-
-            if (!targetStats.isStaticPlant) {
-                TyouEnkakuSousa3dan = 0;
-
-                stats.weapon2Index = eval(document.calcForm.A_weapon2.value);
-                stats.weapon2LV = ItemOBJ[stats.weapon2Index][4];
-                stats.weapon2_ATK = ItemOBJ[stats.weapon2Index][3];
-                stats.weapon2_RefinementLevel = eval(document.calcForm.A_Weapon2_ATKplus.value);
-
-
-                stats.weapon2LV_upgradeBonusATK = 0;
-                stats.weapon2LV_Minplus = 0;
-                stats.weapon2LV_overUpgradeBonusATK = 0;
-                if (stats.weapon2LV == 1) {
-                    stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 2;
-                    if (stats.weapon2_RefinementLevel >= 8) {
-                        stats.weapon2LV_Minplus = 1;
-                        stats.weapon2LV_overUpgradeBonusATK = 3 * (stats.weapon2_RefinementLevel - 7);
-                    }
-                } else if (stats.weapon2LV == 2) {
-                    stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 3;
-                    if (stats.weapon2_RefinementLevel >= 7) {
-                        stats.weapon2LV_Minplus = 1;
-                        stats.weapon2LV_overUpgradeBonusATK = 5 * (stats.weapon2_RefinementLevel - 6);
-                    }
-                } else if (stats.weapon2LV == 3) {
-                    stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 5;
-                    if (stats.weapon2_RefinementLevel >= 6) {
-                        stats.weapon2LV_Minplus = 1;
-                        stats.weapon2LV_overUpgradeBonusATK = 8 * (stats.weapon2_RefinementLevel - 5);
-                    }
-                } else if (stats.weapon2LV == 4) {
-                    stats.weapon2LV_upgradeBonusATK = stats.weapon2_RefinementLevel * 7;
-                    if (stats.weapon2_RefinementLevel >= 5) {
-                        stats.weapon2LV_Minplus = 1;
-                        stats.weapon2LV_overUpgradeBonusATK = 14 * (stats.weapon2_RefinementLevel - 4);
-                    }
-                }
-
-                workDex = Math.floor(stats.dex * (1 + (stats.weapon2LV - 1) * 0.2));
-
-                if (workDex >= stats.weapon2_ATK)
-                    w_left_Maxatk = stats.baseATK + stats.weapon2LV_overUpgradeBonusATK + Math.floor((stats.weapon2_ATK + impositioMagnus) * sizeModifier);
-                else
-                    w_left_Maxatk = stats.baseATK + stats.weapon2LV_overUpgradeBonusATK + Math.floor((stats.weapon2_ATK - 1 + impositioMagnus) * sizeModifier);
-
-                w_left_Maxatk = BattleCalc4(stats, targetStats, w_left_Maxatk * skillModifier, 2, 1);
-
-                if (w_left_Maxatk < 1) w_left_Maxatk = 1;
-                w_left_Maxatk = Math.floor(w_left_Maxatk * element[targetStats.element][stats.weapon2Element]);
-
-
-                w_left_star = 0;
-                if (stats.cards[4] == 106 && stats.cards[5] == 106 && stats.cards[6] == 106) {
-                    w_left_star += 40;
-                } else {
-                    for (i = 4; i <= 6; i++) {
-                        if (cardOBJ[stats.cards[i]][0] == 106)
-                            w_left_star += 5;
-                    }
-                }
-                if (stats.cards[7] == 106)
-                    w_left_star += 10;
-                w_left_Maxatk += w_left_star;
-                w_left_Maxatk = w_left_Maxatk * (3 + SkillSearch("Lefthand Mastery", stats)) / 10;
-                w_left_Maxatk = Math.floor(w_left_Maxatk);
-
-
-                if (workDex > stats.weapon2_ATK)
-                    workDex = stats.weapon2_ATK;
-                w_left_Minatk = stats.baseATK + stats.weapon2LV_Minplus + Math.floor((workDex + impositioMagnus) * sizeModifier);
-                w_left_Minatk = BattleCalc4(stats, targetStats, w_left_Minatk * skillModifier, 0, 1);
-
-                if (w_left_Minatk < 1) w_left_Minatk = 1;
-                w_left_Minatk = Math.floor(w_left_Minatk * element[targetStats.element][stats.weapon2Element]);
-                w_left_Minatk += w_left_star;
-                w_left_Minatk *= (0.3 + SkillSearch("Lefthand Mastery", stats) / 10);
-                w_left_Minatk = Math.floor(w_left_Minatk);
-
-                w_left_Aveatk = (w_left_Maxatk + w_left_Minatk) / 2;
-            } else {
-                w_left_Maxatk = 1;
-                w_left_Minatk = 1;
-                w_left_Aveatk = 1;
-            }
-
-            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-
-            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
-            // myInnerHtml("ATK_02", finalDamages[2] + n_A_EDP_DMG[2] + "(" + w_left_Maxatk + ")", 0);
-            battleResult.atk02 = finalDamages[2] + n_A_EDP_DMG[2] + "(" + w_left_Maxatk + ")";
-
-            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[2] += BattleCalc3left(w_left_Maxatk);
-            finalDamages[2] += HitEDPplus(n_A_EDP_DMG[2]);
-
-            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
-            // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0] + "(" + w_left_Minatk + ")", 0);
-            battleResult.atk00 = finalDamages[0] + n_A_EDP_DMG[0] + "(" + w_left_Minatk + ")";
-
-            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[0] += BattleCalc3left(w_left_Minatk);
-            finalDamages[0] += HitEDPplus(n_A_EDP_DMG[0]);
-
-            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
-            // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1] + "(" + w_left_Aveatk + ")", 0);
-            battleResult.atk01 = finalDamages[1] + n_A_EDP_DMG[1] + "(" + w_left_Aveatk + ")";
-
-            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[1] += BattleCalc3left(w_left_Aveatk);
-            finalDamages[1] += HitEDPplus(n_A_EDP_DMG[1]);
-
-            let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
-            battleResult = Object.assign(battleResult, battleVariousResult);
-        } else if (stats.weaponType == WEAPON_TYPE_KATAR) {
-            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
-            wk = Math.floor(finalDamages[2] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            wk2 = Math.floor((finalDamages[2] + n_A_EDP_DMG[2]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            // myInnerHtml("ATK_02", (finalDamages[2] + wk2 + n_A_EDP_DMG[2]) + "(" + (finalDamages[2] + n_A_EDP_DMG[2]) + "+" + wk2 + ")", 0);
-            battleResult.atk02 = (finalDamages[2] + wk2 + n_A_EDP_DMG[2]) + "(" + (finalDamages[2] + n_A_EDP_DMG[2]) + "+" + wk2 + ")";
-
-            finalDamages[2] += wk;
-
-
-            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[2] += HitEDPplus(n_A_EDP_DMG[2]);
-
-            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
-            wk = Math.floor(finalDamages[0] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            wk2 = Math.floor((finalDamages[0] + n_A_EDP_DMG[0]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            // myInnerHtml("ATK_00", (finalDamages[0] + wk2 + n_A_EDP_DMG[0]) + "(" + (finalDamages[0] + n_A_EDP_DMG[0]) + "+" + wk2 + ")", 0);
-            battleResult.atk00 = (finalDamages[0] + wk2 + n_A_EDP_DMG[0]) + "(" + (finalDamages[0] + n_A_EDP_DMG[0]) + "+" + wk2 + ")";
-            finalDamages[0] += wk;
-
-            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[0] += HitEDPplus(n_A_EDP_DMG[0]);
-
-            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
-            wk = Math.floor(finalDamages[1] * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            wk2 = Math.floor((finalDamages[1] + n_A_EDP_DMG[1]) * (0.01 + SkillSearch("Double Attack", stats) * 0.02));
-            // myInnerHtml("ATK_01", (finalDamages[1] + wk2 + n_A_EDP_DMG[1]) + "(" + (finalDamages[1] + n_A_EDP_DMG[1]) + "+" + wk2 + ")", 0);
-            battleResult.atk01 = (finalDamages[1] + wk2 + n_A_EDP_DMG[1]) + "(" + (finalDamages[1] + n_A_EDP_DMG[1]) + "+" + wk2 + ")";
-            finalDamages[1] += wk;
-
-            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[1] += HitEDPplus(n_A_EDP_DMG[1]);
-
-            let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
-            battleResult = Object.assign(battleResult, battleVariousResult);
-        } else {
-            let wTAKA = 0;
-            if (stats.weaponType == WEAPON_TYPE_BOW && SkillSearch("Blitz Beat") && stats.skillToUseName != "Sharp Shooting (Temp)", stats) {
-                // myInnerHtml("bSUBname", "Bird Damage (Atk Rate))", 0);
-                battleResult.bonusSubName = "Bird Damage (Atk Rate))";
-                wBTw1 = Math.floor((stats.jobLevel - 1) / 10 + 1);
-                if (wBTw1 > 5) wBTw1 = 5;
-                let wBTw2 = SkillSearch("Blitz Beat", stats);
-                if (wBTw2 < wBTw1)
-                    wBTw1 = wBTw2;
-                let wBT = 80 + Math.floor(stats.dex / 10) * 2 + Math.floor(stats.int / 2) * 2 + SkillSearch("Steel Crow", stats) * 6;
-                wBT = Math.floor(wBT * element[targetStats.element][0]);
-                wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
-                let wBTw3 = Math.round((1 + stats.luk * 0.3) * 100) / 100;
-                if (targetStats.mobIndex == 44)
-                    wBT = 0;
-                // myInnerHtml("bSUB", wBT * wBTw1 + "(" + wBTw3 + "%)", 0);
-                battleResult.bonusSub = wBT * wBTw1 + "(" + wBTw3 + "%)";
-                wBT = wBT * wBTw1 * wBTw3 / 100;
-                wBT = wBT * (hitRate + ((100 - hitRate) * criticalRate / 100)) / 100;
-                wBTw1 = 0;
-                wTAKA = Math.round(wBT * 100) / 100;
-            }
-            TyouEnkakuSousa3dan = 0;
-
-            if (SkillSearch("Raging Trifecta Blow", stats)) {
-                TyouEnkakuSousa3dan = -1;
-
-                // myInnerHtml("bSUBname", "Trifecta Damage", 0);
-                battleResult.bonusSubName = "Trifecta Damage";
-                san1 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 0) / 3) * 3;
-                san2 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 1) / 3) * 3;
-                san3 = Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2] * (skillModifier + wBC3_3danAtkBairitu, InWarOfEmperium), 2) / 3) * 3;
-                // myInnerHtml("bSUB", san1 + " ~ " + san3, 0);
-                // myInnerHtml("bSUB2name", "Trifecta Rate", 0);
-                // myInnerHtml("bSUB2", 30 - SkillSearch("Raging Trifecta Blow", stats) + "%", 0);
-                battleResult.bonusSub = san1 + " ~ " + san3;
-                battleResult.bonusSub2Name = "Trifecta Rate";
-                battleResult.bonusSub2 = 30 - SkillSearch("Raging Trifecta Blow", stats) + "%";
-                TyouEnkakuSousa3dan = 0;
-            }
-
-            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-            finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
-            if (SkillSearch("Raging Trifecta Blow", stats))
-                TyouEnkakuSousa3dan = san3;
-            battleResult.atk02 = (finalDamages[2] + n_A_EDP_DMG[2]) + "";
-            // myInnerHtml("ATK_02", (finalDamages[2] + n_A_EDP_DMG[2]), 0);
-
-
-            finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[2] += wTAKA;
-            finalDamages[2] += HitEDPplus(n_A_EDP_DMG[2]);
-
-            finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
-            // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0], 0);
-            battleResult.atk00 = (finalDamages[0] + n_A_EDP_DMG[0]) + "";
-            if (SkillSearch("Raging Trifecta Blow", stats))
-                TyouEnkakuSousa3dan = san1;
-
-            finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[0] += wTAKA;
-            finalDamages[0] += HitEDPplus(n_A_EDP_DMG[0]);
-
-            finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
-            // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1], 0);
-            battleResult.atk01 = (finalDamages[1] + n_A_EDP_DMG[1]) + "";
-            if (SkillSearch("Raging Trifecta Blow", stats))
-                TyouEnkakuSousa3dan = san2;
-
-            finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-            finalDamages[1] += wTAKA;
-            finalDamages[1] += HitEDPplus(n_A_EDP_DMG[1]);
-
-            let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-            battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-            let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-            battleResult = Object.assign(battleResult, battleVariousResult);
-        }
-        return battleResult;
-    } else if (stats.skillToUseName === "Sharp Shooting (Temp)") {
-        isRangedAttack = 1;
-        battleResult.critAtkName = "Defence Bypassing Damage";
-        battleResult.critChanceName = "Chance to Bypass Defence";
-        // myInnerHtml("CRIATKname", "Defence Bypassing Damage", 0);
-        // myInnerHtml("CRInumname", "Chance to Bypass Defence", 0);
-
-        skillModifier += (1 + 0.5 * stats.skillToUseLV);
-        wCast = 2 * stats.cast;
-        wDelay = 1.5;
-        swDelay = 1;
-
-
-        stats.critATK[1] = n_A_DMG[1];
-        stats.critATK[0] = n_A_DMG[0];
-        stats.critATK[2] = n_A_DMG[2];
-
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 1);
-
-        wCriTyuu = 1;
-        stats.critATK[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[1], 10, InWarOfEmperium);
-        stats.critATK[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[0], 10, InWarOfEmperium);
-        stats.critATK[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, stats.critATK[2], 10, InWarOfEmperium);
-        wCriTyuu = 0;
-
-
-        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 0);
-        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 2);
-        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 3);
-
-        // myInnerHtml("CRIATK", (stats.critATK[0] + n_A_EDP_DMG[0]) + " ~ " + (stats.critATK[2] + n_A_EDP_DMG[2]), 0);
-        battleResult.critAtk = [];
-        battleResult.critAtk[0] = stats.critATK[0] + n_A_EDP_DMG[0];
-        battleResult.critAtk[1] = stats.critATK[2] + n_A_EDP_DMG[2];
-
-
-        stats.critATK[2] += HitEDPplus(n_A_EDP_DMG[2]);
-        stats.critATK[0] += HitEDPplus(n_A_EDP_DMG[0]);
-        stats.critATK[1] += HitEDPplus(n_A_EDP_DMG[1]);
-
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-        finalDamages[2] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[2], 2, InWarOfEmperium);
-        // myInnerHtml("ATK_02", (finalDamages[2] + n_A_EDP_DMG[2]), 0);
-        battleResult.atk02 = (finalDamages[2] + n_A_EDP_DMG[2]) + "";
-
-
-        finalDamages[2] = BattleCalc3(stats, targetStats, finalDamages[2], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-        finalDamages[2] += HitEDPplus(n_A_EDP_DMG[2]);
-
-        finalDamages[0] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[0], 0, InWarOfEmperium);
-        // myInnerHtml("ATK_00", finalDamages[0] + n_A_EDP_DMG[0], 0);
-        battleResult.atk00 = (finalDamages[0] + n_A_EDP_DMG[0]) + "";
-
-        finalDamages[0] = BattleCalc3(stats, targetStats, finalDamages[0], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-        finalDamages[0] += HitEDPplus(n_A_EDP_DMG[0]);
-
-        finalDamages[1] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[1], 1, InWarOfEmperium);
-        // myInnerHtml("ATK_01", finalDamages[1] + n_A_EDP_DMG[1], 0);
-        battleResult.atk01 = (finalDamages[1] + n_A_EDP_DMG[1]) + "";
-
-        finalDamages[1] = BattleCalc3(stats, targetStats, finalDamages[1], InWarOfEmperium, w998B, w998E, w998G, w998I, w998L);
-        finalDamages[1] += HitEDPplus(n_A_EDP_DMG[1]);
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        return battleResult;
-    }
-
-    // 6 -> bash
-    // 7 -> magnum break
-    let activeSkillIds = [6, 7, 19, 41, 44, 65, 71, 72, 73, 83, 84, 158, 161, 169, 171, 188, 189, 199, 207, 248, 260, 261, 264, 288, 289, 290, 292, 302, 303, 326, 331, 333, 335, 337, 339, 382, 388, 348, 349, 350, 419, 423, 428, 429, 430, 431, 432, 434, 435, 436, 437, "NULL"];
-    let activeSkillInUseIndex;
-    let wActiveHitNum = 0;
-    for (activeSkillInUseIndex = 0; activeSkillIds[activeSkillInUseIndex] != stats.skillToUse && activeSkillIds[activeSkillInUseIndex] != "NULL"; activeSkillInUseIndex++) ;
-    if (stats.skillToUse === activeSkillIds[activeSkillInUseIndex]) {
-        wActiveHitNum = 1;
-        if (stats.skillToUseName === "Bash")
-            skillModifier += stats.skillToUseLV * 0.3;
-        else if (stats.skillToUseName === "Solar Heat" || stats.skillToUseName === "Lunar Heat" || stats.skillToUseName === "Stellar Heat") {
-            //Heat
-
-            wDelay = 0.1;
-
-        } else if (stats.skillToUseName === "Magnum Break") {
-            skillModifier += stats.skillToUseLV * 0.2;
-            stats.weapon1Element = 3;
-            wDelay = 2;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Sand Attack") {
-            not_use_card = 1;
-            skillModifier += 0.3;
-            stats.weapon1Element = 2;
-        } else if (stats.skillToUseName === "Arrow Shower") {
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 0.05 - 0.25;
-            wDelay = 1;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Arrow Repel") {
-            isRangedAttack = 1;
-            wCast = 1.5;
-            skillModifier += 0.5;
-        } else if (stats.skillToUseName === "Mammonite")
-            skillModifier += stats.skillToUseLV * 0.5;
-        else if (stats.skillToUseName === "Spear Stab") {
-            skillModifier += stats.skillToUseLV * 0.2;
-            isRangedAttack = 1;
-        } else if (stats.skillToUseName === "Grimtooth") {
-            if (stats.skillToUseLV >= 3)
-                isRangedAttack = 1;
-            skillModifier += 0.2 * stats.skillToUseLV;
-
-
-        } else if (stats.skillToUseName === "Smite") {
-            skillModifier += stats.skillToUseLV * 0.2;
-
-        } else if (stats.skillToUseName === "Holy Cross") {
-            skillModifier += stats.skillToUseLV * 0.35;
-            stats.weapon1Element = 6;
-        } else if (stats.skillToUseName === "Sightless Mind")
-            skillModifier += stats.skillToUseLV * 0.4;
-        else if (stats.skillToUseName === "Spear Boomerang") {
-            skillModifier += stats.skillToUseLV * 0.5;
-            wDelay = 1;
-            swDelay = 1;
-            isRangedAttack = 1;
-        } else if (stats.skillToUseName === "Brandish Spear") {
-            w = (1 + stats.skillToUseLV * 0.2);
-            if (stats.skillToUseLV == 10) skillModifier += 4.625;
-            else if (stats.skillToUseLV >= 7) skillModifier += w + w / 2 + w / 4 - 1;
-            else if (stats.skillToUseLV >= 4) skillModifier += w + w / 2 - 1;
-            else skillModifier += w - 1;
-            wCast = 0.7;
-        } else if (stats.skillToUseName === "Sonic Blow" || stats.skillToUseName === "Sonic Blow (Soul Linked)") {
-            wActiveHitNum = 8;
-            skillModifier += stats.skillToUseLV * 0.5 + 2;
-            if (stats.skillToUseName === "Sonic Blow (Soul Linked)" && InWarOfEmperium == 0)
-                skillModifier *= 2;
-            if (stats.skillToUseName === "Sonic Blow (Soul Linked)" && InWarOfEmperium == 1)
-                skillModifier *= 1.25;
-            wDelay = 2;
-            swDelay = 2;
-        } else if (stats.skillToUseName === "Back Stab") {
-            skillModifier += stats.skillToUseLV * 0.4 + 2;
-            wDelay = 0.5;
-            swDelay = 1;
-            w_HIT = 100;
-            // myInnerHtml("BattleHIT", 100, 0);
-            battleResult.battleHit = 100;
-        } else if (stats.skillToUseName === "Raging Quadruple Blow") {
-            wActiveHitNum = 4;
-            skillModifier += 0.5 + stats.skillToUseLV * 0.5;
-            n_SpSkill = 1;
-        } else if (stats.skillToUseName === "Raging Thrust") {
-            skillModifier += 1.4 + stats.skillToUseLV * 0.6;
-            n_SpSkill = 1;
-        } else if (stats.skillToUseName === "Melody Strike" || stats.skillToUseName === "Slinging Arrow") {
-            wCast = 1.5;
-            skillModifier += (stats.skillToUseLV * 0.4 - 0.4);
-            stats.weapon1Element = ArrowOBJ[stats.arrow][1];
-            if (eval(document.calcForm.A_Weapon_element.value) != 0)
-                stats.weapon1Element = eval(document.calcForm.A_Weapon_element.value);
-            isRangedAttack = 1;
-        } else if (stats.skillToUseName === "Bomb") {
-            not_use_card = 1;
-            stats.weapon1Element = 3;
-            n_SpSkill = 1;
-            wCast = 1;
-            skillModifier += stats.skillToUseLV * 0.2;
-            w_HIT = 100;
-            // myInnerHtml("BattleHIT", 100, 0);
-            battleResult.battleHit = 100;
-        } else if (stats.skillToUseName === "Traumatic Blow") {
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 0.4;
-            wDelay = 0.5;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Vital Strike") {
-            isRangedAttack = 1;
-            skillModifier += (stats.skillToUseLV * 0.1 - 0.5);
-            if (stats.skillToUseLV > 5)
-                wDelay = 1;
-            else
-                wDelay = 0.8;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Meteor Assault") {
-            not_use_card = 1;
-            skillModifier += (stats.skillToUseLV * 0.4 - 0.6);
-            wCast = 0.5;
-            wDelay = 0.5;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Raging Palm Strike") {
-            skillModifier += (1 + stats.skillToUseLV);
-            wDelay = 0.3;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Glacier Fist") {
-            n_SpSkill = 1;
-            skillModifier += stats.skillToUseLV - 0.6;
-
-
-        } else if (stats.skillToUseName === "Chain Crush Combo") {
-            n_SpSkill = 1;
-            skillModifier += (3 + stats.skillToUseLV);
-            if (stats.skillToUseLV > 6) wDelay = 1;
-            else wDelay = 0.8;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Arrow Vulcan") {
-            wActiveHitNum = 9;
-            skillModifier += 1 + stats.skillToUseLV;
-            stats.weapon1Element = ArrowOBJ[stats.arrow][1];
-            if (eval(document.calcForm.A_Weapon_element.value) != 0)
-                stats.weapon1Element = eval(document.calcForm.A_Weapon_element.value);
-            isRangedAttack = 1;
-            wCast = 1.8 + stats.skillToUseLV * 0.2;
-            if (stats.skillToUseLV >= 6) wDelay = 1;
-            else wDelay = 0.8;
-            wDelay = 3;
-            swDelay = 2;
-        } else if (stats.skillToUseName === "Tomahawk Throwing") {
-            isRangedAttack = 1;
-            not_use_card = 1;
-            stats.weapon1Element = 4;
-        } else if (stats.skillToUseName === "Pulse Strike (Temp)") {
-            skillModifier += (stats.skillToUseLV - 1) * 1;
-        } else if (stats.skillToUseName === "High Speed Cart Ram") {
-            not_use_card = 1;
-            skillModifier += Math.floor((eval(document.calcForm.SkillSubNum.value) / (16 - stats.skillToUseLV) / 100 - 1) * 100) / 100;
-        } else if (stats.skillToUseName === "Excruciating Palm") {
-            not_use_card = 1;
-            skillModifier += 2;
-
-
-        } else if (stats.skillToUseName === "Tornado Kick" || stats.skillToUseName === "Heel Drop") {
-            n_SpSkill = 1;
-            skillModifier += (0.6 + stats.skillToUseLV * 0.2);
-        } else if (stats.skillToUseName === "Roundouse" || stats.skillToUseName === "Counter Kick") {
-            n_SpSkill = 1;
-            skillModifier += (0.9 + stats.skillToUseLV * 0.3);
-            if (stats.skillToUseName === "Counter Kick")
-                wActiveHitNum = 3;
-        } else if (stats.skillToUseName === "Flying Kick (Normal)") {
-            n_SpSkill = 1;
-            skillModifier += (-0.7 + stats.skillToUseLV * 0.1);
-        } else if (stats.skillToUseName === "Bull's Eye") {
-            not_use_card = 1;
-            wCast = 0.5;
-            isRangedAttack = 1;
-            wActiveHitNum = 5;
-            if (targetStats.race == 2 || targetStats.race == 7)
-                skillModifier += 4;
-        } else if (stats.skillToUseName === "Magical Bullet") {
-            isRangedAttack = 1;
-            stats.weapon1Element = 8;
-            not_use_card = 1;
-        } else if (stats.skillToUseName === "Trigger Happy Shot") {
-            isRangedAttack = 1;
-            wActiveHitNum = 5;
-            skillModifier += stats.skillToUseLV * 0.5 + 4;
-            wDelay = 1.7;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Desperado (Single Hit)") {
-            isRangedAttack = 0;
-            skillModifier += stats.skillToUseLV * 0.5 - 0.5;
-            wDelay = 1;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Tracking") {
-            wCast = 1 + 0.2 * stats.skillToUseLV;
-            cast_kotei = 1;
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 1 + 1;
-            wDelay = 1;
-            swDelay = 1;
-            w_HIT = hitRate * 5 + 5;
-            if (w_HIT > 100)
-                w_HIT = 100;
-        } else if (stats.skillToUseName === "Disarm") {
-            wCast = 2;
-            isRangedAttack = 1;
-        } else if (stats.skillToUseName === "Wounding Shot") {
-            wCast = 1.5;
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 0.2;
-            wDelay = 0;
-            swDelay = 1;
-            w_HIT = 100;
-        } else if (stats.skillToUseName === "Crowd Control Shot") {
-            cast_kotei = 1;
-            wCast = 1;
-            isRangedAttack = 0;
-            skillModifier += stats.skillToUseLV * 0.5;
-            wDelay = 1;
-            swDelay = 2
-            w_HIT = 100;
-        } else if (stats.skillToUseName === "Full Blast") {
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 1 + 2;
-            wDelay = 1 + stats.skillToUseLV * 0.2;
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Spread Shot") {
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 0.2 - 0.2;
-            wDelay = "(Unknown)";
-            swDelay = 1;
-        } else if (stats.skillToUseName === "Gunslinger Mine") {
-            isRangedAttack = 1;
-            not_use_card = 1;
-            wCast = 1;
-            wDelay = 1;
-            swDelay = 1;
-            w_HIT = 100;
-        }
-
-
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-
-        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0);
-        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1);
-        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2);
-
-        if (cast_kotei == 0)
-            wCast = wCast * stats.cast;
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (let b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            if (wActiveHitNum > 1)
-                finalDamages[b] = Math.floor(finalDamages[b] / wActiveHitNum) * wActiveHitNum;
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
-            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] + n_A_EDP_DMG[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1] + n_A_EDP_DMG[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2] + n_A_EDP_DMG[2]) + "";
-
-        if (cast_kotei == 0) {
-            let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-            battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-            let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-            battleResult = Object.assign(battleResult, battleVariousResult);
-        }
-    } else if (stats.skillToUseName === "Stave Crasher") {
-        isRangedAttack = 1;
-        wCast = 0.3;
-        wDelay = 0.3;
-        swDelay = 1;
-        n_A_DMG[2] = stats.matk[2];
-        n_A_DMG[0] = stats.matk[0];
-        n_A_DMG[1] = (stats.matk[0] + stats.matk[2]) / 2;
-
-
-        for (b = 0; b <= 2; b++)
-            n_A_EDP_DMG[b] = BattleCalcEDP(stats, targetStats, n_A_DMG[b], b);
-
-        wCast = wCast * stats.cast;
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
-            finalDamages[b] = (finalDamages[b] * hitRate + (ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) + stats.weapon1LV_upgradeBonusATK) * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] + n_A_EDP_DMG[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1] + n_A_EDP_DMG[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2] + n_A_EDP_DMG[2]) + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Double Strafe" || stats.skillToUseName === "Pierce" || stats.skillToUseName === "Throw Spirit Spheres (# Hits = # of Spirit Spheres)" || stats.skillToUseName === "Bowling Bash" || stats.skillToUseName === "Triple Action" || stats.skillToUseName === "Beast Strafing") {
-        var isBowlingBash = false;
-        if (stats.skillToUseName === "Double Strafe") { // double strafe
-            isRangedAttack = 1;
-            skillModifier += stats.skillToUseLV * 0.1 - 0.1;
-            hitCount = 2;
-        } else if (stats.skillToUseName === "Pierce") {
-            skillModifier += stats.skillToUseLV * 0.1;
-            hitCount = targetStats.size + 1;
-        } else if (stats.skillToUseName === "Bowling Bash") {
-            skillModifier += stats.skillToUseLV * 0.4;
-            wCast = 0.7 * stats.cast;
-            hitCount = 2;
-            if (stats.skillToUseLV == 1)
-                hitCount = 1;
-            isBowlingBash = true;
-            if (targetStats.lexAeterna == 1) {
-                hitCount = 3;
-                if (stats.skillToUseLV == 1)
-                    hitCount = 2;
-            }
-        } else if (stats.skillToUseName === "Throw Spirit Spheres (# Hits = # of Spirit Spheres)") {
-            skillModifier += stats.skillToUseLV * 0.5;
-            if (stats.job == 15 || stats.job == 29)
-                w = SkillSearch("Summon Spirit Sphere", stats);
-            else
-                w = stats.supportiveSkills[10];
-            if (w > stats.skillToUseLV) {
-                w = stats.skillToUseLV;
-            }
-            hitCount = w;
-            wCast = (1 + w) * stats.cast;
-            wDelay = 0.5;
-            swDelay = 1;
-            isRangedAttack = 1;
-        } else if (stats.skillToUseName === "Triple Action") {
-            isRangedAttack = 1;
-            skillModifier += 0.5;
-            hitCount = 3;
-        } else if (stats.skillToUseName === "Beast Strafing") {
-            n_SpSkill = 1;
-            isRangedAttack = 1;
-            skillModifier += stats.str * 0.08 - 0.5;
-            hitCount = 2;
-        }
-
-
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] += n_A_EDP_DMG[b];
-            if (stats.skillToUseName === "Beast Strafing" && targetStats.race != 2 && targetStats.race != 4)
-                finalDamages[b] = 0;
-            finalDamagesCopy[b] = finalDamages[b];
-            // if (targetStats.lexAeterna == 0 || !isBowlingBash)
-            //     myInnerHtml("ATK_0" + b, finalDamages[b] * hitCount + "(" + finalDamages[b] + SubName[8] + hitCount + "hit)", 0);
-            // else
-            //     myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] * 2 + " + " + finalDamages[b] + ")", 0);
-            finalDamages[b] -= n_A_EDP_DMG[b];
-            finalDamages[b] *= hitCount;
-            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * hitCount * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]) * hitCount;
-        }
-        if (targetStats.lexAeterna == 0 || !isBowlingBash) {
-            battleResult.atk00 = (finalDamagesCopy[0] * hitCount + "(" + finalDamagesCopy[0] + SubName[8] + hitCount + "hit)") + "";
-            battleResult.atk01 = (finalDamagesCopy[1] * hitCount + "(" + finalDamagesCopy[1] + SubName[8] + hitCount + "hit)") + "";
-            battleResult.atk02 = (finalDamagesCopy[2] * hitCount + "(" + finalDamagesCopy[2] + SubName[8] + hitCount + "hit)") + "";
-        } else {
-            battleResult.atk00 = finalDamagesCopy[0] * 3 + "(" + finalDamagesCopy[0] * 2 + " + " + finalDamagesCopy[0] + ")";
-            battleResult.atk01 = finalDamagesCopy[1] * 3 + "(" + finalDamagesCopy[1] * 2 + " + " + finalDamagesCopy[1] + ")";
-            battleResult.atk02 = finalDamagesCopy[2] * 3 + "(" + finalDamagesCopy[2] * 2 + " + " + finalDamagesCopy + ")";
-        }
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Blitz Beat" || stats.skillToUseName === "Falcon Eyes") {
-        stats.weapon1Element = 0;
-        isRangedAttack = 1;
-        wBT = 80 + Math.floor(stats.dex / 10) * 2 + Math.floor(stats.int / 2) * 2 + SkillSearch("Steel Crow", stats) * 6;
-        if (stats.skillToUseName === "Falcon Eyes") {
-            wBT = Math.floor(wBT * (150 + 70 * stats.skillToUseLV) / 100);
-            wBT = Math.floor(wBT * element[targetStats.element][0]);
-            wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
-            wBT *= 5;
-            wCast = 1 * stats.cast;
-            wDelay = 3;
-        } else {
-            wBT = Math.floor(wBT * element[targetStats.element][0]);
-            wBT = tPlusDamCut(stats, targetStats, wBT, InWarOfEmperium);
-            wBT *= stats.skillToUseLV;
-            wCast = 1.5 * stats.cast;
-            wDelay = 1;
-        }
-        swDelay = 1;
-        // myInnerHtml("ATK_02", wBT, 0);
-        // myInnerHtml("ATK_00", wBT, 0);
-        // myInnerHtml("ATK_01", wBT, 0);
-        battleResult.atk00 = wBT;
-        battleResult.atk01 = wBT;
-        battleResult.atk02 = wBT;
-        finalDamages[0] = finalDamages[2] = finalDamages[1] = wBT;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Envenom" || (stats.skillToUseName === "Poison React (Counter)" && (targetStats.element < 50 || 60 <= targetStats.element))) {
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-        stats.weapon1Element = 5;
-
-
-        n_A_EDP_DMG[2] = BattleCalcEDP(stats, targetStats, n_A_DMG[2], 2);
-        n_A_EDP_DMG[0] = BattleCalcEDP(stats, targetStats, n_A_DMG[0], 0);
-        n_A_EDP_DMG[1] = BattleCalcEDP(stats, targetStats, n_A_DMG[1], 1);
-
-        wINV = Math.floor(ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][5]);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][5]);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
-            finalDamages[b] = (finalDamages[b] * hitRate + wINV * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] + n_A_EDP_DMG[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1] + n_A_EDP_DMG[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2] + n_A_EDP_DMG[2]) + "";
-
-        // myInnerHtml("bSUBname", '<Font color="#0000FF">Poison Damage</Font>', 0);
-        // myInnerHtml("bSUB", '<Font color="#0000FF">' + wINV + "</Font>", 0);
-        battleResult.bonusSubName = "Poison Damage";
-        battleResult.bonusSub = wINV + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Shield Boomerang" || stats.skillToUseName === "Shield Boomerang (SoulLinked)") {
-        isRangedAttack = 1;
-        stats.weapon1Element = 0;
-        wDelay = 0.7;
-        if (stats.skillToUseName === "Shield Boomerang (SoulLinked)")
-            wDelay = 0.35;
-        swDelay = 1;
-        wSBr = stats.shieldHandDefPlus * 4;
-
-        skillModifier2 = (1 + stats.skillToUseLV * 0.3);
-        if (stats.skillToUseName === "Shield Boomerang (SoulLinked)")
-            skillModifier2 *= 2;
-
-        baseATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
-        stats.baseATK = stats.str + baseATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = stats.baseATK * skillModifier + ItemOBJ[stats.equipments[5]][6] + wSBr;
-            finalDamages[b] = Math.floor(Math.floor(finalDamages[b] * (100 - targetStats.def) / 100 - n_B_DEF2[b]) * skillModifier2);
-            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
-            if (finalDamages[b] < 1) finalDamages[b] = 1;
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-            finalDamages[b] = (finalDamages[b] * hitRate) / 100;
-        }
-        battleResult.atk00 = (finalDamagesCopy[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2]) + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Rapid Smiting") {
-        isRangedAttack = 1;
-        stats.weapon1Element = 0;
-        wCast = 1 * stats.cast;
-        wDelay = 1;
-        swDelay = 1;
-        wSBr = stats.shieldHandDefPlus;
-        wSC = ItemOBJ[stats.equipments[5]][6];
-
-        skillModifier2 = (1 + stats.skillToUseLV * 0.3);
-
-        baseATK_w = Math.round(Math.floor(stats.str / 10) * Math.floor(stats.str / 10));
-        stats.baseATK = stats.str + baseATK_w + Math.floor(stats.dex / 5) + Math.floor(stats.luk / 5);
-        stats.baseATK = stats.baseATK * skillModifier + wSC + wSBr * 4;
-
-        wSC -= 100;
-        if (wSC < 0)
-            wSC = 0;
-        wSC2 = [0, 0, 0];
-        wSC2[2] = 100 + wSC + (wSBr * 2) * wSBr;
-        wSC2[1] = 100 + (wSC + (wSBr * 2) * wSBr) / 2;
-        wSC2[0] = 100
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = (stats.baseATK * (100 - targetStats.def) / 100 - n_B_DEF2[b]) * skillModifier2;
-            finalDamages[b] += wSC2[b];
-            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
-            if (finalDamages[b] < 1) finalDamages[b] = 1;
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] * 5 + "(" + finalDamages[b] + SubName[8] + "5hit)", 0);
-            finalDamages[b] *= 5;
-            finalDamages[b] = (finalDamages[b] * hitRate) / 100;
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] * 5 + "(" + finalDamagesCopy[0] + SubName[8] + "5hit)") + "";
-        battleResult.atk01 = (finalDamagesCopy[1] * 5 + "(" + finalDamagesCopy[1] + SubName[8] + "5hit)") + "";
-        battleResult.atk02 = (finalDamagesCopy[2] * 5 + "(" + finalDamagesCopy[2] + SubName[8] + "5hit)") + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Clashing Spiral") {
-        isRangedAttack = 1;
-        if (stats.skillToUseLV == 5)
-            wCast = 1 * stats.cast;
-        else
-            wCast = (0.1 + 0.2 * stats.skillToUseLV) * stats.cast;
-        wDelay = 1 + 0.2 * stats.skillToUseLV;
-        swDelay = 1;
-
-        wSPP = Math.floor(stats.str / 10);
-        finalDamages[2] = wSPP * wSPP + ItemOBJ[stats.equipments[0]][6] * 0.8 * (1 + 0.5 * stats.skillToUseLV);
-        wSPP = 1.25 - (targetStats.size * 0.25);
-        finalDamages[2] = Math.floor(finalDamages[2] * wSPP + stats.weapon1LV_upgradeBonusATK);
-        finalDamages[2] = finalDamages[2] * element[targetStats.element][stats.weapon1Element];
-        finalDamages[2] = BaiCI(stats, targetStats, finalDamages[2], InWarOfEmperium);
-        // myInnerHtml("ATK_00", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
-        // myInnerHtml("ATK_01", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
-        // myInnerHtml("ATK_02", finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)", 0);
-        battleResult.atk00 = finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
-        battleResult.atk01 = finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
-        battleResult.atk02 = finalDamages[2] * 5 + "(" + finalDamages[2] + SubName[8] + 5 + "hit)";
-        finalDamages[2] *= 5;
-        wSPP2 = stats.weapon1LV_upgradeBonusATK * element[targetStats.element][stats.weapon1Element];
-        wSPP2 = BaiCI(stats, targetStats, wSPP2, InWarOfEmperium);
-        wSPP2 = tPlusDamCut(stats, targetStats, wSPP2, InWarOfEmperium);
-        finalDamages[2] = finalDamages[2] * hitRate / 100 + wSPP2 * 5 * (100 - hitRate) / 100;
-
-
-        finalDamages[0] = finalDamages[1] = finalDamages[2];
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Venom Splasher") {
-        not_use_card = 1;
-        n_SpSkill = 1;
-        wCast = 1 * stats.cast;
-
-        if (targetStats.isNormal) {
-
-            skillModifier += (400 + 50 * stats.skillToUseLV + 20 * eval(document.calcForm.SkillSubNum.value)) / 100;
-            ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-
-            let finalDamagesCopy = [0, 0, 0];
-            for (b = 0; b <= 2; b++) {
-                finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-                finalDamages[b] = Math.floor(finalDamages[b]);
-                finalDamagesCopy[b] = finalDamages[b];
-                // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-            }
-            battleResult.atk00 = (finalDamagesCopy[0]) + "";
-            battleResult.atk01 = (finalDamagesCopy[1]) + "";
-            battleResult.atk02 = (finalDamagesCopy[2]) + "";
-        }
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Soul Destroyer") {
-        not_use_card = 1;
-        isRangedAttack = 1;
-        wCast = 0.5 * stats.cast;
-        wDelay = 0.8 + 0.2 * stats.skillToUseLV;
-        swDelay = 1;
-
-        w_SBr = new Array();
-        w = stats.int * 5 * stats.skillToUseLV;
-        w_SBr[2] = w + 1000 - Math.floor((targetStats.def + targetStatsArray[TARGET_STAT_MDEF] + n_B_MDEF2 + n_B_DEF2[2]) / 2);
-        w_SBr[1] = w + 750 - Math.floor((targetStats.def + targetStatsArray[TARGET_STAT_MDEF] + n_B_MDEF2 + n_B_DEF2[1]) / 2);
-        w_SBr[0] = w + 500 - Math.floor((targetStats.def + targetStatsArray[TARGET_STAT_MDEF] + n_B_MDEF2 + n_B_DEF2[0]) / 2);
-        for (i = 0; i <= 2; i++)
-            w_SBr[i] = tPlusDamCut(stats, targetStats, w_SBr[i], InWarOfEmperium);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] *= stats.skillToUseLV;
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + w_SBr[b] + "(" + finalDamages[b] + "+" + w_SBr[b] + ")", 0);
-            finalDamagesCopy[b] = finalDamages[b];
-            finalDamages[b] = ((finalDamages[b] + w_SBr[b]) * hitRate + (ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) + w_SBr[b]) * (100 - hitRate)) / 100;
-        }
-        battleResult.atk00 = finalDamagesCopy[0] + w_SBr[0] + "(" + finalDamagesCopy[0] + "+" + w_SBr[0] + ")";
-        battleResult.atk01 = finalDamagesCopy[1] + w_SBr[1] + "(" + finalDamagesCopy[1] + "+" + w_SBr[1] + ")";
-        battleResult.atk02 = finalDamagesCopy[2] + w_SBr[2] + "(" + finalDamagesCopy[2] + "+" + w_SBr[2] + ")";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Grand Cross") {
-
-        // myInnerHtml("CRIATKname", '<Font color="#FF0000">HP Casting Cost</Font>', 0);
-        // myInnerHtml("CRIATK", '<Font color="#FF0000">' + Math.floor(stats.maxHp / 5) + "</Font>", 0);
-        //
-        // myInnerHtml("CRInumname", '<Font color="#FF0000">Reflect Damage</Font>', 0);
-        battleResult.critAtkName = "HP Casting Cost";
-        battleResult.critAtk = [];
-        battleResult.critAtk[0] = Math.floor(stats.maxHp / 5);
-        battleResult.critChanceName = "Reflect Damage";
-
-
-        wGXhito = 100 - StPlusCard("DAMAGE_INC_DEC_RACE_DEMIHUMAN_PERCENTAGE", stats);
-        wGXhito -= StPlusItem("DAMAGE_INC_DEC_RACE_DEMIHUMAN_PERCENTAGE", stats);
-
-        wGXsei = 100 - SkillSearch("Faith", stats) * 5;
-        wGXsei -= StPlusCard("DAMAGE_INC_DEC_ELEMENT_HOLY_PERCENTAGE", stats);
-        wGXsei -= StPlusItem("DAMAGE_INC_DEC_ELEMENT_HOLY_PERCENTAGE", stats);
-
-        wGXen = StPlusCard("RESISTANCE_RANGE_ATTACK_PERCENTAGE", stats);
-        wGXen += StPlusItem("RESISTANCE_RANGE_ATTACK_PERCENTAGE", stats);
-
-
-        work_A_VITDEF = [0, 0, 0];
-        work_A_VITDEF[0] = stats.vitDEF[2];
-        work_A_VITDEF[1] = stats.vitDEF[1];
-        work_A_VITDEF[2] = stats.vitDEF[0];
-        stats.intMDEF = stats.int + Math.floor(stats.vit / 2);
-
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = BK_n_A_DMG[b] * (100 - stats.def) / 100 - work_A_VITDEF[b] + stats.weapon1LV_upgradeBonusATK;
-            finalDamages[b] = Math.floor(finalDamages[b] * (skillModifier + stats.skillToUseLV * 0.4));
-
-            w = stats.matk[b] * (100 - n_A_MDEF) / 100 - stats.intMDEF;
-            w = Math.floor(w * (stats.skillToUseLV * 0.4 + 1));
-
-            finalDamages[b] += w;
-            finalDamages[b] = Math.floor(finalDamages[b] * wGXhito / 100);
-            finalDamages[b] = Math.floor(finalDamages[b] * wGXsei / 100);
-            finalDamages[b] = Math.floor(finalDamages[b] * (100 - wGXen) / 100);
-
-            if (CardNumSearch("Bathory"))
-                finalDamages[b] = Math.floor(finalDamages[b] * 125 / 100);
-
-            if (CardNumSearch("Evil Druid"))
-                finalDamages[b] = Math.floor(finalDamages[b] * 150 / 100);
-
-            if (CardNumSearch("Angeling") || CardNumSearch("0"))
-                finalDamages[b] = Math.floor(finalDamages[b] * 0 / 100);
-            finalDamages[b] = Math.floor(finalDamages[b] / 2);
-        }
-        battleResult.critChance = finalDamages[0] + "~3hit ~ " + finalDamages[1] + "~3hit";
-        // myInnerHtml("CRInum", '<Font color="#FF0000">' + finalDamages[0] + "�~3hit ~ " + finalDamages[1] + "�~3hit</Font>", 0);
-
-
-        isRangedAttack = 2;
-        stats.weapon1Element = 6;
-        wCast = 3 * stats.cast;
-        wDelay = 1.5;
-        swDelay = 1;
-
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = BK_n_A_DMG[b] * (100 - targetStats.def) / 100 - n_B_DEF2[b] + stats.weapon1LV_upgradeBonusATK;
-            finalDamages[b] *= skillModifier + stats.skillToUseLV * 0.4;
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][6]);
-            w = stats.matk[b] * (100 - targetStatsArray[TARGET_STAT_MDEF]) / 100 - n_B_MDEF2;
-            w *= (stats.skillToUseLV * 0.4 + 1);
-            w = Math.floor(w * element[targetStats.element][6]);
-            finalDamages[b] = tPlusDamCut(stats, targetStats, Math.floor((w + finalDamages[b], InWarOfEmperium) * element[targetStats.element][6]));
-            if (finalDamages[b] < 1) finalDamages[b] = 1;
-            if (60 <= targetStats.element && targetStats.element <= 69) finalDamages[b] = 0;
-        }
-
-
-        let finalDamagesCopy = [0, 0, 0];
-        if (targetStats.lexAeterna == 0) {
-            for (b = 0; b <= 2; b++) {
-                // myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] + SubName[8] + "3hit)", 0);
-                finalDamagesCopy[b] = finalDamages[b];
-                finalDamages[b] *= 3;
-            }
-            battleResult.atk00 = finalDamagesCopy[0] * 3 + "(" + finalDamagesCopy[0] + SubName[8] + "3hit)";
-            battleResult.atk01 = finalDamagesCopy[1] * 3 + "(" + finalDamagesCopy[1] + SubName[8] + "3hit)";
-            battleResult.atk02 = finalDamagesCopy[2] * 3 + "(" + finalDamagesCopy[2] + SubName[8] + "3hit)";
-        } else {
-            for (b = 0; b <= 2; b++) {
-                // myInnerHtml("ATK_0" + b, finalDamages[b] * 4 + "(" + finalDamages[b] * 2 + " + " + finalDamages[b] + SubName[8] + "2hit)", 0);
-                finalDamagesCopy[b] = finalDamages[b];
-                finalDamages[b] *= 4;
-            }
-            battleResult.atk00 = finalDamagesCopy[0] * 4 + "(" + finalDamagesCopy[0] * 2 + " + " + finalDamagesCopy[0] + SubName[8] + "2hit)";
-            battleResult.atk01 = finalDamagesCopy[1] * 4 + "(" + finalDamagesCopy[1] * 2 + " + " + finalDamagesCopy[1] + SubName[8] + "2hit)";
-            battleResult.atk02 = finalDamagesCopy[2] * 4 + "(" + finalDamagesCopy[2] * 2 + " + " + finalDamagesCopy[2] + SubName[8] + "2hit)";
-        }
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Cart Revolution") {
-        wCR = 100;
-
-        if (SkillSearch("Maximum Power-Thust", stats)) {
-            wCR += 20 * SkillSearch("Maximum Power-Thust", stats);
-        } else {
-            if (SkillSearch("Power-Thrust", stats))
-                wCR += SkillSearch("Power-Thrust", stats) * 5;
-            if (SkillSearch("Power-Thrust", stats) == 0 && stats.supportiveSkills[8])
-                wCR += stats.supportiveSkills[8] * 5 / 10;
-        }
-        CR_n_A_DMG = [0, 0, 0];
-
-        CRbai = eval(document.calcForm.SkillSubNum.value) / 8000;
-        for (b = 0; b <= 2; b++)
-            CR_n_A_DMG[b] = Math.floor(n_A_DMG[b] * wCR / 100);
-
-        skillModifier += 0.5;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] += Math.floor(ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, CR_n_A_DMG[b], b, InWarOfEmperium) * CRbai);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-
-            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * 2 * (100 - hitRate)) / 100;
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2]) + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Gloria Domini") {
-        finalDamages[2] = 500 + 300 * stats.skillToUseLV;
-        if (n_Ses)
-            finalDamages[2] = Math.floor(finalDamages[2] * 0.6);
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-        // myInnerHtml("ATK_02", finalDamages[2], 0);
-        // myInnerHtml("ATK_00", finalDamages[0], 0);
-        // myInnerHtml("ATK_01", finalDamages[1], 0);
-        battleResult.atk00 = (finalDamages[0]) + "";
-        battleResult.atk01 = (finalDamages[1]) + "";
-        battleResult.atk02 = (finalDamages[2]) + "";
-
-        wCast = (1.5 + 0.5 * stats.skillToUseLV) * stats.cast;
-        wDelay = 1.5 + stats.skillToUseLV * 0.5;
-        swDelay = 1;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Martyr's Reconing") {
-        stats.weapon1Element = 0;
-        finalDamages[2] = Math.floor(stats.maxHp * 0.09 * (0.9 + 0.1 * stats.skillToUseLV));
-        finalDamages[2] = BaiCI(stats, targetStats, finalDamages[2], InWarOfEmperium);
-        finalDamages[2] = Math.floor(finalDamages[2] * element[targetStats.element][0]);
-        // myInnerHtml("ATK_02", finalDamages[2], 0);
-        // myInnerHtml("ATK_00", finalDamages[2], 0);
-        // myInnerHtml("ATK_01", finalDamages[2], 0);
-        battleResult.atk00 = (finalDamages[2]) + "";
-        battleResult.atk01 = (finalDamages[2]) + "";
-        battleResult.atk02 = (finalDamages[2]) + "";
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Occult Impaction") {
-        stats.weapon1Element = 0;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-        skillModifier += stats.skillToUseLV * 0.75;
-
-
-        work_B_DEF2 = [0, 0, 0];
-        work_B_DEF2[0] = n_B_DEF2[2];
-        work_B_DEF2[1] = n_B_DEF2[1];
-        work_B_DEF2[2] = n_B_DEF2[0];
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = Math.floor(Math.floor(BK_n_A_DMG[b] * skillModifier) * (work_B_DEF2[b] + targetStats.def) / 50);
-            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-            finalDamagesCopy[b] = finalDamages[b];
-        }
-        battleResult.atk00 = (finalDamagesCopy[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2]) + "";
-
-        wCast = 1 * stats.cast;
-        wDelay = 0.5;
-        swDelay = 1;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Guillotine Fist" || stats.skillToUseName === "Guillotine Fist (MaxSP-1)") {
-        stats.weapon1Element = 0;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-        if (stats.skillToUseName === "Guillotine Fist")
-            skillModifier += 7 + eval(document.calcForm.SkillSubNum.value) / 10;
-        else
-            skillModifier += 7 + (stats.maxSp - 1) / 10;
-        wASYU = 250 + stats.skillToUseLV * 150;
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = Math.floor(BK_n_A_DMG[b] * skillModifier) + wASYU;
-            finalDamages[b] = BaiCI(stats, targetStats, finalDamages[b], InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-            finalDamagesCopy[b] = finalDamages[b];
-        }
-        battleResult.atk00 = (finalDamagesCopy[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2]) + "";
-
-        wCast = (4.5 - 0.5 * stats.skillToUseLV) * stats.cast;
-        wDelay = 3.5 - 0.5 * stats.skillToUseLV;
-        swDelay = 1;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Throw Dagger") {
-        isRangedAttack = 1;
-        not_use_card = 1;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
-            finalDamagesCopy[b] = finalDamages[b];
-            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] + n_A_EDP_DMG[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1] + n_A_EDP_DMG[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2] + n_A_EDP_DMG[2]) + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Throw Kunai") {
-        isRangedAttack = 1;
-        not_use_card = 1;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-
-
-        if (eval(document.calcForm.A_Weapon_element.value) == 0 && stats.weaponType != WEAPON_TYPE_UNARMED && StPlusCard(20) == 0)
-            stats.weapon1Element = KunaiOBJ[eval(document.calcForm.SkillSubNum.value)][1];
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] * 3 + "(" + finalDamages[b] + SubName[8] + "3hit)", 0);
-            finalDamages[b] = (finalDamages[b] * 3 * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = finalDamagesCopy[0] * 3 + "(" + finalDamagesCopy[0] + SubName[8] + "3hit)";
-        battleResult.atk01 = finalDamagesCopy[1] * 3 + "(" + finalDamagesCopy[1] + SubName[8] + "3hit)";
-        battleResult.atk02 = finalDamagesCopy[2] * 3 + "(" + finalDamagesCopy[2] + SubName[8] + "3hit)";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Throw Huuma Shuriken") {
-        skillModifier += (stats.skillToUseLV * 1.5 + 0.5);
-        isRangedAttack = 1;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-        wCast = 3 * stats.cast;
-        wDelay = 3;
-        swDelay = 1;
-        wActiveHitNum = 2 + Math.round(stats.skillToUseLV / 2);
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = ApplyMasteryAndWeaponryResearchAndDMGLevel(stats, targetStats, n_A_DMG[b], b, InWarOfEmperium);
-            finalDamages[b] = Math.floor(finalDamages[b] * element[targetStats.element][0]);
-            if (wActiveHitNum > 1)
-                finalDamages[b] = Math.floor(finalDamages[b] / wActiveHitNum) * wActiveHitNum;
-            finalDamagesCopy[b] = finalDamages[b];
-            // myInnerHtml("ATK_0" + b, finalDamages[b] + n_A_EDP_DMG[b], 0);
-            finalDamages[b] = (finalDamages[b] * hitRate + ApplyWeaponryResearchAndDMGLevel(stats, targetStats, 0, InWarOfEmperium) * element[targetStats.element][0] * (100 - hitRate)) / 100;
-            finalDamages[b] += HitEDPplus(n_A_EDP_DMG[b]);
-        }
-        battleResult.atk00 = (finalDamagesCopy[0] + n_A_EDP_DMG[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1] + n_A_EDP_DMG[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2] + n_A_EDP_DMG[2]) + "";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-    } else if (stats.skillToUseName === "Final Strike" || stats.skillToUseName === "Final Strike (MaxHP-1)") {
-        stats.weapon1Element = 0;
-        isRangedAttack = 1;
-        ApplySkillModifier(stats, n_A_DMG, skillModifier, 0);
-        if (stats.skillToUseName === "Final Strike")
-            w_1senHP = eval(document.calcForm.SkillSubNum.value);
-        else
-            w_1senHP = stats.maxHp - 1;
-
-        finalDamages[0] = (stats.str + stats.skillToUseLV) * 40 + w_1senHP * (stats.baseLevel / 100) * stats.skillToUseLV / 10;
-        finalDamages[0] = finalDamages[0] * (100 - targetStats.def) / 100;
-        finalDamages[0] = BaiCI(stats, targetStats, finalDamages[0], InWarOfEmperium);
-        finalDamages[0] = Math.floor(finalDamages[0] * element[targetStats.element][0]);
-
-        finalDamages[2] = finalDamages[1] = finalDamages[0];
-        battleResult.atk00 = finalDamages[0];
-        battleResult.atk01 = finalDamages[2];
-        battleResult.atk02 = finalDamages[2];
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Acid Terror") {
-        isRangedAttack = 1;
-        stats.weapon1Element = 0;
-        skillModifier = (50 + stats.skillToUseLV * 50) / 100;
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = Math.floor((BK_n_A_DMG[b] - n_B_DEF2[b]) * skillModifier);
-            finalDamages[b] = tPlusDamCut(stats, targetStats, Math.floor(finalDamages[b] * element[targetStats.element][0], InWarOfEmperium));
-            // myInnerHtml("ATK_0" + b, finalDamages[b], 0);
-            finalDamagesCopy[b] = finalDamages[b];
-        }
-        battleResult.atk00 = (finalDamagesCopy[0]) + "";
-        battleResult.atk01 = (finalDamagesCopy[1]) + "";
-        battleResult.atk02 = (finalDamagesCopy[2]) + "";
-
-        wCast = 1 * stats.cast;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Acid Demonstration") {
-        isRangedAttack = 1;
-        stats.weapon1Element = 0;
-        hitCount = stats.skillToUseLV;
-
-        wAD = 0.7 * stats.int * stats.int * targetStatsArray[TARGET_STAT_VIT] / (stats.int + targetStatsArray[TARGET_STAT_VIT]);
-        finalDamages[2] = Math.floor(wAD);
-        finalDamages[2] = tPlusDamCut(stats, targetStats, Math.floor(finalDamages[2] * element[targetStats.element][0], InWarOfEmperium));
-        if (InWarOfEmperium == 1)
-            finalDamages[2] = Math.floor(finalDamages[2] / 2);
-        // myInnerHtml("ATK_02", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
-        // myInnerHtml("ATK_00", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
-        // myInnerHtml("ATK_01", finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)", 0);
-        battleResult.atk00 = finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
-        battleResult.atk01 = finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
-        battleResult.atk02 = finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
-        finalDamages[2] *= hitCount;
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-
-        wCast = 1 * stats.cast;
-        wDelay = 1;
-        swDelay = 1;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Land Mine" || stats.skillToUseName === "Blast Mine" || stats.skillToUseName === "Claymore Trap") {
-        n_SpSkill = 1;
-        if (stats.skillToUseName === "Land Mine") {
-            stats.weapon1Element = 2;
-            finalDamages[2] = Math.floor((75 + stats.dex) * (1 + stats.int / 100) * stats.skillToUseLV * element[targetStats.element][2]);
-        } else if (stats.skillToUseName === "Blast Mine") {
-            stats.weapon1Element = 4;
-            finalDamages[2] = Math.floor((50 + stats.dex / 2) * (1 + stats.int / 100) * stats.skillToUseLV * element[targetStats.element][4]) * eval(document.calcForm.SkillSubNum.value);
-        } else if (stats.skillToUseName === "Claymore Trap") {
-            stats.weapon1Element = 3;
-            finalDamages[2] = Math.floor((75 + stats.dex / 2) * (1 + stats.int / 100) * stats.skillToUseLV * element[targetStats.element][3]) * eval(document.calcForm.SkillSubNum.value);
-        }
-
-        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-        // myInnerHtml("ATK_02", finalDamages[2], 0);
-        // myInnerHtml("ATK_00", finalDamages[0], 0);
-        // myInnerHtml("ATK_01", finalDamages[1], 0);
-        battleResult.atk00 = finalDamages[0];
-        battleResult.atk01 = finalDamages[1];
-        battleResult.atk02 = finalDamages[2];
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Heal") {
-        stats.weapon1Element = 6;
-        wDelay = 1;
-        swDelay = 1;
-        isRangedAttack = 2;
-        finalDamages[2] = HealCalc(stats.skillToUseLV, 0);
-        finalDamages[2] = Math.floor(Math.floor(finalDamages[2] / 2) * element[targetStats.element][6]);
-        if (targetStats.element < 90) {
-            finalDamages[2] = 0;
-        }
-
-        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-        // myInnerHtml("ATK_02", finalDamages[2], 0);
-        // myInnerHtml("ATK_00", finalDamages[0], 0);
-        // myInnerHtml("ATK_01", finalDamages[1], 0);
-        battleResult.atk00 = finalDamages[0];
-        battleResult.atk01 = finalDamages[1];
-        battleResult.atk02 = finalDamages[2];
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Sanctuary") {
-        stats.weapon1Element = 6;
-        n_SpSkill = 1;
-        isRangedAttack = 2;
-        if (stats.skillToUseLV <= 6)
-            finalDamages[2] = 100 * stats.skillToUseLV;
-        else
-            finalDamages[2] = 777;
-        finalDamages[2] = Math.floor(Math.floor(finalDamages[2] / 2) * element[targetStats.element][6]);
-        if (targetStats.element < 90 && targetStats.race != 6)
-            finalDamages[2] = 0;
-        if (targetStats.race != 6 && targetStats.race != 1)
-            finalDamages[2] = 0;
-
-        w_HEAL_BAI = 100;
-        if (EquipNumSearch("Staff of Recovery", stats))
-            w_HEAL_BAI += Math.floor(weaponRefinementLevel * 1.5)
-        if (CardNumSearch("White Lady"))
-            w_HEAL_BAI += 30 * CardNumSearch("White Lady");
-        finalDamages[2] = Math.floor(finalDamages[2] * w_HEAL_BAI / 100);
-
-        finalDamages[2] = tPlusDamCut(stats, targetStats, finalDamages[2], InWarOfEmperium);
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-        // myInnerHtml("ATK_02", finalDamages[2], 0);
-        // myInnerHtml("ATK_00", finalDamages[0], 0);
-        // myInnerHtml("ATK_01", finalDamages[1], 0);
-        battleResult.atk00 = finalDamages[0];
-        battleResult.atk01 = finalDamages[1];
-        battleResult.atk02 = finalDamages[2];
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, 0, 0, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Turn Undead") {
-        stats.weapon1Element = 6;
-        isRangedAttack = 2;
-        if (targetStats.element < 90) {
-            w = 0;
-            finalDamages[2] = 0;
-            finalDamages[0] = 0;
-            finalDamages[1] = 0;
-        } else {
-            if (targetStatsArray[19] != 1) {
-                w = (20 * stats.skillToUseLV + stats.baseLevel + stats.int + stats.luk) / 1000;
-                finalDamages[2] = targetStats.hp;
-            } else {
-                w = 0;
-                finalDamages[2] = 0;
-            }
-            finalDamages[0] = stats.baseLevel + stats.int + stats.skillToUseLV * 10;
-            finalDamages[0] = Math.floor(finalDamages[0] * element[targetStats.element][6]);
-            finalDamages[1] = Math.round((targetStats.hp * w + finalDamages[0] * (100 - w) / 100));
-        }
-        // myInnerHtml("ATK_02", Math.floor(finalDamages[2] * element[targetStats.element][6]) + "(Success Rate " + Math.round(w * 10000) / 100 + "%)", 0);
-        // myInnerHtml("ATK_00", finalDamages[0] + "(Failure Damage)", 0);
-        // myInnerHtml("ATK_01", finalDamages[1] + "(Certain One Hit Kill HP)", 0);
-        battleResult.atk00 = finalDamages[0] + "(Failure Damage)";
-        battleResult.atk01 = finalDamages[1] + "(Certain One Hit Kill HP)";
-        battleResult.atk02 = Math.floor(finalDamages[2] * element[targetStats.element][6]) + "(Success Rate " + Math.round(w * 10000) / 100 + "%)";
-
-        wCast = 1 * stats.cast;
-        wDelay = 3;
-        swDelay = 1;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else if (stats.skillToUseName === "Gravity Field") {
-        stats.weapon1Element = 0;
-        n_SpSkill = 1;
-        isRangedAttack = 2;
-        hitCount = 4 + stats.skillToUseLV;
-        finalDamages[2] = 200 + 200 * stats.skillToUseLV;
-
-        finalDamages[2] = Math.floor(finalDamages[2]);
-
-        wStrG = finalDamages[2] * hitCount + "(" + finalDamages[2] + " x " + hitCount + "hit)"
-        // myInnerHtml("ATK_02", wStrG, 0);
-        // myInnerHtml("ATK_00", wStrG, 0);
-        // myInnerHtml("ATK_01", wStrG, 0);
-        battleResult.atk00 = wStrG;
-        battleResult.atk01 = wStrG;
-        battleResult.atk02 = wStrG;
-
-        finalDamages[2] = finalDamages[2] * hitCount;
-        finalDamages[0] = finalDamages[2];
-        finalDamages[1] = finalDamages[2];
-
-        wCast = 5 * stats.cast;
-        swDelay = 1;
-        wDelay = 2;
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    } else {
-        isRangedAttack = 2;
-        swDelay = 1;
-        skillModifier = 1;
-        if (stats.skillToUseName === "Fire Bolt") {
-            stats.weapon1Element = 3;
-            hitCount = stats.skillToUseLV;
-            wCast = 0.7 * stats.skillToUseLV;
-            wDelay = 0.8 + stats.skillToUseLV * 0.2;
-        } else if (stats.skillToUseName === "Cold Bolt") {
-            stats.weapon1Element = 1;
-            hitCount = stats.skillToUseLV;
-            wCast = 0.7 * stats.skillToUseLV;
-            wDelay = 0.8 + stats.skillToUseLV * 0.2;
-        } else if (stats.skillToUseName === "Lightning Bolt") {
-            stats.weapon1Element = 4;
-            hitCount = stats.skillToUseLV;
-            wCast = 0.7 * stats.skillToUseLV;
-            wDelay = 0.8 + stats.skillToUseLV * 0.2;
-        } else if (stats.skillToUseName === "Fire Ball") {
-            stats.weapon1Element = 3;
-            if (stats.skillToUseLV <= 5) {
-                wCast = 1.5;
-                wDelay = 1.5;
-            } else {
-                wCast = 1;
-                wDelay = 1;
-            }
-            skillModifier = 0.7 + stats.skillToUseLV * 0.1;
-        } else if (stats.skillToUseName === "Fire Wall") {
-            stats.weapon1Element = 3;
-            hitCount = 4 + stats.skillToUseLV;
-            wCast = 2.15 - (stats.skillToUseLV * 0.15);
-            wDelay = 0.1;
-            skillModifier = 0.5;
-        } else if (stats.skillToUseName === "Frost Diver") {
-            stats.weapon1Element = 1;
-            wCast = 0.8;
-            wDelay = 1.5;
-            skillModifier = 1 + stats.skillToUseLV * 0.1;
-        } else if (stats.skillToUseName === "Thunder Storm") {
-            stats.weapon1Element = 4;
-            hitCount = stats.skillToUseLV;
-            wCast = 1 * stats.skillToUseLV;
-            wDelay = 2;
-            skillModifier = 0.8;
-        } else if (stats.skillToUseName === "Napalm Beat") {
-            stats.weapon1Element = 8;
-            wCast = 0.5;
-            if (stats.skillToUseLV == 10)
-                wDelay = 0.5;
-            else if (stats.skillToUseLV == 9)
-                wDelay = 0.6;
-            else if (stats.skillToUseLV == 8)
-                wDelay = 0.7;
-            else if (stats.skillToUseLV >= 6)
-                wDelay = 0.8;
-            else if (stats.skillToUseLV >= 4)
-                wDelay = 0.9;
-            else
-                wDelay = 1;
-            skillModifier = 0.7 + stats.skillToUseLV * 0.1;
-        } else if (stats.skillToUseName === "Soul Strike") {
-            stats.weapon1Element = 8;
-            hitCount = Math.round(stats.skillToUseLV / 2);
-            wCast = 0.5;
-            if (stats.skillToUseLV % 2 == 0)
-                wDelay = 0.8 + stats.skillToUseLV / 2 * 0.2;
-            else
-                wDelay = 1 + (stats.skillToUseLV + 1) / 2 * 0.2;
-        } else if (stats.skillToUseName === "Fire Pillar") {
-            stats.weapon1Element = 3;
-            hitCount = stats.skillToUseLV + 2;
-            wCast = 3.3 - (0.3 * stats.skillToUseLV);
-            wDelay = 1;
-            skillModifier = 0.2;
-        } else if (stats.skillToUseName === "Sightrasher") {
-            stats.weapon1Element = 3;
-            wCast = 0.7;
-            wDelay = 2;
-            skillModifier = 1 + stats.skillToUseLV * 0.2;
-        } else if (stats.skillToUseName === "Meteor Storm") {
-            stats.weapon1Element = 3;
-            hitCount = Math.round(stats.skillToUseLV / 2) * (Math.floor(stats.skillToUseLV / 2) + 2);
-            wCast = 15;
-            wDelay = Math.floor(stats.skillToUseLV / 2) * 1 + 2;
-        } else if (stats.skillToUseName === "Jupitel Thunder") {
-            stats.weapon1Element = 4;
-            hitCount = stats.skillToUseLV + 2;
-            wCast = 2 + stats.skillToUseLV * 0.5;
-            wDelay = 0.01;
-        } else if (stats.skillToUseName === "Lord of Vermillion") {
-            stats.weapon1Element = 4;
-            hitCount = 4;
-            wCast = 15.5 - stats.skillToUseLV * 0.5;
-            wDelay = 5;
-            skillModifier = 0.8 + stats.skillToUseLV * 0.2;
-        } else if (stats.skillToUseName === "Water Ball" || stats.skillToUseName === "Water Ball") {
-            swDelay = 2;
-            stats.weapon1Element = 1;
-            if (stats.skillToUseLV >= 4)
-                hitCount = 25
-            else if (stats.skillToUseLV >= 2)
-                hitCount = 9;
-            wCast = stats.skillToUseLV;
-            skillModifier = 1 + stats.skillToUseLV * 0.3;
-            wDelay = 0.1 * hitCount;
-        } else if (stats.skillToUseName === "Frost Nova") {
-            skillModifier = 0.66 + stats.skillToUseLV * 0.066;
-            stats.weapon1Element = 1;
-            wCast = 6 - Math.floor((stats.skillToUseLV - 1) / 2) * 0.5;
-            wDelay = 1;
-        } else if (stats.skillToUseName === "Storm Gust") {
-            stats.weapon1Element = 1;
-            hitCount = eval(document.calcForm.SkillSubNum.value);
-            wCast = 5 + stats.skillToUseLV;
-            wDelay = 5;
-            skillModifier = 1 + stats.skillToUseLV * 0.4;
-        } else if (stats.skillToUseName === "Earth Spike" || stats.skillToUseName === "Heaven's Drive") {
-            stats.weapon1Element = 2;
-            hitCount = stats.skillToUseLV;
-            if (stats.skillToUseName === "Earth Spike") {
-                wCast = stats.skillToUseLV * 0.7;
-                wDelay = 0.8 + stats.skillToUseLV * 0.2;
-            } else {
-                wCast = stats.skillToUseLV;
-                wDelay = 1;
-            }
-        } else if (stats.skillToUseName === "Napalm Vulcan") {
-            hitCount = stats.skillToUseLV;
-            stats.weapon1Element = 8;
-            wCast = 1;
-            wDelay = 1;
-            skillModifier = 0.7 + stats.skillToUseLV * 0.1;
-        } else if (stats.skillToUseName === "Holy Light" || stats.skillToUseName === "Holy Light (Soul Linked)") {
-            stats.weapon1Element = 6;
-            wCast = 2;
-            skillModifier = 1.25;
-            if (stats.skillToUseName === "Holy Light (Soul Linked)")
-                skillModifier *= 5;
-            wDelay = 0.01;
-        } else if (stats.skillToUseName === "Magnus Exorcismus") {
-            n_SpSkill = 1;
-            stats.weapon1Element = 6;
-            hitCount = stats.skillToUseLV;
-            wCast = 15;
-            wDelay = 4;
-            if (targetStats.race != 6 && targetStats.element < 90) {
-                stats.matk[2] = 0;
-                stats.matk[0] = 0;
-                stats.matk[1] = 0;
-            }
-        } else if (stats.skillToUseName === "Estin") {
-            stats.weapon1Element = eval(document.calcForm.A_Weapon_element.value);
-            wCast = 0.1;
-            wDelay = 0.5;
-            if (targetStats.size == 0)
-                skillModifier = stats.skillToUseLV * 0.1;
-            else
-                skillModifier = 0.01;
-            if (InWarOfEmperium == 1)
-                skillModifier = 0;
-        } else if (stats.skillToUseName === "Estun") {
-            stats.weapon1Element = eval(document.calcForm.A_Weapon_element.value);
-            wCast = 0.1;
-            wDelay = 0.5;
-
-            skillModifier = stats.skillToUseLV * 0.05;
-
-
-            if (InWarOfEmperium == 1)
-                skillModifier = 0;
-        } else if (stats.skillToUseName === "Esma") {
-            stats.weapon1Element = eval(document.calcForm.A_Weapon_element.value);
-            n_SpSkill = 1;
-            hitCount = stats.skillToUseLV;
-            wCast = 2;
-            wDelay = 0.5;
-            skillModifier = 0.4 + stats.baseLevel / 100;
-            if (InWarOfEmperium == 1)
-                skillModifier = 0;
-        } else if (stats.skillToUseName === "Flaming Petals") {
-            stats.weapon1Element = 3;
-            skillModifier = 0.9;
-            hitCount = stats.skillToUseLV;
-            wCast = 0.7 * stats.skillToUseLV;
-            wDelay = 0.01;
-        } else if (stats.skillToUseName === "Blaze Shield") {
-            stats.weapon1Element = 3;
-            skillModifier = 0.5;
-            hitCount = Math.round(stats.skillToUseLV / 2) + 4;
-            wCast = 6.5 - 0.5 * stats.skillToUseLV;
-            wDelay = 1;
-            n_SpSkill = 1;
-        } else if (stats.skillToUseName === "Exploding Dragon") {
-            stats.weapon1Element = 3;
-            skillModifier = 1.5 + stats.skillToUseLV * 1.5;
-            hitCount = 1;
-            wCast = 3;
-            wDelay = 3;
-        } else if (stats.skillToUseName === "Freezing Spear") {
-            stats.weapon1Element = 1;
-            skillModifier = 1;
-            hitCount = stats.skillToUseLV + 2;
-            wCast = stats.skillToUseLV * 0.7;
-            wDelay = 0.01;
-        } else if (stats.skillToUseName === "Snow Flake Draft") {
-            stats.weapon1Element = 1;
-            skillModifier = 1.0 + stats.skillToUseLV * 0.5;
-            hitCount = 1;
-            wCast = 3;
-            wDelay = 3;
-        } else if (stats.skillToUseName === "Wind Blade") {
-            stats.weapon1Element = 4;
-            skillModifier = 1.0;
-            hitCount = Math.floor(stats.skillToUseLV / 2) + 1;
-            wCast = Math.floor(stats.skillToUseLV / 2) + 1;
-            wDelay = 1;
-        } else if (stats.skillToUseName === "Lightning Jolt") {
-            stats.weapon1Element = 4;
-            skillModifier = 1.6 + 0.4 * stats.skillToUseLV;
-            hitCount = 1;
-            wCast = 4;
-            wDelay = 0.01;
-
-        } else if (stats.skillToUseName === "First Wind") {
-            stats.weapon1Element = 4;
-            skillModifier = 1.0 + stats.skillToUseLV * 1.0;
-            hitCount = 1;
-            wCast = 4;
-            wDelay = 0.01;
-        }
-
-        wCast *= stats.cast;
-
-        let finalDamagesCopy = [0, 0, 0];
-        for (b = 0; b <= 2; b++) {
-            finalDamages[b] = BattleMagicCalc(stats.matk[b] * skillModifier);
-            // myInnerHtml("ATK_0" + b, finalDamages[b] * hitCount + "(" + finalDamages[b] + SubName[8] + hitCount + "hit)", 0);
-            finalDamagesCopy[b] = finalDamages[b];
-            finalDamages[b] *= hitCount;
-        }
-        battleResult.atk00 = finalDamages[0] * hitCount + "(" + finalDamages[0] + SubName[8] + hitCount + "hit)";
-        battleResult.atk01 = finalDamages[1] * hitCount + "(" + finalDamages[1] + SubName[8] + hitCount + "hit)";
-        battleResult.atk02 = finalDamages[2] * hitCount + "(" + finalDamages[2] + SubName[8] + hitCount + "hit)";
-
-        let castAndDelayBattleResult = CastAndDelay(stats, wCast, wDelay, swDelay);
-        battleResult = Object.assign(battleResult, castAndDelayBattleResult);
-
-        let battleVariousResult = BattleVariousResults(stats, targetStats, wCast, wDelay, finalDamages, InWarOfEmperium);
-        battleResult = Object.assign(battleResult, battleVariousResult);
-        // myInnerHtml("BattleHIT", 100, 0);
-        battleResult.battleHit = 100;
-    }
     return battleResult;
 }
 
@@ -4669,10 +4852,10 @@ function ApplyATKBonusPercentage(stats, n_A_DMG) {
     let wA01 = 100;
 
     ;
-    if (stats.skillToUseName != "Occult Impaction" && stats.skillToUseName != "Guillotine Fist" && stats.skillToUseName != "Guillotine Fist (MaxSP-1)") {
+    if (stats.skillToUse.name != "Occult Impaction" && stats.skillToUse.name != "Guillotine Fist" && stats.skillToUse.name != "Guillotine Fist (MaxSP-1)") {
         if (SkillSearch("Auto Berserk", stats))
             wA01 += 32;
-        else if (stats.supportiveSkills[12])
+        else if (stats.supportiveSkills[12].level)
             wA01 += 5;
 
 
@@ -4684,8 +4867,8 @@ function ApplyATKBonusPercentage(stats, n_A_DMG) {
             wA01 += 100;
         if (stats.groundSupportiveSkills[2])
             wA01 += 10;
-        if (StPlusItem("ATK_PERCENTAGE", stats))
-            wA01 += StPlusItem("ATK_PERCENTAGE", stats);
+        if (GetEquipmentStats(ATK_PERCENTAGE, stats))
+            wA01 += GetEquipmentStats(ATK_PERCENTAGE, stats);
     }
     stats.critATK[2] = stats.critATK[2] * wA01 / 100;
     stats.critATK[0] = stats.critATK[0] * wA01 / 100;
@@ -4703,11 +4886,11 @@ function ApplySkillModifier(stats, n_A_DMG, skillModifier, isCrit) {
     } else {
         if (SkillSearch("Power-Thrust", stats))
             wA02 += SkillSearch("Power-Thrust", stats) * 5;
-        if (SkillSearch("Power-Thrust", stats) == 0 && stats.supportiveSkills[8])
-            wA02 += stats.supportiveSkills[8] * 5 / 5;
+        if (SkillSearch("Power-Thrust", stats) == 0 && stats.supportiveSkills[8].level)
+            wA02 += stats.supportiveSkills[8].level * 5 / 5;
     }
     if (SkillSearch("Kihop", stats)) {
-        wA02 += 2 * SkillSearch("Kihop") * SkillSearch("Party Members (Kihop Bonus", stats);
+        wA02 += 2 * SkillSearch("Kihop", stats) * SkillSearch("Party Members (Kihop Bonus", stats);
     }
 
     if (isCrit == 0) {
@@ -4722,16 +4905,16 @@ function ApplySkillModifier(stats, n_A_DMG, skillModifier, isCrit) {
 }
 
 
-function HealCalc(HealLv, HealType) {
-    wHeal = Math.floor((stats.baseLevel + stats.int) / 8) * (HealLv * 8 + 4);
-    wHealBAI = 100;
+function HealCalc(stats, HealLv, HealType) {
+    let wHeal = Math.floor((stats.baseLevel + stats.int) / 8) * (HealLv * 8 + 4);
+    let wHealBAI = 100;
     wHealBAI += SkillSearch("Mediatio", stats) * 2;
     if (EquipNumSearch("Staff of Recovery", stats))
         wHealBAI += Math.floor(weaponRefinementLevel * 1.5)
-    if (CardNumSearch("White Lady"))
-        wHealBAI += 30 * CardNumSearch("White Lady");
+    if (CardNumSearch("White Lady", stats))
+        wHealBAI += 30 * CardNumSearch("White Lady", stats);
     if (HealType == 0)
-        if (EquipNumSearch("0") || EquipNumSearch("0", stats))
+        if (EquipNumSearch("0", stats) || EquipNumSearch("0", stats))
             wHealBAI += 50;
     wHeal = Math.floor(wHeal * wHealBAI / 100);
     return wHeal;
@@ -4740,12 +4923,14 @@ function HealCalc(HealLv, HealType) {
 
 function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDamages, InWarOfEmperium) {
     let battleResult = {
+        display: {
+            // minAtkNum: 0, // MinATKnum
+            // maxAtkNum: 0, // MaxATKnum
+            // avgAtkNum: 0, // AveATKnum
+            // battleTime: 0, // BattleTime
+            // averageReceivedDamage: 0, // AverageReceivedDamageIncludingDodge
+        }
         // dps: 0, // DPS
-        // minAtkNum: 0, // MinATKnum
-        // maxAtkNum: 0, // MaxATKnum
-        // avgAtkNum: 0, // AveATKnum
-        // battleTime: 0, // BattleTime
-        // averageReceivedDamage: 0, // AverageReceivedDamageIncludingDodge
     }
     let w;
     if (afterCastDelay == 0)
@@ -4763,14 +4948,14 @@ function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDam
         battleResult.dps = w;
     }
 
-    if (targetStats.mobIndex == 44 && stats.skillToUseName != "Basic Attack") {
+    if (targetStats.mobIndex == 44 && stats.skillToUse.name != "Basic Attack") {
         for (let i = 0; i <= 2; i++) {
             finalDamages[i] = 0;
             // myInnerHtml("ATK_0" + i, 0, 0);
         }
-        battleResult.atk00 = 0;
-        battleResult.atk01 = 0;
-        battleResult.atk02 = 0;
+        battleResult.minDmg = 0;
+        battleResult.maxDmg = 0;
+        battleResult.avgDmg = 0;
     }
 
     tPlusAG(InWarOfEmperium);
@@ -4781,26 +4966,26 @@ function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDam
     }
     if (i < 1000) {
         // myInnerHtml("MinATKnum", i, 0);
-        battleResult.minAtkNum = i;
+        battleResult.display.minAtkNum = i;
     } else {
         // myInnerHtml("MinATKnum", SubName[5], 0);
-        battleResult.minAtkNum = SubName[5];
+        battleResult.display.minAtkNum = SubName[5];
     }
     w = targetStats.hp;
 
-    for (i = 0; 0 < w && i < 1000; i++) {
+    for (let i = 0; 0 < w && i < 1000; i++) {
         w -= finalDamages[0];
     }
     if (i < 1000) {
-        battleResult.maxAtkNum = i;
+        battleResult.display.maxAtkNum = i;
         // myInnerHtml("MaxATKnum", i, 0);
     } else {
-        battleResult.maxAtkNum = SubName[5];
+        battleResult.display.maxAtkNum = SubName[5];
         // myInnerHtml("MaxATKnum", SubName[5], 0);
     }
     w = targetStats.hp;
 
-    for (i = 0; 0 < w && i < 1000; i++) {
+    for (let i = 0; 0 < w && i < 1000; i++) {
         w -= finalDamages[1];
     }
 
@@ -4814,7 +4999,7 @@ function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDam
         // }
     }
     if (i < 1000) {
-        battleResult.avgAtkNum = i;
+        battleResult.display.avgAtkNum = i;
         // myInnerHtml("AveATKnum", i, 0);
 
         let n_AveATKnum = i;
@@ -4829,14 +5014,14 @@ function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDam
 
         if (n_SpSkill) {
             // myInnerHtml("BattleTime", "Special", 0);
-            battleResult.battleTime = "special";
+            battleResult.display.battleTime = "special";
         } else {
             // myInnerHtml("BattleTime", w + "s", 0);
-            battleResult.battleTime = w + "s";
+            battleResult.display.battleTime = w + "s";
         }
     } else {
-        battleResult.avgAtkNum = SubName[5];
-        battleResult.battleTime = SubName[6];
+        battleResult.display.avgAtkNum = SubName[5];
+        battleResult.display.battleTime = SubName[6];
         // myInnerHtml("AveATKnum", SubName[5], 0);
         // myInnerHtml("BattleTime", SubName[6], 0);
     }
@@ -4854,7 +5039,7 @@ function BattleVariousResults(stats, targetStats, cast, afterCastDelay, finalDam
         if (SkillSearch("Guard", stats)) {
             w = Math.round(w * w_AG[SkillSearch("Guard", stats)]) / 100;
         }
-        if (stats.weaponType == WEAPON_TYPE_TWO_HANDED_SWORD && SkillSearch("Parrying", stats)) {
+        if (stats.equipments.weapon.type == WEAPON_TYPE_TWO_HANDED_SWORD && SkillSearch("Parrying", stats)) {
             w = Math.round(w * (80 - SkillSearch("Parrying", stats) * 3)) / 100;
         }
         if (SkillSearch("Counter Instinct", stats)) {
@@ -4876,14 +5061,14 @@ function CalculateDamageReceived(stats, targetStats) {
 
     let w_HiDam = new Array();
     let wBHD = targetStats.atk2;
-    w_HiDam[0] = targetStats.atk;
-    w_HiDam[1] = (targetStats.atk * 5 + wBHD) / 6;
-    w_HiDam[2] = (targetStats.atk * 4 + wBHD * 2) / 6;
-    w_HiDam[3] = (targetStats.atk + wBHD) / 2;
-    w_HiDam[4] = (targetStats.atk * 2 + wBHD * 4) / 6;
-    w_HiDam[5] = (targetStats.atk + wBHD * 5) / 6;
+    w_HiDam[0] = targetStats.atk1;
+    w_HiDam[1] = (targetStats.atk1 * 5 + wBHD) / 6;
+    w_HiDam[2] = (targetStats.atk1 * 4 + wBHD * 2) / 6;
+    w_HiDam[3] = (targetStats.atk1 + wBHD) / 2;
+    w_HiDam[4] = (targetStats.atk1 * 2 + wBHD * 4) / 6;
+    w_HiDam[5] = (targetStats.atk1 + wBHD * 5) / 6;
     w_HiDam[6] = wBHD;
-    if (targetStats.atk == targetStats.atk2)
+    if (targetStats.atk1 == targetStats.atk2)
         w_HiDam[6] = wBHD - 1;
 
     w_HiDam[0] = w_HiDam[0] * (100 - stats.totalDef) / 100 - stats.vitDEF[2];
@@ -4909,22 +5094,22 @@ function CalculateDamageReceived(stats, targetStats) {
     }
 
 
-    wBHD = StPlusCard("DAMAGE_INC_DEC_ELEMENT_NEUTRAL_PERCENTAGE", stats);
-    wBHD += StPlusItem("DAMAGE_INC_DEC_ELEMENT_NEUTRAL_PERCENTAGE", stats);
+    wBHD = GetCardStats(DAMAGE_INC_DEC_ELEMENT_NEUTRAL_PERCENTAGE, stats);
+    wBHD += GetEquipmentStats(DAMAGE_INC_DEC_ELEMENT_NEUTRAL_PERCENTAGE, stats);
     if (EquipNumSearch("0", stats) || EquipNumSearch("0", stats))
-        wBHD += stats.shoulderDefPlus * 3;
+        wBHD += stats.equipments.shoulder.refinement * 3;
     if (SkillSearch("Skin Tempering", stats))
         wBHD += SkillSearch("Skin Tempering", stats);
-    if (stats.shoulderDefPlus >= 9 && CardNumSearch("Orc Baby", stats))
+    if (stats.equipments.shoulder.refinement >= 9 && CardNumSearch("Orc Baby", stats))
         wBHD += 5;
     if (wBHD != 0) {
-        for (i = 0; i <= 6; i++)
+        for (let i = 0; i <= 6; i++)
             w_HiDam[i] -= Math.floor(w_HiDam[i] * wBHD / 100);
     }
 
     if (SkillSearch("Energy Coat", stats)) {
         wBHD = 6 * SkillSearch("Energy Coat", stats);
-        for (i = 0; i <= 6; i++)
+        for (let i = 0; i <= 6; i++)
             w_HiDam[i] -= Math.floor(w_HiDam[i] * wBHD / 100);
     }
 
@@ -4932,12 +5117,12 @@ function CalculateDamageReceived(stats, targetStats) {
     wBHD = 0;
     if (CardNumSearch("0", stats) && n_A_JobSearch(stats) == 3 && (targetStats.race == 6 || targetStats.race == 1))
         wBHD += 30;
-    if (stats.supportiveSkills[14] && targetStats.race == 6 && stats.job != 13 && stats.job != 27)
-        wBHD += stats.supportiveSkills[14] * 5;
+    if (stats.supportiveSkills[14].level && targetStats.race == 6 && stats.job != 13 && stats.job != 27)
+        wBHD += stats.supportiveSkills[14].level * 5;
     if (targetStats.race == 9 && SkillSearch("Dragonology", stats))
         wBHD += SkillSearch("Dragonology", stats) * 4;
-    wBHD += StPlusCard(DAMAGE_INC_DEC_RACE_PERCENTAGE + targetStats.race, stats);
-    wBHD += StPlusItem(DAMAGE_INC_DEC_RACE_PERCENTAGE + targetStats.race, stats);
+    wBHD += GetCardStats(DAMAGE_INC_DEC_RACE_PERCENTAGE + targetStats.race, stats);
+    wBHD += GetEquipmentStats(DAMAGE_INC_DEC_RACE_PERCENTAGE + targetStats.race, stats);
     if (wBHD != 0) {
         for (let i = 0; i <= 6; i++)
             w_HiDam[i] -= Math.floor(w_HiDam[i] * wBHD / 100);
@@ -4945,8 +5130,8 @@ function CalculateDamageReceived(stats, targetStats) {
 
 
     wBHD = 0;
-    wBHD += StPlusCard(DAMAGE_INC_DEC_SIZE_PERCENTAGE + targetStats.size, stats);
-    wBHD += StPlusItem(DAMAGE_INC_DEC_SIZE_PERCENTAGE + targetStats.size, stats);
+    wBHD += GetCardStats(DAMAGE_INC_DEC_SIZE_PERCENTAGE + targetStats.size, stats);
+    wBHD += GetEquipmentStats(DAMAGE_INC_DEC_SIZE_PERCENTAGE + targetStats.size, stats);
     if (targetStats.size == 1) {
         if (EquipNumSearch("Hurricane Fury", stats))
             wBHD += weaponRefinementLevel;
@@ -4959,16 +5144,16 @@ function CalculateDamageReceived(stats, targetStats) {
 
 
     if (targetStats.isNormal) {
-        wBHD = StPlusCard("NORMAL_ATTACK_PERCENTAGE", stats);
-        wBHD += StPlusItem("NORMAL_ATTACK_PERCENTAGE", stats);
+        wBHD = GetCardStats(NORMAL_ATTACK_PERCENTAGE, stats);
+        wBHD += GetEquipmentStats(NORMAL_ATTACK_PERCENTAGE, stats);
         for (let i = 0; i <= 6; i++)
             w_HiDam[i] -= Math.floor(w_HiDam[i] * wBHD / 100);
     }
 
 
     if (targetStats.rangeAttack) {
-        wBHD = StPlusCard("RESISTANCE_RANGE_ATTACK_PERCENTAGE", stats);
-        wBHD += StPlusItem("RESISTANCE_RANGE_ATTACK_PERCENTAGE", stats);
+        wBHD = GetCardStats(RESISTANCE_RANGE_ATTACK_PERCENTAGE, stats);
+        wBHD += GetEquipmentStats(RESISTANCE_RANGE_ATTACK_PERCENTAGE, stats);
         if (SkillSearch("Gunslinger's Panic", stats))
             wBHD += 20;
         for (let i = 0; i <= 6; i++)
@@ -4997,8 +5182,8 @@ function CalculateDamageReceived(stats, targetStats) {
     }
 
 
-    wBHD = StPlusCard(3000 + targetStats.mobIndex, stats);
-    wBHD += StPlusItem(3000 + targetStats.mobIndex, stats);
+    wBHD = GetCardStats(3000 + targetStats.mobIndex, stats);
+    wBHD += GetEquipmentStats(3000 + targetStats.mobIndex, stats);
     for (let i = 0; i <= 6; i++)
         w_HiDam[i] -= Math.floor(w_HiDam[i] * wBHD / 100);
 
@@ -5016,7 +5201,7 @@ function CalculateDamageReceived(stats, targetStats) {
         w_HiDam[i] = Math.floor(w_HiDam[i] * 100) / 100;
     }
 
-    if (stats.supportiveSkills[5])
+    if (stats.supportiveSkills[5].level)
         for (let i = 0; i <= 6; i++)
             w_HiDam[i] = Math.floor(w_HiDam[i] / 2);
 
@@ -5036,52 +5221,52 @@ function CalculateDamageReceived(stats, targetStats) {
     return battleResult;
 }
 
-function BattleMagicCalc(wBMC) {
+function BattleMagicCalc(stats, targetStats, wBMC, InWarOfEmperium) {
 
 
-    wBMC_MDEF = targetStatsArray[TARGET_STAT_MDEF];
-    wMDEF_w = 0;
+    let wBMC_MDEF = targetStats.mdef;
+    let wMDEF_w = 0, wBMC2 = 0;
     if (EquipNumSearch("Staff of Piercing", stats))
         wMDEF_w += 10 + weaponRefinementLevel;
-    if (targetStats.isNormal && CardNumSearch("High Wizard Kathryne (MVP)"))
+    if (targetStats.isNormal && CardNumSearch("High Wizard Kathryne (MVP)", stats))
         wMDEF_w += 100;
-    if (targetStats.isMvp && CardNumSearch("Vesper"))
-        wMDEF_w += 30 * CardNumSearch("Vesper");
+    if (targetStats.isMvp && CardNumSearch("Vesper", stats))
+        wMDEF_w += 30 * CardNumSearch("Vesper", stats);
     if (wMDEF_w > 100)
         wMDEF_w = 100;
     if (wMDEF_w != 0) {
         wBMC_MDEF = wBMC_MDEF - Math.floor(wBMC_MDEF * wMDEF_w / 100);
-        n_B_MDEF2 = n_B_MDEF2 - Math.floor(n_B_MDEF2 * wMDEF_w / 100);
+        targetStats.mdef2 = targetStats.mdef2 - Math.floor(targetStats.mdef2 * wMDEF_w / 100);
     }
-    if (stats.skillToUseName == "Fire Pillar")
+    if (stats.skillToUse.name == "Fire Pillar")
         wBMC2 = Math.floor(wBMC + 50);
     else
-        wBMC2 = Math.floor(wBMC * (100 - wBMC_MDEF) / 100 - n_B_MDEF2);
+        wBMC2 = Math.floor(wBMC * (100 - wBMC_MDEF) / 100 - targetStats.mdef2);
     if (wBMC2 < 1) wBMC2 = 1;
-    if (stats.skillToUseName == "Magnus Exorcismus") {
+    if (stats.skillToUse.name == "Magnus Exorcismus") {
         if (targetStats.race != 6 && targetStats.element < 90) {
             wBMC2 = 0;
         }
     }
 
-    wBMC2 = Math.floor(wBMC2 * element[targetStats.element][stats.weapon1Element]);
-    if (90 <= targetStats.element && (stats.skillToUseName == "Soul Strike" || stats.skillToUseName == ""))
-        wBMC2 = Math.floor(wBMC2 * (1 + 0.05 * stats.skillToUseLV));
+    wBMC2 = Math.floor(wBMC2 * element[targetStats.element][stats.equipments.weapon.element]);
+    if (90 <= targetStats.element && (stats.skillToUse.name == "Soul Strike" || stats.skillToUse.name == ""))
+        wBMC2 = Math.floor(wBMC2 * (1 + 0.05 * stats.skillToUse.level));
 
 
     if (targetStats.race == 9 && SkillSearch("Dragonology", stats))
         wBMC2 = wBMC2 * (100 + SkillSearch("Dragonology", stats) * 2) / 100;
 
     if (targetStats.race == 8)
-        wBMC2 = wBMC2 * (100 + CardNumSearch("Dolor of Thanatos") * 10) / 100;
+        wBMC2 = wBMC2 * (100 + CardNumSearch("Dolor of Thanatos", stats) * 10) / 100;
 
     if (targetStats.race == 6)
-        wBMC2 = wBMC2 * (100 + CardNumSearch("Skeggiold") * 2) / 100;
+        wBMC2 = wBMC2 * (100 + CardNumSearch("Skeggiold", stats) * 2) / 100;
 
     wBMC2 = tPlusDamCut(stats, targetStats, wBMC2, InWarOfEmperium);
 
 
-    wBMC2 = wBMC2 * (100 + StPlusItem(5000 + stats.skillToUse) + StPlusCard(5000 + stats.skillToUse)) / 100;
+    wBMC2 = wBMC2 * (100 + GetEquipmentStats(5000 + stats.skillToUse.index, stats) + GetCardStats(5000 + stats.skillToUse.index, stats)) / 100;
 
     wBMC2 = Math.floor(wBMC2);
 
@@ -5090,12 +5275,14 @@ function BattleMagicCalc(wBMC) {
 
 function CastAndDelay(stats, wCast, wDelay, swDelay) {
     let battleResult = {
-        // bonusSub: "", // bSUB
-        // bonusSubName: "", // bSUBname
-        // bonusSub2: "", // bSUB2name
-        // bonusSub2Name: "", // bSUB2name
-        // cast: 0,
-        // afterCastDelay: 0,
+        display: {
+            // bonusSub: "", // bSUB
+            // bonusSubName: "", // bSUBname
+            // bonusSub2: "", // bSUB2name
+            // bonusSub2Name: "", // bSUB2name
+            // cast: 0,
+            // afterCastDelay: 0,
+        }
     }
     if (wCast != 0) {
         let wCAD = stats.performanceSkills[2];
@@ -5103,8 +5290,8 @@ function CastAndDelay(stats, wCast, wDelay, swDelay) {
             wCAD = wCAD * 3 + stats.performanceSkills[32] + Math.floor(stats.performanceSkills[22] / 10);
             wCast *= (100 - wCAD) / 100;
         }
-        battleResult.bonusSub = Math.floor(wCast * 100) / 100 + SubName[1];
-        battleResult.bonusSubName = SubName[9];
+        battleResult.display.bonusSub = Math.floor(wCast * 100) / 100 + SubName[1];
+        battleResult.display.bonusSubName = SubName[9];
         // myInnerHtml("bSUBname", SubName[9], 0);
         // myInnerHtml("bSUB", Math.floor(wCast * 100) / 100 + SubName[1], 0);
     }
@@ -5112,7 +5299,7 @@ function CastAndDelay(stats, wCast, wDelay, swDelay) {
         if (swDelay == 1) {
             let wCAD = stats.performanceSkills[2];
             if (wDelay != "(Unknown)") {
-                wDelay = Math.floor(wDelay * (100 - (StPlusCard(ACD_PERCENTAGE, stats) + StPlusItem(ACD_PERCENTAGE, stats)))) / 100;
+                wDelay = Math.floor(wDelay * (100 - (GetCardStats(ACD_PERCENTAGE, stats) + GetEquipmentStats(ACD_PERCENTAGE, stats)))) / 100;
                 if (wCAD != 0) {
                     let wCAD2 = 3;
                     if (wCAD == 10)
@@ -5127,34 +5314,175 @@ function CastAndDelay(stats, wCast, wDelay, swDelay) {
             }
             // myInnerHtml("bSUB2name", "Delay (Fixed Type)", 0);
             // myInnerHtml("bSUB2", Math.floor(wDelay * 100) / 100 + "s", 0);
-            battleResult.bonusSub2 = Math.floor(wDelay * 100) / 100 + "s";
-            battleResult.bonusSub2Name = "Delay (Fixed Type)";
-            return battleResult;
-        }
-        if (swDelay == 2) {
-            battleResult.bonusSub2 = wDelay + "s";
-            battleResult.bonusSub2Name = "Delay(Motion Type)";
+            battleResult.display.bonusSub2 = Math.floor(wDelay * 100) / 100 + "s";
+            battleResult.display.bonusSub2Name = "Delay (Fixed Type)";
+            battleResult.cast = wCast;
+            battleResult.afterCastDelay = wDelay;
+        } else if (swDelay == 2) {
+            battleResult.display.bonusSub2 = wDelay + "s";
+            battleResult.display.bonusSub2Name = "Delay(Motion Type)";
             // myInnerHtml("bSUB2name", "Delay(Motion Type)", 0);
             // myInnerHtml("bSUB2", wDelay + "s", 0);
         } else {
             if (n_SpSkill != 1) {
                 if (wDelay != "(�s��)")
                     wDelay = Math.floor(wDelay * 100) / 100;
-                battleResult.bonusSub2 = wDelay + "s";
-                battleResult.bonusSub2Name = "Delay(Attack Speed Type)";
+                battleResult.display.bonusSub2 = wDelay + "s";
+                battleResult.display.bonusSub2Name = "Delay(Attack Speed Type)";
                 // myInnerHtml("bSUB2name", "Delay(Attack Speed Type)", 0);
                 // myInnerHtml("bSUB2", wDelay + "s", 0);
             }
         }
     }
-    battleResult.cast = wCast;
-    battleResult.afterCastDelay = wDelay;
+    battleResult.cast = wCast * 1000.0;
+    battleResult.afterCastDelay = wDelay * 1000.0;
     return battleResult;
+}
+
+function buildEquipment(equipmentIndex, isWeapon, refinement) {
+    let item = ItemOBJ[equipmentIndex];
+    let equipment = {
+        index: equipmentIndex,
+        name: item[8],
+        refinement: refinement ? refinement : 0,
+        itemId: ItemIds[equipmentIndex][1],
+        cards: []
+    }
+    if (isWeapon) {
+        equipment.atk = item[3];
+    } else {
+        equipment.def = item[3];
+    }
+    for (let STP2j = 0; item[STP2j + 11] != 0; STP2j += 2) {
+        let bonus = bonusLabel[item[STP2j + 11]];
+        if (bonus === undefined) {
+            if (item[STP2j + 11] > 5000) {
+                equipment[bonusLabel[5000]] = item[STP2j + 12];
+            } else {
+                console.log("Item bonus is undefined for item", item[8], "value", item[STP2j + 11], "at index", STP2j + 11)
+            }
+        } else {
+            equipment[bonus] = item[STP2j + 12];
+        }
+    }
+    return equipment;
+}
+
+function buildCard(cardIndex) {
+    if (!cardIndex) {
+        cardIndex = 0;
+    }
+    let item = cardOBJ[cardIndex];
+    let card = {index: cardIndex, name: item[2], itemId: CardIds[cardIndex][1]}
+
+    for (let STP2j = 0; item[STP2j + 4] != 0; STP2j += 2) {
+        let bonus = bonusLabel[item[STP2j + 4]];
+        if (bonus === undefined) {
+            if (item[STP2j + 4] > 5000) {
+                card[bonusLabel[5000]] = item[STP2j + 5];
+            } else {
+                console.log("Card bonus is undefined for card", item[2], "value", item[STP2j + 4], "at index", STP2j + 4)
+            }
+        } else {
+            card[bonus] = item[STP2j + 5];
+        }
+    }
+    return card;
+}
+
+function addPassiveSkill(FORM_DATA, stats, index) {
+    if (JobSkillPassOBJ[stats.job][index] != 999) {
+        let level = eval(FORM_DATA["A_PASSIVE_SKILL" + index]);
+        if (level > 0) {
+            stats.passiveSkills.push({
+                skid: SkillOBJ[JobSkillPassOBJ[stats.job][index]][3],
+                name: SkillOBJ[JobSkillPassOBJ[stats.job][index]][2],
+                level: eval(FORM_DATA["A_PASSIVE_SKILL" + index])
+            });
+        }
+    }
+}
+
+function GetTestCase(formData) {
+    let targetStats = CalculateEnemyStats(formData, 0);
+    let sourceStats = CalculateAllStats(formData, targetStats);
+    let battleResult = CalculateBattle(sourceStats, targetStats, 0);
+    let testCase = {
+        ...sourceStats,
+        targetId: MonsterIds[targetStats.mobIndex][1],
+        targetName: MonsterOBJ[targetStats.mobIndex][1],
+        ...battleResult,
+        formData: btoa(JSON.stringify(formData))
+    }
+    testCase._id = formData._id ? formData._id : Math.random().toString(36).substring(2, 6 + 2);
+    testCase.job = JobName[testCase.job];
+    if (testCase.arrow !== null) {
+        testCase.arrow = ArrowOBJ[testCase.arrow][2];
+    }
+    delete testCase.display;
+    delete testCase.performanceSkills;
+    delete testCase.supportiveSkillsBattleChant;
+    delete testCase.groundSupportiveSkills;
+    delete testCase.foodBoxBonus;
+    delete testCase.str;
+    delete testCase.agi;
+    delete testCase.vit;
+    delete testCase.dex;
+    delete testCase.int;
+    delete testCase.luk;
+    delete testCase.isRebirth;
+    testCase.matkMin = testCase.matk[0];
+    testCase.matkMax = testCase.matk[2];
+    delete testCase.matk;
+    for (let entry of Object.entries(testCase.equipments)) {
+        if (entry[1].name && entry[1].name.startsWith("(No")) {
+            delete testCase.equipments[entry[0]];
+        } else {
+            entry[1].cards = entry[1].cards.filter(c => c.index !== 0);
+            if (entry[1].cards.length === 0) {
+                delete entry[1].cards;
+            }
+        }
+    }
+    for(let entry of Object.entries(testCase.supportiveSkills)) {
+        if (entry[1].level === 0) {
+            delete testCase.supportiveSkills[entry[0]];
+        }
+    }
+    RemoveNullValues(testCase);
+
+    return testCase;
+}
+
+function RemoveNullValues(obj) {
+    for (let key in obj) {
+        if (obj[key] === undefined || obj[key] === null || Number.isNaN(obj[key])) {
+            if (Number.isNaN(obj[key])) {
+                throw new Error("key " + key + " is NaN. ")
+                // console.error("Found not a number for key", key)
+            }
+            delete obj[key];
+        } else if (Array.isArray(obj[key])) {
+            if (obj[key].length === 0) {
+                delete obj[key];
+            } else if (obj[key].every(v => v === 0)) {
+                delete obj[key];
+            }
+        } else if (typeof obj[key] === 'object') {
+            RemoveNullValues(obj[key]);
+        } else if (typeof obj[key] === 'string' && obj[key] === '') {
+            delete obj[key];
+        }
+    }
 }
 
 
 export {
     CalculateAllStats,
     CalculateEnemyStats,
-    CalculateBattle
+    CalculateBattle,
+    GetTestCase,
+    buildEquipment,
+    buildCard,
+    RemoveNullValues
 }
