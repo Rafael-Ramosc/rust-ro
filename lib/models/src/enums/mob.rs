@@ -17,32 +17,44 @@ pub enum MobClass {
 #[derive(WithStringValue, WithNumberValue, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MobRace {
     #[value_string = "RC_All"]
+    #[value_string = "All"]
     #[value = 0]
     All,
     #[value_string = "RC_Angel"]
+    #[value_string = "Angel"]
     Angel,
     #[value_string = "RC_Brute"]
+    #[value_string = "Brute"]
     Brute,
     #[value_string = "RC_DemiHuman"]
+    #[value_string = "DemiHuman"]
+    #[value_string = "Demihuman"]
     DemiHuman,
     #[value_string = "RC_Demon"]
+    #[value_string = "Demon"]
     Demon,
     #[value_string = "RC_Dragon"]
+    #[value_string = "Dragon"]
     Dragon,
     #[value_string = "RC_Fish"]
+    #[value_string = "Fish"]
     Fish,
     #[value_string = "RC_Formless"]
+    #[value_string = "Formless"]
     Formless,
     #[value_string = "RC_Insect"]
+    #[value_string = "Insect"]
     Insect,
     #[value_string = "RC_Plant"]
+    #[value_string = "Plant"]
     Plant,
     #[value_string = "RC_Player_Human"]
     PlayerHuman,
     #[value_string = "RC_Player_Doram"]
     PlayerDoram,
     #[value_string = "RC_Undead"]
-    Undead,
+    #[value_string = "Undead"]
+    RUndead,
 
 }
 
@@ -53,10 +65,10 @@ pub enum MobGroup {
     Goblin,
     #[value_string = "RC2_Kobold"]
     Kobold,
-    #[value_string = "RC2_Orc"]
-    Orc,
     #[value_string = "RC2_Golem"]
     Golem,
+    #[value_string = "RC2_Orc"]
+    Orc,
     #[value_string = "RC2_Guardian"]
     Guardian,
     #[value_string = "RC2_Ninja"]

@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// NV_BASIC
+// NV_BASIC - Basic Skill
 pub struct BasicSkill {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -94,7 +99,7 @@ impl SkillBase for BasicSkill {
 }
 impl PassiveSkillBase for BasicSkill {
 }
-// NV_FIRSTAID
+// NV_FIRSTAID - First Aid
 pub struct FirstAid {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -152,7 +157,7 @@ impl SkillBase for FirstAid {
        3
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Passive
     }
     fn _is_magic(&self) -> bool {
         false
@@ -165,17 +170,17 @@ impl SkillBase for FirstAid {
         if status.sp() > 3 { Ok(3) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_passive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for FirstAid {
+impl PassiveSkillBase for FirstAid {
 }
-// NV_TRICKDEAD
+// NV_TRICKDEAD - Play Dead
 pub struct PlayDead {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -246,13 +251,17 @@ impl SkillBase for PlayDead {
         if status.sp() > 5 { Ok(5) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for PlayDead {
+impl SupportiveSkillBase for PlayDead {
 }

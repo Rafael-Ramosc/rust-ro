@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// CR_SLIMPITCHER
+// CR_SLIMPITCHER - Aid Condensed Potion
 pub struct AidCondensedPotion {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -131,6 +136,44 @@ impl SkillBase for AidCondensedPotion {
        1000
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -141,7 +184,7 @@ impl SkillBase for AidCondensedPotion {
 }
 impl GroundSkillBase for AidCondensedPotion {
 }
-// CR_FULLPROTECTION
+// CR_FULLPROTECTION - Full Protection
 pub struct FullProtection {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -199,13 +242,13 @@ impl SkillBase for FullProtection {
        40
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -231,10 +274,14 @@ impl SkillBase for FullProtection {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for FullProtection {
 }
-// CR_ACIDDEMONSTRATION
+// CR_ACIDDEMONSTRATION - Acid Demonstration
 pub struct AcidDemonstration {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -292,10 +339,10 @@ impl SkillBase for AcidDemonstration {
        30
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        false
+        true
     }
     fn _is_physical(&self) -> bool {
         false
@@ -371,8 +418,12 @@ impl OffensiveSkillBase for AcidDemonstration {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// CR_CULTIVATION
+// CR_CULTIVATION - Plant Cultivation
 pub struct PlantCultivation {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -454,6 +505,14 @@ impl SkillBase for PlantCultivation {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -461,6 +520,8 @@ impl SkillBase for PlantCultivation {
     fn as_ground_skill(&self) -> Option<&dyn GroundSkill> {
         Some(self)
     }
+}
+impl InteractiveSkillBase for PlantCultivation {
 }
 impl GroundSkillBase for PlantCultivation {
 }

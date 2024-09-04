@@ -1,4 +1,3 @@
-use std::collections::{HashMap};
 use std::sync::Arc;
 use eframe::egui::{Color32, emath, epaint, Frame, Pos2, Rect, Sense, Shape, Stroke, Ui};
 use eframe::egui::epaint::RectShape;
@@ -8,9 +7,12 @@ use crate::server::model::map_instance::MapInstance;
 use crate::server::model::map_item::{MapItem, MapItemType};
 use crate::server::{Server};
 use crate::util::coordinate;
+use crate::util::hasher::NoopHasherU32;
+use hashbrown::HashMap;
 
 pub struct MapInstanceView {
     pub cursor_pos: Option<Pos2>,
+    pub clicked: bool,
     pub zoom: f32,
     pub zoom_center: Pos2,
     pub zoom_draw_rect: Rect,
@@ -23,7 +25,7 @@ struct PreviousCell {
 }
 
 impl MapInstanceView {
-    pub fn draw_map_instance_view(&mut self, ui: &mut Ui, map_instance: &Arc<MapInstance>, map_items: HashMap<u32, MapItem>) {
+    pub fn draw_map_instance_view(&mut self, ui: &mut Ui, map_instance: &Arc<MapInstance>, map_items: HashMap<u32, MapItem, NoopHasherU32>, selected_map_item: &Option<MapItem>) {
         Frame::dark_canvas(ui.style()).show(ui, |ui| {
             let (_id, response) = ui.allocate_exact_size(ui.available_size_before_wrap(), Sense::click_and_drag());
             let absolute_draw_rect = response.rect;
@@ -43,15 +45,16 @@ impl MapInstanceView {
             let mut shapes = vec![];
             let margin = 0.0;
 
-            let cursor_pos = ui.input().pointer.hover_pos();
+            let cursor_pos = ui.input(|input| input.pointer.hover_pos());
             self.cursor_pos = None;
-            if ui.input().zoom_delta() > 1.0 {
+            self.clicked = ui.input(|i| i.pointer.any_click());
+            if ui.input(|i| i.zoom_delta()) > 1.0 {
                 self.zoom_center = Pos2 {
                     x: cursor_pos.as_ref().unwrap().x - absolute_draw_rect.min.x,
                     y: cursor_pos.as_ref().unwrap().y - absolute_draw_rect.min.y,
                 };
                 self.zoom *= 1.5;
-            } else if ui.input().zoom_delta() < 1.0 {
+            } else if ui.input(|i| i.zoom_delta()) < 1.0 {
                 self.zoom /= 1.5;
                 if self.zoom <= 1.0 {
                     self.zoom = 1.0;
@@ -116,6 +119,7 @@ impl MapInstanceView {
                                 x: j as f32,
                                 y: i as f32
                             });
+
                         }
                     }
 
@@ -145,34 +149,43 @@ impl MapInstanceView {
             for (_, map_item) in map_items.iter() {
                 let map_name = map_instance.name().to_string();
                 let map_instance_id = map_instance.id();
-                let position = self.server.state().map_item_x_y(map_item, &map_name, map_instance_id).unwrap();
-                if position.x() < start_j
-                    || position.y() < start_i {
-                    continue;
-                }
-                let mut cell_color = Default::default();
-                if *map_item.object_type() == MapItemType::Mob {
-                    cell_color = Color32::RED;
-                } else if *map_item.object_type() == MapItemType::Character {
-                    cell_color = Color32::GREEN;
-                } else if *map_item.object_type() == MapItemType::Warp {
-                    cell_color = Color32::BLUE;
-                }
-                shapes.push(epaint::Shape::Rect(RectShape {
-                    rect: emath::Rect {
-                        min: Pos2 {
-                            x: absolute_draw_rect.min.x + margin + (shape_x_size * (position.x() - start_j) as f32),
-                            y: absolute_draw_rect.max.y - margin - (shape_y_size * ((position.y() - start_i) as f32 + 1.0)),
-                        },
-                        max: Pos2 {
-                            x: absolute_draw_rect.min.x + margin + (shape_x_size * ((position.x() - start_j) as f32 + 1.0)),
-                            y: absolute_draw_rect.max.y - margin - (shape_y_size * ((position.y() - start_i) as f32)),
+                if let Some(position) = self.server.state().map_item_x_y(map_item, &map_name, map_instance_id) {
+                    if position.x() < start_j
+                        || position.y() < start_i {
+                        continue;
+                    }
+                    let mut cell_color = Default::default();
+                    if *map_item.object_type() == MapItemType::Mob {
+                        cell_color = Color32::RED;
+                    } else if *map_item.object_type() == MapItemType::Character {
+                        cell_color = Color32::GREEN;
+                    } else if *map_item.object_type() == MapItemType::Warp {
+                        cell_color = Color32::BLUE;
+                    }
+                    if let Some(selected_map_item) = selected_map_item {
+                        if selected_map_item.id() == map_item.id() {
+                            cell_color = Color32::GOLD;
                         }
-                    },
-                    fill: cell_color,
-                    stroke: Stroke::NONE,
-                    rounding: Default::default(),
-                }));
+                    }
+                    shapes.push(epaint::Shape::Rect(RectShape {
+                        rect: emath::Rect {
+                            min: Pos2 {
+                                x: absolute_draw_rect.min.x + margin + (shape_x_size * (position.x() - start_j) as f32),
+                                y: absolute_draw_rect.max.y - margin - (shape_y_size * ((position.y() - start_i) as f32 + 1.0)),
+                            },
+                            max: Pos2 {
+                                x: absolute_draw_rect.min.x + margin + (shape_x_size * ((position.x() - start_j) as f32 + 1.0)),
+                                y: absolute_draw_rect.max.y - margin - (shape_y_size * ((position.y() - start_i) as f32)),
+                            }
+                        },
+                        fill: cell_color,
+                        stroke: Stroke::NONE,
+                        blur_width: 0.0,
+                        fill_texture_id: Default::default(),
+                        rounding: Default::default(),
+                        uv: Rect { min: Default::default(), max: Default::default() },
+                    }));
+                }
             }
 
 
@@ -197,7 +210,10 @@ impl MapInstanceView {
                 },
                 rounding: Default::default(),
                 fill: previous_cell.as_ref().unwrap().color,
-                stroke: Stroke::NONE
+                stroke: Stroke::NONE,
+                blur_width: 0.0,
+                fill_texture_id: Default::default(),
+                uv: Rect { min: Default::default(), max: Default::default() },
             }));
         }
     }

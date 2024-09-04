@@ -192,16 +192,16 @@ mod tests {
         context.inventory_service.add_items_in_inventory(&runtime, character_add_items, &mut character);
         equip_item_from_name(&mut character, "Knife");
         equip_item_from_name(&mut character, "Hat");
-        assert_eq!(character.status.equipped_weapons()[0].item_id, create_inventory_item("Knife", 1).item_id);
-        assert_eq!(character.status.equipped_gears()[0].item_id, create_inventory_item("Hat", 1).item_id);
+        assert_eq!(character.status.equipped_weapons()[0].item_id(), create_inventory_item("Knife", 1).item_id);
+        assert_eq!(character.status.equipped_gears()[0].item_id(), create_inventory_item("Hat", 1).item_id);
         // When
         context.inventory_service.reload_inventory(&runtime, character.char_id, &mut character);
         // Then
         assert_eq!(character.inventory.len(), 3); // potion is not in inventory anymore
         assert_eq!(character.status.equipped_gears().len(), 1);
-        assert_eq!(character.status.equipped_gears()[0].item_id, create_inventory_item("Beret", 1).item_id);
+        assert_eq!(character.status.equipped_gears()[0].item_id(), create_inventory_item("Beret", 1).item_id);
         assert_eq!(character.status.equipped_weapons().len(), 1);
-        assert_eq!(character.status.equipped_weapons()[0].item_id, create_inventory_item("Bow", 1).item_id);
+        assert_eq!(character.status.equipped_weapons()[0].item_id(), create_inventory_item("Bow", 1).item_id);
         assert_eq!(character.status.equipped_ammo().unwrap().item_id, create_inventory_item("Arrow", 1).item_id);
         assert!(inventory_repository.has_fetched_items.load(Ordering::Relaxed));
     }
@@ -264,6 +264,7 @@ mod tests {
         assert_eq!(character.inventory[inventory_index].as_ref().unwrap().equip, item.location as i32);
         assert_ne!(character.inventory[inventory_index].as_ref().unwrap().equip, 0);
         assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcReqWearEquipAck2::packet_id(GlobalConfigService::instance().packetver()))]));
+        assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcSpriteChange2::packet_id(GlobalConfigService::instance().packetver()))]));
         assert_sent_persistence_event!(context, PersistenceEvent::UpdateEquippedItems(vec![character.inventory[inventory_index].as_ref().unwrap().clone()]));
     }
 
@@ -327,6 +328,7 @@ mod tests {
         context.test_context.countdown_latch().wait_with_timeout(Duration::from_millis(200));
         assert_eq!(character.inventory[inventory_index].as_ref().unwrap().equip, item.location as i32);
         assert_ne!(character.inventory[inventory_index].as_ref().unwrap().equip, 0);
+        assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcSpriteChange2::packet_id(GlobalConfigService::instance().packetver()))]));
         assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcReqWearEquipAck2::packet_id(GlobalConfigService::instance().packetver()))]));
         assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcAttackRange::packet_id(GlobalConfigService::instance().packetver()))]));
         assert_sent_persistence_event!(context, PersistenceEvent::UpdateEquippedItems(vec![character.inventory[inventory_index].as_ref().unwrap().clone()]));
@@ -508,7 +510,7 @@ mod tests {
     #[test]
     fn test_takeoff_equip_item_should_unequip_item() {
         // Given
-        let context = before_each(mocked_repository());
+        let context = before_each_with_latch(mocked_repository(), 2);
         let mut character = create_character();
         let _char_id = character.char_id;
         let knife_index = equip_item_from_name(&mut character, "Knife");
@@ -517,6 +519,8 @@ mod tests {
         context.inventory_service.takeoff_equip_item(&mut character, knife_index);
         // Then
         assert_eq!(character.status.all_equipped_items().len(), 0);
+        context.test_context.countdown_latch().wait_with_timeout(Duration::from_millis(200));
+        assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_char(character.char_id, vec![SentPacket::with_id(PacketZcSpriteChange2::packet_id(GlobalConfigService::instance().packetver()))]));
     }
 
     #[test]

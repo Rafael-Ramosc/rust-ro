@@ -11,6 +11,7 @@ use crate::server::model::map_instance::MapInstanceKey;
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::state::character::Character;
 use models::enums::EnumWithNumberValue;
+use models::status_bonus::StatusBonuses;
 
 pub fn create_character() -> Character {
     Character {
@@ -36,13 +37,13 @@ pub fn create_character() -> Character {
             job_exp: 0,
             state: 0,
             size: Default::default(),
+            is_male: true,
             weapons: vec![],
             equipments: vec![],
             ammo: None,
             known_skills: vec![],
             effect: None,
-            bonuses: vec![],
-            bonuses_temporary: vec![],
+            bonuses: StatusBonuses::default(),
         },
         char_id: 150000,
         account_id: 2000000,
@@ -70,11 +71,24 @@ pub fn equip_item_from_id(character: &mut Character, id: u32) -> usize {
     let item = GlobalConfigService::instance().get_item(id as i32);
     equip_item(character, item)
 }
+pub fn equip_item_from_id_with_cards(character: &mut Character, id: u32, cards: Vec<i16>) -> usize {
+    let item = GlobalConfigService::instance().get_item(id as i32);
+    equip_item_with_cards_and_refinement(character, item, cards, 0)
+}
+pub fn equip_item_from_name_with_cards(character: &mut Character, name: &str, cards: Vec<i16>) -> usize {
+    let item = GlobalConfigService::instance().get_item_by_name(name);
+    equip_item_with_cards_and_refinement(character, item, cards, 0)
+}
 
 //
 // Warning: this method is not safe, if an item is already equipped at the given item location, character will have more than 1 item equipped to this location.
 // Character equip given item.
 pub fn equip_item(character: &mut Character, item: &ItemModel) -> usize {
+    equip_item_with_cards_and_refinement(character, item, vec![], 0)
+}//
+// Warning: this method is not safe, if an item is already equipped at the given item location, character will have more than 1 item equipped to this location.
+// Character equip given item.
+pub fn equip_item_with_cards_and_refinement(character: &mut Character, item: &ItemModel, cards: Vec<i16>, refinement: u8) -> usize {
     let mut rng = rand::thread_rng();
     let inventory_item = InventoryItemModel {
         id: rng.next_u32() as i32,
@@ -82,14 +96,14 @@ pub fn equip_item(character: &mut Character, item: &ItemModel) -> usize {
         item_id: item.id,
         item_type: DBItemType::from_type(item.item_type),
         amount: 1,
-        refine: 0,
+        refine: refinement as i16,
         is_identified: false,
         equip: item.location as i32,
         is_damaged: false,
-        card0: 0,
-        card1: 0,
-        card2: 0,
-        card3: 0,
+        card0: cards.first().cloned().unwrap_or_default(),
+        card1: cards.get(1).cloned().unwrap_or_default(),
+        card2: cards.get(2).cloned().unwrap_or_default(),
+        card3: cards.get(3).cloned().unwrap_or_default(),
         name_english: item.name_english.clone(),
         weight: item.weight,
     };

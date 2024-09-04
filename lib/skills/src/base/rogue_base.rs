@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// RG_SNATCHER
+// RG_SNATCHER - Gank
 pub struct Gank {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,55 @@ impl SkillBase for Gank {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 7.0), 0, 210),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 8.5), 0, 210),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 10.0), 0, 210),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 11.5), 0, 210),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 13.0), 0, 210),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 14.5), 0, 210),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 16.0), 0, 210),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 17.5), 0, 210),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 19.0), 0, 210),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(210, 20.5), 0, 210),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +147,7 @@ impl SkillBase for Gank {
 }
 impl PassiveSkillBase for Gank {
 }
-// RG_STEALCOIN
+// RG_STEALCOIN - Mug
 pub struct Mug {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -152,38 +205,68 @@ impl SkillBase for Mug {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for Mug {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl InteractiveSkillBase for Mug {
 }
-// RG_BACKSTAP
+// RG_BACKSTAP - Back Stab
 pub struct BackStab {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -241,7 +324,7 @@ impl SkillBase for BackStab {
        16
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -309,8 +392,12 @@ impl OffensiveSkillBase for BackStab {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// RG_TUNNELDRIVE
+// RG_TUNNELDRIVE - Stalk
 pub struct Stalk {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -377,17 +464,30 @@ impl SkillBase for Stalk {
         false
     }
     #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        TemporaryStatusBonuses::default()
     }
 }
-impl PassiveSkillBase for Stalk {
-}
-// RG_RAID
+// RG_RAID - Sightless Mind
 pub struct SightlessMind {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -474,14 +574,6 @@ impl SkillBase for SightlessMind {
     fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
 }
 impl OffensiveSkillBase for SightlessMind {
     #[inline(always)]
@@ -511,10 +603,65 @@ impl OffensiveSkillBase for SightlessMind {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(2);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 13 {
+                effects.push(StatusEffect::Blind);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 16 {
+                effects.push(StatusEffect::Blind);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 19 {
+                effects.push(StatusEffect::Blind);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 22 {
+                effects.push(StatusEffect::Blind);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Blind);
+            }
+        }
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 13 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 16 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 19 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 22 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
 }
-impl SelfSkillBase for SightlessMind {
-}
-// RG_STRIPWEAPON
+// RG_STRIPWEAPON - Divest Weapon
 pub struct DivestWeapon {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -587,13 +734,13 @@ impl SkillBase for DivestWeapon {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -623,25 +770,17 @@ impl SkillBase for DivestWeapon {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for DivestWeapon {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl InteractiveSkillBase for DivestWeapon {
 }
-// RG_STRIPSHIELD
+// RG_STRIPSHIELD - Divest Shield
 pub struct DivestShield {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -714,13 +853,13 @@ impl SkillBase for DivestShield {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -750,25 +889,17 @@ impl SkillBase for DivestShield {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for DivestShield {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl InteractiveSkillBase for DivestShield {
 }
-// RG_STRIPARMOR
+// RG_STRIPARMOR - Divest Armor
 pub struct DivestArmor {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -841,13 +972,13 @@ impl SkillBase for DivestArmor {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -877,25 +1008,17 @@ impl SkillBase for DivestArmor {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for DivestArmor {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl InteractiveSkillBase for DivestArmor {
 }
-// RG_STRIPHELM
+// RG_STRIPHELM - Divest Helm
 pub struct DivestHelm {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -968,13 +1091,13 @@ impl SkillBase for DivestHelm {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1004,25 +1127,17 @@ impl SkillBase for DivestHelm {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for DivestHelm {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl InteractiveSkillBase for DivestHelm {
 }
-// RG_INTIMIDATE
+// RG_INTIMIDATE - Snatch
 pub struct Snatch {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1095,7 +1210,7 @@ impl SkillBase for Snatch {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1174,8 +1289,12 @@ impl OffensiveSkillBase for Snatch {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// RG_GRAFFITI
+// RG_GRAFFITI - Scribble
 pub struct Scribble {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1254,6 +1373,14 @@ impl SkillBase for Scribble {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -1262,9 +1389,11 @@ impl SkillBase for Scribble {
         Some(self)
     }
 }
+impl InteractiveSkillBase for Scribble {
+}
 impl GroundSkillBase for Scribble {
 }
-// RG_FLAGGRAFFITI
+// RG_FLAGGRAFFITI - Piece
 pub struct Piece {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1345,7 +1474,7 @@ impl SkillBase for Piece {
 }
 impl GroundSkillBase for Piece {
 }
-// RG_CLEANER
+// RG_CLEANER - Remover
 pub struct Remover {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1426,7 +1555,7 @@ impl SkillBase for Remover {
 }
 impl GroundSkillBase for Remover {
 }
-// RG_GANGSTER
+// RG_GANGSTER - Slyness
 pub struct Slyness {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1492,18 +1621,8 @@ impl SkillBase for Slyness {
     fn _is_physical(&self) -> bool {
         false
     }
-    #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
-    }
 }
-impl PassiveSkillBase for Slyness {
-}
-// RG_COMPULSION
+// RG_COMPULSION - Haggle
 pub struct Haggle {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1569,18 +1688,8 @@ impl SkillBase for Haggle {
     fn _is_physical(&self) -> bool {
         false
     }
-    #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
-    }
 }
-impl PassiveSkillBase for Haggle {
-}
-// RG_PLAGIARISM
+// RG_PLAGIARISM - Intimidate
 pub struct Intimidate {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1646,18 +1755,8 @@ impl SkillBase for Intimidate {
     fn _is_physical(&self) -> bool {
         false
     }
-    #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
-    }
 }
-impl PassiveSkillBase for Intimidate {
-}
-// RG_CLOSECONFINE
+// RG_CLOSECONFINE - Close Confine
 pub struct CloseConfine {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1715,34 +1814,16 @@ impl SkillBase for CloseConfine {
        25
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 25 { Ok(25) } else {Err(())}
-    }
-    #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
-        Some(self)
-    }
-}
-impl OffensiveSkillBase for CloseConfine {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
     }
 }

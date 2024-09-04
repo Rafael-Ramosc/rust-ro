@@ -19,9 +19,13 @@ pub mod vanish;
 pub mod weapon;
 pub mod bonus;
 pub mod mob;
+pub mod trigger;
 
 pub trait EnumWithStringValue {
     fn try_from_string(value: &str) -> Result<Self, String>
+        where
+            Self: Sized;
+    fn try_from_string_ignore_case(value: &str) -> Result<Self, String>
         where
             Self: Sized;
     fn from_string(value: &str) -> Self;
@@ -48,4 +52,24 @@ pub trait EnumWithNumberValue {
         where
             Self: Sized;
     fn value(&self) -> usize;
+}
+
+
+pub trait EnumStackable<T: PartialEq> {
+    fn get_value_sum(single_enum: &T, enums: &Vec<T>) -> T;
+    fn merge_enums(enums: &Vec<T>) -> Vec<T> {
+        let mut merged_enums: Vec<T> = Vec::with_capacity(enums.len());
+        for single_enum in enums.iter() {
+            if merged_enums.contains(single_enum) {
+                continue
+            }
+            merged_enums.push(Self::get_value_sum(single_enum, &enums));
+        }
+        merged_enums
+    }
+    #[inline]
+    fn get_enum<'a>(single_enum: &T, enums: &'a Vec<&T>) -> Option<&'a T> {
+        enums.iter().find(|b| **b == single_enum).map(|b| *b)
+    }
+    fn get_enum_value<'a>(single_enum: &T, enums: &'a Vec<&T>) -> Option<f32>;
 }

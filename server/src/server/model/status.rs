@@ -4,7 +4,9 @@ use configuration::configuration::GameConfig;
 use models::enums::element::Element;
 use models::enums::size::Size;
 use models::enums::EnumWithStringValue;
+use models::enums::mob::MobRace;
 use models::status::{KnownSkill, Look, Status, StatusSnapshot};
+use models::status_bonus::StatusBonuses;
 
 pub struct StatusFromDb;
 impl StatusFromDb {
@@ -40,14 +42,14 @@ impl StatusFromDb {
             base_exp: char_model.base_exp as u32,
             job_exp: char_model.job_exp as u32,
             state: 0,
+            is_male: char_model.sex != "F",
             size: Default::default(),
             weapons: vec![],
             equipments: vec![],
             ammo: None,
             known_skills,
             effect: None,
-            bonuses: vec![],
-            bonuses_temporary: vec![],
+            bonuses: StatusBonuses::default(),
         }
     }
     pub fn from_mob_model(mob_model: &MobModel) -> StatusSnapshot {
@@ -72,7 +74,9 @@ impl StatusFromDb {
             mob_model.mdef as u16,
             Size::from_string(&mob_model.size),
             Element::from_string(mob_model.element.as_str()),
-            mob_model.element_level as u8
+            MobRace::from_string(mob_model.race.as_str()),
+            mob_model.element_level as u8,
+
         )
     }
 }

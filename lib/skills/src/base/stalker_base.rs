@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// ST_CHASEWALK
+// ST_CHASEWALK - Stealth
 pub struct Stealth {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -92,17 +97,40 @@ impl SkillBase for Stealth {
        1200
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-86), 2, tick, 10000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(1), 2, tick, 10000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-81), 2, tick, 10000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(2), 2, tick, 10000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-76), 2, tick, 10000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(4), 2, tick, 10000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-71), 2, tick, 10000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(8), 2, tick, 10000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-66), 2, tick, 10000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(16), 2, tick, 10000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
 }
-impl SelfSkillBase for Stealth {
-}
-// ST_REJECTSWORD
+// ST_REJECTSWORD - Counter Instinct
 pub struct CounterInstinct {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -181,7 +209,7 @@ impl SkillBase for CounterInstinct {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -203,17 +231,49 @@ impl SkillBase for CounterInstinct {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(15), 2, tick, 300000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(30), 2, tick, 300000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(45), 2, tick, 300000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(60), 2, tick, 300000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(75), 2, tick, 300000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for CounterInstinct {
+impl SupportiveSkillBase for CounterInstinct {
 }
-// ST_PRESERVE
+// ST_PRESERVE - Preserve
 pub struct Preserve {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -287,18 +347,8 @@ impl SkillBase for Preserve {
     fn _base_cast_time(&self) -> u32 {
        1000
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
 }
-impl SelfSkillBase for Preserve {
-}
-// ST_FULLSTRIP
+// ST_FULLSTRIP - Divest All
 pub struct DivestAll {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -371,13 +421,13 @@ impl SkillBase for DivestAll {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -419,5 +469,9 @@ impl OffensiveSkillBase for DivestAll {
     #[inline(always)]
     fn _element(&self) -> Element {
         Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

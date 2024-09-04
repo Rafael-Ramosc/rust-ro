@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// BS_IRON
+// BS_IRON - Iron Tempering
 pub struct IronTempering {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,35 @@ impl SkillBase for IronTempering {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(94, 5.0), 0, 94),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(94, 10.0), 0, 94),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(94, 15.0), 0, 94),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(94, 20.0), 0, 94),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(94, 25.0), 0, 94),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +127,7 @@ impl SkillBase for IronTempering {
 }
 impl PassiveSkillBase for IronTempering {
 }
-// BS_STEEL
+// BS_STEEL - Steel Tempering
 pub struct SteelTempering {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -158,7 +191,35 @@ impl SkillBase for SteelTempering {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(95, 5.0), 0, 95),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(95, 10.0), 0, 95),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(95, 15.0), 0, 95),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(95, 20.0), 0, 95),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(95, 25.0), 0, 95),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -171,7 +232,7 @@ impl SkillBase for SteelTempering {
 }
 impl PassiveSkillBase for SteelTempering {
 }
-// BS_ENCHANTEDSTONE
+// BS_ENCHANTEDSTONE - Enchanted Stone Craft
 pub struct EnchantedStoneCraft {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -235,7 +296,35 @@ impl SkillBase for EnchantedStoneCraft {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(96, 5.0), 0, 96),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(96, 10.0), 0, 96),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(96, 15.0), 0, 96),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(96, 20.0), 0, 96),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(96, 25.0), 0, 96),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -248,7 +337,7 @@ impl SkillBase for EnchantedStoneCraft {
 }
 impl PassiveSkillBase for EnchantedStoneCraft {
 }
-// BS_ORIDEOCON
+// BS_ORIDEOCON - Oridecon Research
 pub struct OrideconResearch {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -312,7 +401,35 @@ impl SkillBase for OrideconResearch {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(97, 2.0), 0, 97),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(97, 4.0), 0, 97),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(97, 6.0), 0, 97),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(97, 8.0), 0, 97),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(97, 10.0), 0, 97),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -325,7 +442,7 @@ impl SkillBase for OrideconResearch {
 }
 impl PassiveSkillBase for OrideconResearch {
 }
-// BS_DAGGER
+// BS_DAGGER - Smith Dagger
 pub struct SmithDagger {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -389,7 +506,27 @@ impl SkillBase for SmithDagger {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(98, 5.0), 0, 98),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(98, 10.0), 0, 98),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(98, 15.0), 0, 98),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -402,7 +539,7 @@ impl SkillBase for SmithDagger {
 }
 impl PassiveSkillBase for SmithDagger {
 }
-// BS_SWORD
+// BS_SWORD - Smith Sword
 pub struct SmithSword {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -466,7 +603,27 @@ impl SkillBase for SmithSword {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(99, 5.0), 0, 99),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(99, 10.0), 0, 99),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(99, 15.0), 0, 99),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -479,7 +636,7 @@ impl SkillBase for SmithSword {
 }
 impl PassiveSkillBase for SmithSword {
 }
-// BS_TWOHANDSWORD
+// BS_TWOHANDSWORD - Smith Two-handed Sword
 pub struct SmithTwohandedSword {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -543,7 +700,27 @@ impl SkillBase for SmithTwohandedSword {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(100, 5.0), 0, 100),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(100, 10.0), 0, 100),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(100, 15.0), 0, 100),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -556,7 +733,7 @@ impl SkillBase for SmithTwohandedSword {
 }
 impl PassiveSkillBase for SmithTwohandedSword {
 }
-// BS_AXE
+// BS_AXE - Smith Axe
 pub struct SmithAxe {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -620,7 +797,27 @@ impl SkillBase for SmithAxe {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(101, 5.0), 0, 101),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(101, 10.0), 0, 101),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(101, 15.0), 0, 101),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -633,7 +830,7 @@ impl SkillBase for SmithAxe {
 }
 impl PassiveSkillBase for SmithAxe {
 }
-// BS_MACE
+// BS_MACE - Smith Mace
 pub struct SmithMace {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -697,7 +894,27 @@ impl SkillBase for SmithMace {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(102, 5.0), 0, 102),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(102, 10.0), 0, 102),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(102, 15.0), 0, 102),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -710,7 +927,7 @@ impl SkillBase for SmithMace {
 }
 impl PassiveSkillBase for SmithMace {
 }
-// BS_KNUCKLE
+// BS_KNUCKLE - Smith Knucklebrace
 pub struct SmithKnucklebrace {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -774,7 +991,27 @@ impl SkillBase for SmithKnucklebrace {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(103, 5.0), 0, 103),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(103, 10.0), 0, 103),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(103, 15.0), 0, 103),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -787,7 +1024,7 @@ impl SkillBase for SmithKnucklebrace {
 }
 impl PassiveSkillBase for SmithKnucklebrace {
 }
-// BS_SPEAR
+// BS_SPEAR - Smith Spear
 pub struct SmithSpear {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -851,7 +1088,27 @@ impl SkillBase for SmithSpear {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(104, 5.0), 0, 104),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(104, 10.0), 0, 104),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(104, 15.0), 0, 104),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -864,7 +1121,7 @@ impl SkillBase for SmithSpear {
 }
 impl PassiveSkillBase for SmithSpear {
 }
-// BS_HILTBINDING
+// BS_HILTBINDING - Hilt Binding
 pub struct HiltBinding {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -928,7 +1185,20 @@ impl SkillBase for HiltBinding {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(4), 0, 105),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Str(1), 0, 105),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -941,7 +1211,7 @@ impl SkillBase for HiltBinding {
 }
 impl PassiveSkillBase for HiltBinding {
 }
-// BS_FINDINGORE
+// BS_FINDINGORE - Ore Discovery
 pub struct OreDiscovery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1005,7 +1275,7 @@ impl SkillBase for OreDiscovery {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1018,7 +1288,7 @@ impl SkillBase for OreDiscovery {
 }
 impl PassiveSkillBase for OreDiscovery {
 }
-// BS_WEAPONRESEARCH
+// BS_WEAPONRESEARCH - Weaponry Research
 pub struct WeaponryResearch {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1082,7 +1352,75 @@ impl SkillBase for WeaponryResearch {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(2), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(2), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 1.0), 0, 107),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(4), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(4), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 2.0), 0, 107),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(6), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(6), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 3.0), 0, 107),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(8), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(8), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 4.0), 0, 107),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(10), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(10), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 5.0), 0, 107),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(12), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(12), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 6.0), 0, 107),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(14), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(14), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 7.0), 0, 107),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(16), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(16), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 8.0), 0, 107),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(18), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(18), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 9.0), 0, 107),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(20), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::Atk(20), 0, 107),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SkillIdSuccessPercentage(107, 10.0), 0, 107),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1095,7 +1433,7 @@ impl SkillBase for WeaponryResearch {
 }
 impl PassiveSkillBase for WeaponryResearch {
 }
-// BS_REPAIRWEAPON
+// BS_REPAIRWEAPON - Weapon Repair
 pub struct WeaponRepair {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1153,13 +1491,13 @@ impl SkillBase for WeaponRepair {
        30
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1170,17 +1508,17 @@ impl SkillBase for WeaponRepair {
        7500
     }
     #[inline(always)]
-    fn is_supportive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SupportiveSkillBase for WeaponRepair {
+impl InteractiveSkillBase for WeaponRepair {
 }
-// BS_SKINTEMPER
+// BS_SKINTEMPER - Skin Tempering
 pub struct SkinTempering {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1244,7 +1582,40 @@ impl SkillBase for SkinTempering {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Fire, 4), 0, 109),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Neutral, 1), 0, 109),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Fire, 8), 0, 109),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Neutral, 2), 0, 109),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Fire, 12), 0, 109),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Neutral, 3), 0, 109),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Fire, 16), 0, 109),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Neutral, 4), 0, 109),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Fire, 20), 0, 109),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Neutral, 5), 0, 109),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1257,7 +1628,7 @@ impl SkillBase for SkinTempering {
 }
 impl PassiveSkillBase for SkinTempering {
 }
-// BS_HAMMERFALL
+// BS_HAMMERFALL - Hammer Fall
 pub struct HammerFall {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1321,7 +1692,7 @@ impl SkillBase for HammerFall {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1336,6 +1707,14 @@ impl SkillBase for HammerFall {
         }
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -1344,9 +1723,50 @@ impl SkillBase for HammerFall {
         Some(self)
     }
 }
+impl OffensiveSkillBase for HammerFall {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 50 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 60 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 70 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
+}
 impl GroundSkillBase for HammerFall {
 }
-// BS_ADRENALINE
+// BS_ADRENALINE - Adrenaline Rush
 pub struct AdrenalineRush {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1419,13 +1839,13 @@ impl SkillBase for AdrenalineRush {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1455,17 +1875,76 @@ impl SkillBase for AdrenalineRush {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 150000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 150000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for AdrenalineRush {
+impl SupportiveSkillBase for AdrenalineRush {
 }
-// BS_WEAPONPERFECT
+// BS_WEAPONPERFECT - Weapon Perfection
 pub struct WeaponPerfection {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1538,13 +2017,13 @@ impl SkillBase for WeaponPerfection {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1566,17 +2045,21 @@ impl SkillBase for WeaponPerfection {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for WeaponPerfection {
+impl SupportiveSkillBase for WeaponPerfection {
 }
-// BS_OVERTHRUST
+// BS_OVERTHRUST - Power-Thrust
 pub struct PowerThrust {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1649,13 +2132,13 @@ impl SkillBase for PowerThrust {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1685,17 +2168,81 @@ impl SkillBase for PowerThrust {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 20000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 20000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(10), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 40000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(15), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(20), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 80000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(25), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 100000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 20000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 40000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 80000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 100000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for PowerThrust {
+impl SupportiveSkillBase for PowerThrust {
 }
-// BS_MAXIMIZE
+// BS_MAXIMIZE - Maximize Power
 pub struct MaximizePower {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1753,30 +2300,34 @@ impl SkillBase for MaximizePower {
        10
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for MaximizePower {
+impl SupportiveSkillBase for MaximizePower {
 }
-// BS_UNFAIRLYTRICK
+// BS_UNFAIRLYTRICK - Unfair Trick
 pub struct UnfairTrick {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1840,20 +2391,10 @@ impl SkillBase for UnfairTrick {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
+        false
     }
 }
-impl PassiveSkillBase for UnfairTrick {
-}
-// BS_GREED
+// BS_GREED - Greed
 pub struct Greed {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1917,7 +2458,7 @@ impl SkillBase for Greed {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1927,18 +2468,8 @@ impl SkillBase for Greed {
     fn _base_after_cast_act_delay(&self) -> u32 {
        1000
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
 }
-impl SelfSkillBase for Greed {
-}
-// BS_ADRENALINE2
+// BS_ADRENALINE2 - Advanced Adrenaline Rush
 pub struct AdvancedAdrenalineRush {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2002,7 +2533,7 @@ impl SkillBase for AdvancedAdrenalineRush {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -2018,13 +2549,40 @@ impl SkillBase for AdvancedAdrenalineRush {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 150000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 150000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for AdvancedAdrenalineRush {
+impl SupportiveSkillBase for AdvancedAdrenalineRush {
 }

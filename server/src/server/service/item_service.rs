@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use std::sync::{Arc, Once, RwLock};
+use std::sync::{Arc, Once};
 use std::sync::mpsc::SyncSender;
 use base64::Engine;
 use base64::engine::general_purpose;
@@ -9,6 +9,7 @@ use rathena_script_lang_interpreter::lang::compiler::{Compiler, DebugFlag};
 use rathena_script_lang_interpreter::lang::vm::Vm;
 use tokio::runtime::Runtime;
 use tokio::sync::mpsc;
+use models::enums::bonus::BonusType;
 
 
 use packets::packets::PacketZcUseItemAck2;
@@ -72,22 +73,15 @@ impl ItemService {
         if let Some(item) = character.get_item_from_inventory(character_user_item.index) {
             if item.item_type().is_consumable() {
                 // TODO check if char can use (class restriction, level restriction)
+                //TODO rework, this is deprecated, items script are now compiled. In addition it is not efficient to instantiate PlayerScriptHandler each time
                 let maybe_script_ref = ItemService::instance().get_item_script(item.item_id, runtime);
                 if maybe_script_ref.is_some() {
                     let script = maybe_script_ref.as_ref().unwrap();
-                    let (tx, rx) = mpsc::channel(1);
+                    let (tx, _rx) = mpsc::channel(1);
                     let session = server_ref.state().get_session(character.account_id);
                     session.set_script_handler_channel_sender(tx);
                     let script_result = Vm::repl(server_ref.vm.clone(), script,
-                                                 Box::new(&PlayerScriptHandler {
-                                                     client_notification_channel: self.client_notification_sender.clone(),
-                                                     npc_id: 0,
-                                                     server: server_ref.clone(),
-                                                     player_action_receiver: RwLock::new(rx),
-                                                     runtime: Runtime::new().unwrap(),
-                                                     session,
-                                                     configuration_service: self.configuration_service,
-                                                 }));
+                                                 Box::new(PlayerScriptHandler::instance()), vec![0, character.char_id, character.account_id]);
                     let mut packet_zc_use_item_ack = PacketZcUseItemAck2::new(self.configuration_service.packetver());
                     packet_zc_use_item_ack.set_aid(character_user_item.char_id);
                     packet_zc_use_item_ack.set_index(character_user_item.index as u16);
@@ -134,7 +128,7 @@ impl ItemService {
                         LoadConstant(_) | LoadValue |  LoadGlobal => {}
                         CallNative { reference, .. } => {
                             let native = vm.get_from_native_pool(*reference).unwrap();
-                            if !(native.name == "bonus" || native.name == "bonus2" || native.name == "bonus3" || native.name == "bonus4" || native.name == "bonus5") {
+                            if !(native.name == "bonus" || native.name == "bonus2" || native.name == "bonus3" || native.name == "bonus4" || native.name == "bonus5" || native.name == "skill") {
                                 complex_script = true; break;
                             }
                         }
@@ -145,9 +139,14 @@ impl ItemService {
                         _ => { complex_script = true; break; }
                     }
                 }
+
+                Vm::repl(vm.clone(), class_file, Box::new(&script_handler), vec![]);
+                item.bonuses = script_handler.drain();
+
+                item.bonuses.iter().filter_map(|b| {
+                    if let BonusType::ElementWeapon(element) = b { Some(*element) } else { None }
+                }).for_each(|element| { item.element = Some(element); });
                 if !complex_script {
-                    Vm::repl(vm.clone(), class_file, Box::new(&script_handler));
-                    item.bonuses = script_handler.drain();
                     item.script_compilation = None;
                     count_script_executed += 1;
                 } else {

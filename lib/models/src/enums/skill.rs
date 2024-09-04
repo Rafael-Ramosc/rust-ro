@@ -38,9 +38,11 @@ pub enum SkillState {
 
 #[derive(WithNumberValue, WithStringValue, Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SkillType {
-    Magic,
-    Weapon,
-    Misc,
+    Offensive,
+    Interactive,
+    Performance,
+    Support,
+    Passive,
 }
 
 #[derive(WithNumberValue, WithStringValue, Debug, Copy, Clone, PartialEq, Eq, Default)]
@@ -48,13 +50,18 @@ pub enum SkillTargetType {
     #[value = 0]
     #[default]
     Passive,
-    Attack,
+    #[value = 1]
+    Target,
+    #[value = 2]
     Ground,
+    #[value = 4]
     #[value_string = "Self"]
     MySelf,
-    #[value = 10]
-    Support,
-    #[value = 11]
+    #[value = 4]
+    Party,
+    #[value = 16]
+    Friend,
+    #[value = 32]
     Trap,
 }
 
@@ -71,6 +78,8 @@ pub enum SkillDamageFlags {
     Ignoredefcard,
     Critical,
     Ignorelongcard,
+    IsPhysical,
+    IsMagical,
     Max,
 }
 

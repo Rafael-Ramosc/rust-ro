@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// CH_PALMSTRIKE
+// CH_PALMSTRIKE - Raging Palm Strike
 pub struct RagingPalmStrike {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -90,7 +95,7 @@ impl SkillBase for RagingPalmStrike {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -167,8 +172,12 @@ impl OffensiveSkillBase for RagingPalmStrike {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// CH_TIGERFIST
+// CH_TIGERFIST - Glacier Fist
 pub struct GlacierFist {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -269,17 +278,29 @@ impl SkillBase for GlacierFist {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for GlacierFist {
+impl OffensiveSkillBase for GlacierFist {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Weapon
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// CH_CHAINCRUSH
+// CH_CHAINCRUSH - Chain Crush Combo
 pub struct ChainCrushCombo {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -417,14 +438,6 @@ impl SkillBase for ChainCrushCombo {
     fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
 }
 impl OffensiveSkillBase for ChainCrushCombo {
     #[inline(always)]
@@ -499,10 +512,12 @@ impl OffensiveSkillBase for ChainCrushCombo {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-impl SelfSkillBase for ChainCrushCombo {
-}
-// CH_SOULCOLLECT
+// CH_SOULCOLLECT - Zen
 pub struct Zen {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -576,14 +591,4 @@ impl SkillBase for Zen {
     fn _base_cast_time(&self) -> u32 {
        2000
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-}
-impl SelfSkillBase for Zen {
 }

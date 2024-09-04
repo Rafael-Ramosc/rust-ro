@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// DC_DANCINGLESSON
+// DC_DANCINGLESSON - Dance Lessons
 pub struct DanceLessons {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,65 @@ impl SkillBase for DanceLessons {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 3), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(40), 0, 323),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 6), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(80), 0, 323),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 9), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(120), 0, 323),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 12), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-96), 0, 323),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 15), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-56), 0, 323),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 18), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-16), 0, 323),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 21), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(24), 0, 323),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 24), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(64), 0, 323),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 27), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(104), 0, 323),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Whip, 30), 0, 323),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-112), 0, 323),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +157,7 @@ impl SkillBase for DanceLessons {
 }
 impl PassiveSkillBase for DanceLessons {
 }
-// DC_THROWARROW
+// DC_THROWARROW - Slinging Arrow
 pub struct SlingingArrow {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -167,7 +230,7 @@ impl SkillBase for SlingingArrow {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -249,10 +312,14 @@ impl OffensiveSkillBase for SlingingArrow {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// DC_UGLYDANCE
+// DC_UGLYDANCE - Hip Shaker
 pub struct HipShaker {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -361,14 +428,6 @@ impl SkillBase for HipShaker {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-    #[inline(always)]
     fn is_performance_skill(&self) -> bool {
         true
     }
@@ -377,11 +436,9 @@ impl SkillBase for HipShaker {
         Some(self)
     }
 }
-impl SelfSkillBase for HipShaker {
-}
 impl PerformanceSkillBase for HipShaker {
 }
-// DC_SCREAM
+// DC_SCREAM - Dazzler
 pub struct Dazzler {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -486,17 +543,56 @@ impl SkillBase for Dazzler {
        4000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Dazzler {
+impl OffensiveSkillBase for Dazzler {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 35 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
 }
-// DC_HUMMING
+// DC_HUMMING - Focus Ballet
 pub struct FocusBallet {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -635,14 +731,6 @@ impl SkillBase for FocusBallet {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-    #[inline(always)]
     fn is_performance_skill(&self) -> bool {
         true
     }
@@ -651,11 +739,9 @@ impl SkillBase for FocusBallet {
         Some(self)
     }
 }
-impl SelfSkillBase for FocusBallet {
-}
 impl PerformanceSkillBase for FocusBallet {
 }
-// DC_DONTFORGETME
+// DC_DONTFORGETME - Slow Grace
 pub struct SlowGrace {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -794,12 +880,62 @@ impl SkillBase for SlowGrace {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-8.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-8), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-11.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-11), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-14.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-14), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-17.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-17), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-20.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-20), 2, tick, 180000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-23.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-23), 2, tick, 180000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-26.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-26), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-29.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-29), 2, tick, 180000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-32.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-32), 2, tick, 180000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-35.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-35), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -810,11 +946,9 @@ impl SkillBase for SlowGrace {
         Some(self)
     }
 }
-impl SelfSkillBase for SlowGrace {
-}
 impl PerformanceSkillBase for SlowGrace {
 }
-// DC_FORTUNEKISS
+// DC_FORTUNEKISS - Lady Luck
 pub struct LadyLuck {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -953,12 +1087,52 @@ impl SkillBase for LadyLuck {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(11.0), 2, tick, 120000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(12.0), 2, tick, 120000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(13.0), 2, tick, 120000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(14.0), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(15.0), 2, tick, 120000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(16.0), 2, tick, 120000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(17.0), 2, tick, 120000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(18.0), 2, tick, 120000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(19.0), 2, tick, 120000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Crit(20.0), 2, tick, 120000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -969,11 +1143,9 @@ impl SkillBase for LadyLuck {
         Some(self)
     }
 }
-impl SelfSkillBase for LadyLuck {
-}
 impl PerformanceSkillBase for LadyLuck {
 }
-// DC_SERVICEFORYOU
+// DC_SERVICEFORYOU - Gypsy's Kiss
 pub struct GypsysKiss {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1112,12 +1284,52 @@ impl SkillBase for GypsysKiss {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(11), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(12), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(13), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(14), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(15), 2, tick, 180000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(16), 2, tick, 180000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(17), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(18), 2, tick, 180000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(19), 2, tick, 180000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxspPercentage(20), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -1128,11 +1340,9 @@ impl SkillBase for GypsysKiss {
         Some(self)
     }
 }
-impl SelfSkillBase for GypsysKiss {
-}
 impl PerformanceSkillBase for GypsysKiss {
 }
-// DC_WINKCHARM
+// DC_WINKCHARM - Wink of Charm
 pub struct WinkofCharm {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1190,7 +1400,7 @@ impl SkillBase for WinkofCharm {
        40
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1211,17 +1421,17 @@ impl SkillBase for WinkofCharm {
        2000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
-}
-impl OffensiveSkillBase for WinkofCharm {
     #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
+    fn _client_type(&self) -> usize {
+        16
     }
+}
+impl SupportiveSkillBase for WinkofCharm {
 }

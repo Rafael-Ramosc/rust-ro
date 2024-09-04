@@ -8,12 +8,12 @@ use crate::tests::common;
 use crate::tests::common::{create_mpsc, TestContext};
 use crate::tests::common::sync_helper::CountDownLatch;
 
-struct StatusServiceTestContext {
+pub struct StatusServiceTestContext {
     test_context: TestContext,
-    status_service: StatusService,
+    pub status_service: StatusService,
 }
 
-fn before_each() -> StatusServiceTestContext {
+pub fn before_each() -> StatusServiceTestContext {
     before_each_with_latch(0)
 }
 
@@ -24,24 +24,35 @@ fn before_each_with_latch(latch_size: usize) -> StatusServiceTestContext {
     let count_down_latch = CountDownLatch::new(latch_size);
     StatusServiceTestContext {
         test_context: TestContext::new(client_notification_sender.clone(), client_notification_receiver, persistence_event_sender.clone(), persistence_event_receiver, count_down_latch),
-        status_service: StatusService::new(GlobalConfigService::instance()),
+        status_service: StatusService::new(GlobalConfigService::instance(), "../native_functions_list.txt"),
     }
 }
 
 #[cfg(test)]
 #[cfg(not(feature = "integration_tests"))]
 mod tests {
+    use std::fmt::format;
     use std::fs::File;
     use std::io::{Seek, SeekFrom, Write};
+    use std::mem;
     use std::path::Path;
+    use std::ptr::eq;
+    use models::enums::bonus::BonusType;
     use models::enums::class::JobName;
+    use models::enums::element::Element;
     use models::enums::weapon::WeaponType;
     use models::status::{Status, StatusSnapshot};
     use models::enums::EnumWithStringValue;
     use models::enums::EnumWithNumberValue;
+    use models::item::{WearGear, WearWeapon};
+    use crate::tests::common::fixtures::battle_fixture::Equipment;
+    use crate::tests::common::fixtures::TestResult;
+    #[macro_use]
+    use crate::format_result;
     use crate::{eq_with_variance, status_snapshot};
 
-    use crate::tests::common::character_helper::{create_character, equip_item_from_name};
+    use crate::tests::common::character_helper::{create_character, equip_item_from_name_with_cards, equip_item_from_id_with_cards, equip_item_from_name, equip_item_with_cards_and_refinement};
+    use crate::tests::common::fixtures::battle_fixture::BattleFixture;
     use super::*;
 
     #[test]
@@ -151,10 +162,63 @@ mod tests {
             if !stat.weapon.is_empty() {
                 equip_item_from_name(&mut character, stat.weapon);
             }
+            let status_snapshot = status_snapshot!(context, character);
             // When
-            let status_atk = context.status_service.status_atk_left_side(status_snapshot!(context, character));
+            let status_atk = status_snapshot.atk_left_side();
             // Then
             assert_eq!(status_atk, stat.expected_status_atk, "Expected status atk1 to be {} but was {} with stats {:?}", stat.expected_status_atk, status_atk, stat);
+        }
+    }
+
+    #[test]
+    fn test_status_right_side_atk() {
+        // Given
+        let context = before_each();
+        #[derive(Debug)]
+        struct Stats<'a> {
+            weapon: &'a str,
+            refine: u8,
+            expected_status_atk: i32,
+            expected_overupgrade_bonus: u8,
+        }
+        let stats = vec![
+            Stats { weapon: "Knife", refine: 0, expected_status_atk: 0, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Knife", refine: 5, expected_status_atk: 5 * 2, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Knife", refine: 7, expected_status_atk: 7 * 2, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Knife", refine: 8, expected_status_atk: 8 * 2, expected_overupgrade_bonus: 3 },
+            Stats { weapon: "Knife", refine: 9, expected_status_atk: 9 * 2, expected_overupgrade_bonus: 6 },
+            Stats { weapon: "Knife", refine: 10, expected_status_atk: 10 * 2, expected_overupgrade_bonus: 9 },
+            Stats { weapon: "Dagger", refine: 0, expected_status_atk: 0, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Dagger", refine: 5, expected_status_atk: 5 * 3, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Dagger", refine: 7, expected_status_atk: 7 * 3, expected_overupgrade_bonus: 5 },
+            Stats { weapon: "Dagger", refine: 8, expected_status_atk: 8 * 3, expected_overupgrade_bonus: 10 },
+            Stats { weapon: "Dagger", refine: 9, expected_status_atk: 9 * 3, expected_overupgrade_bonus: 15 },
+            Stats { weapon: "Dagger", refine: 10, expected_status_atk: 10 * 3, expected_overupgrade_bonus: 20 },
+            Stats { weapon: "Damascus", refine: 0, expected_status_atk: 0, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Damascus", refine: 5, expected_status_atk: 5 * 5, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Damascus", refine: 6, expected_status_atk: 6 * 5, expected_overupgrade_bonus: 8 },
+            Stats { weapon: "Damascus", refine: 7, expected_status_atk: 7 * 5, expected_overupgrade_bonus: 16 },
+            Stats { weapon: "Damascus", refine: 8, expected_status_atk: 8 * 5, expected_overupgrade_bonus: 24 },
+            Stats { weapon: "Damascus", refine: 9, expected_status_atk: 9 * 5, expected_overupgrade_bonus: 32 },
+            Stats { weapon: "Damascus", refine: 10, expected_status_atk: 10 * 5, expected_overupgrade_bonus: 40 },
+            Stats { weapon: "Combat_Knife", refine: 0, expected_status_atk: 0, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Combat_Knife", refine: 4, expected_status_atk: 4 * 7, expected_overupgrade_bonus: 0 },
+            Stats { weapon: "Combat_Knife", refine: 5, expected_status_atk: 5 * 7, expected_overupgrade_bonus: 14 },
+            Stats { weapon: "Combat_Knife", refine: 6, expected_status_atk: 6 * 7, expected_overupgrade_bonus: 28 },
+            Stats { weapon: "Combat_Knife", refine: 7, expected_status_atk: 7 * 7, expected_overupgrade_bonus: 42 },
+            Stats { weapon: "Combat_Knife", refine: 8, expected_status_atk: 8 * 7, expected_overupgrade_bonus: 56 },
+            Stats { weapon: "Combat_Knife", refine: 9, expected_status_atk: 9 * 7, expected_overupgrade_bonus: 70 },
+            Stats { weapon: "Combat_Knife", refine: 10, expected_status_atk: 10 * 7, expected_overupgrade_bonus: 84 },
+        ];
+
+        for stat in stats {
+            let mut character = create_character();
+            equip_item_with_cards_and_refinement(&mut character,  GlobalConfigService::instance().get_item_by_name(stat.weapon), vec![], stat.refine);
+            // When
+            let status_snapshot = status_snapshot!(context, character);
+            // Then
+            assert_eq!(status_snapshot.atk_right_side(), stat.expected_status_atk, "Expected status atk right to be {} but was {} with stats {:?}", stat.expected_status_atk, status_snapshot.atk_right_side(), stat);
+            assert_eq!(status_snapshot.overupgrade_right_hand_atk_bonus(), stat.expected_overupgrade_bonus, "Expected status atk right to be {} but was {} with stats {:?}", stat.expected_overupgrade_bonus, status_snapshot.overupgrade_right_hand_atk_bonus(), stat);
         }
     }
 
@@ -172,106 +236,151 @@ mod tests {
     }
 
     #[test]
-    fn test_mob_vit_def() {
-        // Given
-        let context = before_each();
-        let _character = create_character();
-        for vit in [0, 1, 2, 45, 88].iter() {
-            // When
-            let actual_vit = context.status_service.mob_vit_def(*vit);
-            // Then
-            assert!(actual_vit >= *vit, "Expected actual_vit {} to be greater or equal to {}", actual_vit, vit);
-        }
-    }
-
-    #[test]
     fn test_all_stats_when_job_level_change() {
         let fixture_file = "src/tests/common/fixtures/data/stats-for-each-job-level.json";
         let result_file_path = "../doc/progress/stats-for-each-job-level_progress.md";
-        stats_tests(fixture_file, result_file_path, "Stats for each job level", None);
+        stats_tests(fixture_file, result_file_path, "Stats for each job level", None, false);
+    }
+
+    #[test]
+    fn test_all_stats_when_equip_items() {
+        let context = before_each();
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-items.json";
+        let result_file_path = "../doc/progress/stats-for-each-items_progress.md";
+        stats_tests(fixture_file, result_file_path, "Stats for each items", None, false);
+    }
+
+    #[test]
+    fn test_each_stats() {
+        let context = before_each();
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-each-stats.json";
+        let result_file_path = "../doc/progress/each-bonus_progress.md";
+        stats_tests(fixture_file, result_file_path, "Each item bonus", None, false);
+    }
+
+    #[test]
+    fn test_all_stats_when_card() {
+        let context = before_each();
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-cards.json";
+        let result_file_path = "../doc/progress/stats-for-each-card_progress.md";
+        stats_tests(fixture_file, result_file_path, "Stats for each cards", None, false);
     }
 
 
     #[test]
     fn playground() {
-        let id = "jkj3id";
-        let fixture_file = "src/tests/common/fixtures/data/stats-for-each-job-level.json";
-        let result_file_path = "../doc/progress/stats-for-each-job-level_progress.md";
-        stats_tests(fixture_file, result_file_path, "Stats for each job level", Some(id));
+        let id = "0g3rud";
+        let fixture_file = "src/tests/common/fixtures/data/stats-for-cards.json";
+        let result_file_path = "../doc/progress/stats-for-each-items_progress.md";
+        stats_tests(fixture_file, result_file_path, "Stats for each job level", Some(id), false);
     }
 
-    fn stats_tests(fixture_file: &str, result_file_path: &str, title: &str, test_id: Option<&str>) {
+
+    #[test]
+    #[ignore = "not yet implemented"]
+    fn test_status_increase_base_on_high_upgrade_cards() {
+        // apocalypse Card
+        // dimik Card
+    }
+
+    #[test]
+    #[ignore = "not yet implemented"]
+    fn test_status_increase_base_on_low_upgrade_cards() {
+        // gold acidus Card
+        // gibbet
+    }
+
+    #[test]
+    fn test_status_elemental_armor_cards() {
         // Given
         let context = before_each();
-        let mut character = create_character();
-        let _packetver = GlobalConfigService::instance().packetver();
-        let scenario = common::fixtures::battle_fixture::BattleFixture::load(fixture_file);
-        let mut i = -1;
-        #[derive(Clone)]
-        struct TestResult {
-            id: String,
-            job: String,
-            job_level: usize,
-            passed: bool,
-            actual_str: u16,
-            actual_bonus_str: u16,
-            actual_agi: u16,
-            actual_bonus_agi: u16,
-            actual_vit: u16,
-            actual_bonus_vit: u16,
-            actual_int: u16,
-            actual_bonus_int: u16,
-            actual_dex: u16,
-            actual_bonus_dex: u16,
-            actual_luk: u16,
-            actual_bonus_luk: u16,
-            actual_aspd: f32,
-            actual_atk_left: u16,
-            actual_atk_right: u16,
-            actual_matk_min: u16,
-            actual_matk_max: u16,
-            actual_def: u16,
-            actual_mdef: u16,
-            actual_hit: u16,
-            actual_flee: u16,
-            actual_hp: u16,
-            actual_sp: u16,
-            actual_crit: f32,
-            expected_str: u16,
-            expected_bonus_str: u16,
-            expected_agi: u16,
-            expected_bonus_agi: u16,
-            expected_vit: u16,
-            expected_bonus_vit: u16,
-            expected_int: u16,
-            expected_bonus_int: u16,
-            expected_dex: u16,
-            expected_bonus_dex: u16,
-            expected_luk: u16,
-            expected_bonus_luk: u16,
-            expected_aspd: f32,
-            expected_atk_left: u16,
-            expected_atk_right: u16,
-            expected_matk_min: u16,
-            expected_matk_max: u16,
-            expected_def: u16,
-            expected_mdef: u16,
-            expected_hit: u16,
-            expected_flee: u16,
-            expected_hp: u16,
-            expected_sp: u16,
-            expected_crit: f32,
+
+        struct Scenarii<'a> {
+            card: &'a str,
+            expected_element: Element,
+        };
+        let scenario = vec![
+          Scenarii { card: "Ghostring_Card", expected_element: Element::Ghost },
+          Scenarii { card: "Dokebi_Card", expected_element: Element::Wind },
+          Scenarii { card: "Sand_Man_Card", expected_element: Element::Earth },
+          Scenarii { card: "Angeling_Card", expected_element: Element::Holy },
+          Scenarii { card: "Sword_Fish_Card", expected_element: Element::Water },
+          Scenarii { card: "Pasana_Card", expected_element: Element::Fire },
+          Scenarii { card: "Argiope_Card", expected_element: Element::Poison },
+          Scenarii { card: "Bathory_Card", expected_element: Element::Dark },
+          Scenarii { card: "Evil_Druid_Card", expected_element: Element::Undead },
+        ];
+        // When
+        for scenarii in scenario {
+            let mut character = create_character();
+            equip_item_from_name_with_cards(&mut character, "Coat_", vec![GlobalConfigService::instance().get_item_id_from_name(scenarii.card) as i16]);
+            let status_snapshot = status_snapshot!(context, character);
+            // Then
+            assert_eq!(*status_snapshot.element(), scenarii.expected_element);
         }
+
+    }
+
+    #[test]
+    #[ignore = "not yet implemented"]
+    fn test_status_stat_increase_base_on_another_stat_cards() {
+        // venatu Card
+    }
+
+    // #[test]
+    #[bench]
+    // fn fullstuff_bench() {
+    fn fullstuff_bench(bencher: &mut test::Bencher) {
+        let id = "ve5tmv";
+        let context = before_each();
+        let fixture_file = "src/tests/common/fixtures/data/fullstuff.json";
+        let scenario = BattleFixture::load(fixture_file);
+        let scenarii = scenario.iter().find(|s| s.id() == id).unwrap();
+        let mut character = create_character();
+        scenarii.all_equipments().iter().for_each(|e| {
+            equip_item_from_id_with_cards(&mut character, e.item_id() as u32, e.cards().iter().map(|c| c.item_id()).collect::<Vec<i16>>());
+        });
+        let mut character_status = &mut character.status;
+        let job = JobName::from_string(scenarii.job().as_str());
+        character_status.job = job.value() as u32;
+        character_status.job_level = scenarii.job_level();
+        character_status.str = scenarii.base_str();
+        character_status.agi = scenarii.base_agi();
+        character_status.vit = scenarii.base_vit();
+        character_status.dex = scenarii.base_dex();
+        character_status.int = scenarii.base_int();
+        character_status.luk = scenarii.base_luk();
+        character_status.base_level = scenarii.base_level();
+
+        bencher.iter(|| {
+            context.status_service.to_snapshot(&character_status);
+        });
+    }
+
+
+    pub(crate) fn stats_tests(fixture_file: &str, result_file_path: &str, title: &str, test_id: Option<&str>, assert_passed: bool) {
+        // Given
+        let context = before_each();
+        let _packetver = GlobalConfigService::instance().packetver();
+        let scenario = crate::tests::common::fixtures::battle_fixture::BattleFixture::load(fixture_file);
+        let mut i = -1;
+
         let mut results: Vec<TestResult> = Vec::with_capacity(scenario.len());
         // When
-        for scenarii in scenario.iter() {
+        for mut scenarii in scenario {
             if let Some(test_id) = test_id {
                 if !scenarii.id().eq(test_id) {
                     continue;
                 }
             }
+            // println!("{}",scenarii.id());
             i += 1;
-            let mut character_status = Status::default();
+            let mut character = create_character();
+            scenarii.all_equipments().iter().for_each(|e| {
+                equip_item_from_id_with_cards(&mut character, e.item_id() as u32, e.cards().iter().map(|c| c.item_id()).collect::<Vec<i16>>());
+            });
+
+            let mut character_status = &mut character.status;
             let job = JobName::from_string(scenarii.job().as_str());
             character_status.job = job.value() as u32;
             character_status.job_level = scenarii.job_level();
@@ -282,60 +391,18 @@ mod tests {
             character_status.int = scenarii.base_int();
             character_status.luk = scenarii.base_luk();
             character_status.base_level = scenarii.base_level();
+
             let status_snapshot = context.status_service.to_snapshot(&character_status);
             let result = TestResult {
                 id: scenarii.id().clone(),
                 job: job.as_str().to_string(),
                 job_level: scenarii.job_level() as usize,
                 passed: false,
-                actual_str: status_snapshot.base_str(),
-                actual_bonus_str: status_snapshot.bonus_str(),
-                actual_agi: status_snapshot.base_agi(),
-                actual_bonus_agi: status_snapshot.bonus_agi(),
-                actual_vit: status_snapshot.base_vit(),
-                actual_bonus_vit: status_snapshot.bonus_vit(),
-                actual_int: status_snapshot.base_int(),
-                actual_bonus_int: status_snapshot.bonus_int(),
-                actual_dex: status_snapshot.base_dex(),
-                actual_bonus_dex: status_snapshot.bonus_dex(),
-                actual_luk: status_snapshot.base_luk(),
-                actual_bonus_luk: status_snapshot.bonus_luk(),
-                actual_aspd: status_snapshot.aspd() as f32,
-                actual_atk_left: context.status_service.status_atk_left_side(&status_snapshot) as u16,
-                actual_atk_right: context.status_service.status_atk_right_side(&status_snapshot) as u16,
-                actual_matk_min: status_snapshot.matk_min(),
-                actual_matk_max: status_snapshot.matk_max(),
-                actual_def: status_snapshot.def(),
-                actual_mdef: status_snapshot.mdef(),
-                actual_hit: status_snapshot.hit(),
-                actual_flee: status_snapshot.flee(),
-                actual_hp: status_snapshot.max_hp() as u16,
-                actual_sp: status_snapshot.max_sp() as u16,
-                actual_crit: status_snapshot.crit(),
-                expected_str: scenarii.base_str(),
-                expected_bonus_str: scenarii.bonus_str() as u16,
-                expected_agi: scenarii.base_agi(),
-                expected_bonus_agi: scenarii.bonus_agi() as u16,
-                expected_vit: scenarii.base_vit(),
-                expected_bonus_vit: scenarii.bonus_vit() as u16,
-                expected_int: scenarii.base_int(),
-                expected_bonus_int: scenarii.bonus_int() as u16,
-                expected_dex: scenarii.base_dex(),
-                expected_bonus_dex: scenarii.bonus_dex() as u16,
-                expected_luk: scenarii.base_luk(),
-                expected_bonus_luk: scenarii.bonus_luk() as u16,
-                expected_aspd: scenarii.aspd_displayed(),
-                expected_atk_left: scenarii.atk_left(),
-                expected_atk_right: scenarii.atk_right(),
-                expected_matk_min: scenarii.matk_min(),
-                expected_matk_max: scenarii.matk_max(),
-                expected_def: scenarii.def(),
-                expected_mdef: scenarii.mdef(),
-                expected_hit: scenarii.hit(),
-                expected_flee: scenarii.flee(),
-                expected_hp: scenarii.max_hp(),
-                expected_sp: scenarii.max_sp(),
-                expected_crit: scenarii.crit(),
+                actual_status: status_snapshot,
+                desc: scenarii.desc().clone(),
+                expected: mem::take(&mut scenarii),
+                status: mem::take(character_status),
+                actual_combat_result: None,
             };
             let mut passed = false;
             results.push(result);
@@ -343,74 +410,190 @@ mod tests {
         if test_id.is_some() {
             return;
         }
-        macro_rules! format_result {
-            ( $passed:expr, $arg1:expr ) => {
-                if $passed {format!("**{}**", format!("{}", $arg1))} else {format!("*{}*", format!("{}", $arg1))}
-          };
-            ( $passed:expr, $arg1:expr, $arg2:expr  ) => {
-                if $passed {format!("**{}**", format!("{}/{}", $arg1, $arg2))} else {format!("*{}*", format!("{}/{}", $arg1, $arg2))}
-          };
-            ( $passed:expr, $arg1:expr, $arg2:expr , $arg3:expr , $arg4:expr  ) => {
-                if $passed {format!("**{}**", format!("{}+{}/{}+{}", $arg1, $arg2, $arg3, $arg4))} else {format!("*{}*", format!("{}+{}/{}+{}", $arg1, $arg2, $arg3, $arg4))}
-          };
-        }
+
         let path = Path::new(result_file_path);
         let mut result_file = File::create(path).unwrap();
         result_file.write_all(b"                              \n").unwrap();
         result_file.write_all(format!("fixture file was [{}](/server/{})\n\n", fixture_file, fixture_file).as_bytes()).unwrap();
         result_file.write_all(format!("# {}\n", title).as_bytes()).unwrap();
-        result_file.write_all(b"|id|job|jobLv|passed|str|agi|vit|dex|int|luk|aspd|atk left|atk right|matk min|matk max|def|mdef|hit|flee|crit|hp|sp|\n").unwrap();
-        result_file.write_all(b"|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|\n").unwrap();
+        result_file.write_all(b"|id|character|stats computed|stats from fixtures|passed|str|agi|vit|dex|int|luk|aspd|atk left|atk right|matk min|matk max|def|mdef|hit|flee|crit|hp|sp|Armor element|\n").unwrap();
+        result_file.write_all(b"|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|\n").unwrap();
         let mut passed_count = 0;
+        let mut markdown_rows_passed = vec![];
+        let mut markdown_rows_failed = vec![];
         for result in results.iter_mut() {
-            let str_passed = result.actual_str + result.actual_bonus_str == result.expected_str + result.expected_bonus_str;
-            let agi_passed = result.actual_agi + result.actual_bonus_agi == result.expected_agi + result.expected_bonus_agi;
-            let vit_passed = result.actual_vit + result.actual_bonus_vit == result.expected_vit + result.expected_bonus_vit;
-            let dex_passed = result.actual_dex + result.actual_bonus_dex == result.expected_dex + result.expected_bonus_dex;
-            let int_passed = result.actual_int + result.actual_bonus_int == result.expected_int + result.expected_bonus_int;
-            let luk_passed = result.actual_luk + result.actual_bonus_luk == result.expected_luk + result.expected_bonus_luk;
-            let aspd_passed = result.actual_aspd == result.expected_aspd;
-            let atk_left_passed = result.actual_atk_left == result.expected_atk_left;
-            let atk_right_passed = result.actual_atk_right == result.expected_atk_right;
-            let def_passed = result.actual_def == result.expected_def;
-            let mdef_passed = result.actual_mdef == result.expected_mdef;
-            let hit_passed = result.actual_hit == result.expected_hit;
-            let matk_min_passed = result.actual_matk_min == result.expected_matk_min;
-            let matk_max_passed = result.actual_matk_max == result.expected_matk_max;
-            let flee_passed = result.actual_flee == result.expected_flee;
-            let crit_passed = result.actual_crit == result.expected_crit;
-            let hp_passed = eq_with_variance!(1, result.actual_hp, result.expected_hp);
-            let sp_passed = eq_with_variance!(1, result.actual_sp, result.expected_sp);
+            let mut bonuses_desc = vec![];
+            let mut fixtures_bonuses_desc = vec![];
+            let mut actual_bonuses = vec![];
+            let mut expected_bonuses = vec![];
+
+            let mut equipped_gears = result.status.equipped_weapons().iter().collect::<Vec<&WearWeapon>>();
+            equipped_gears.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+            equipped_gears.iter().for_each(|weapon| {
+                let item = GlobalConfigService::instance().get_item(weapon.item_id() as i32);
+                if weapon.card0() > 0 {
+                    let card = GlobalConfigService::instance().get_item(weapon.card0() as i32);
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, item);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", item.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, card);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", card.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                } else {
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, item);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", item.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                }
+            });
+            let mut equipped_gears = result.status.equipped_gears().iter().collect::<Vec<&WearGear>>();
+            equipped_gears.sort_by(|a, b| a.item_id.cmp(&b.item_id));
+            equipped_gears.iter().for_each(|equipment| {
+                let item = GlobalConfigService::instance().get_item(equipment.item_id() as i32);
+                if equipment.card0() > 0 {
+                    let card = GlobalConfigService::instance().get_item(equipment.card0() as i32);
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, item);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", item.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, card);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", card.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                } else {
+                    let mut bonuses = vec![];
+                    context.status_service.collect_bonuses(&result.status, &mut bonuses, item);
+                    bonuses_desc.push(format!("{}<ul>{}</ul>", item.name_aegis.clone(), bonuses.iter().map(|b| {
+                        actual_bonuses.push(b.clone());
+                        format!("<li>*{:?}*</li>", b)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                }
+            });
+
+
+            let mut fixture_equipments = result.expected.all_equipments().iter().cloned().collect::<Vec<&Equipment>>();
+            fixture_equipments.sort_by(|a, b| a.item_id().cmp(&b.item_id()));
+            fixture_equipments.iter().for_each(|e| {
+                fixtures_bonuses_desc.push(format!("{}<ul>{}</ul>", e.name(), e.bonuses().iter().map(|b| {
+                    expected_bonuses.push(b.0.clone());
+                    format!("<li>*{:?}*</li>", b.0)
+                })
+                    .collect::<Vec<String>>()
+                    .join("")));
+                e.cards().iter().for_each(|c| {
+                    fixtures_bonuses_desc.push(format!("{}<ul>{}</ul>", c.name(), c.bonuses().iter().map(|b| {
+                        expected_bonuses.push(b.0.clone());
+                        format!("<li>*{:?}*</li>", b.0)
+                    })
+                        .collect::<Vec<String>>()
+                        .join("")));
+                })
+            });
+            let bonuses_desc = bonuses_desc.iter().map(|d| format!("<li>{}</li>", d))
+                .collect::<Vec<String>>()
+                .join("");
+            let fixtures_bonuses_desc = fixtures_bonuses_desc.iter().map(|d| format!("<li>{}</li>", d))
+                .collect::<Vec<String>>()
+                .join("");
+            let job = format!("{}({}/{})", result.job, result.status.base_level, result.job_level);
+
+            let str_passed = result.actual_status.str() as i16 == result.expected.bonus_str() + result.expected.base_str() as i16;
+            let agi_passed = result.actual_status.agi() as i16 == result.expected.bonus_agi() + result.expected.base_agi() as i16;
+            let vit_passed = result.actual_status.vit() as i16 == result.expected.bonus_vit() + result.expected.base_vit() as i16;
+            let dex_passed = result.actual_status.dex() as i16 == result.expected.bonus_dex() + result.expected.base_dex() as i16;
+            let int_passed = result.actual_status.int() as i16 == result.expected.bonus_int() + result.expected.base_int() as i16;
+            let luk_passed = result.actual_status.luk() as i16 == result.expected.bonus_luk() + result.expected.base_luk() as i16;
+            let aspd_passed = result.actual_status.aspd() >= result.expected.aspd() - 0.5 || result.actual_status.aspd() <= result.expected.aspd() + 0.5;
+            let atk_left_passed = result.actual_status.atk_left_side() as u16 == result.expected.atk_left();
+            let atk_right_passed = result.actual_status.atk_right_side() as u16 == result.expected.atk_right();
+            let def_passed = result.actual_status.def() == result.expected.def();
+            let mdef_passed = result.actual_status.mdef() == result.expected.mdef();
+            let hit_passed = result.actual_status.hit() == result.expected.hit();
+            let matk_min_passed = result.actual_status.matk_min() == result.expected.matk_min();
+            let matk_max_passed = result.actual_status.matk_max() == result.expected.matk_max();
+            let flee_passed = result.actual_status.flee() == result.expected.flee();
+            let crit_passed = result.actual_status.crit() == result.expected.crit();
+            let hp_passed = eq_with_variance!(1, result.actual_status.max_hp(), result.expected.max_hp());
+            let sp_passed = eq_with_variance!(1, result.actual_status.max_sp(), result.expected.max_sp());
+            let armor_element_passed = result.actual_status.element() == result.expected.element();
+
+            let mut found_count = 0;
+            for bonus in expected_bonuses.iter() {
+                if let Some(index) = actual_bonuses.iter().position(|actual_bonus| actual_bonus.clone() == bonus.clone()) {
+                    found_count += 1;
+                    actual_bonuses.swap_remove(index);
+                }
+            }
+            let stat_passed = found_count == expected_bonuses.len();
+
             result.passed = str_passed && agi_passed && vit_passed && dex_passed && int_passed && luk_passed && aspd_passed && atk_left_passed && atk_right_passed
                 && matk_max_passed && matk_min_passed && def_passed && mdef_passed && hit_passed && flee_passed && crit_passed
-                && hp_passed && sp_passed;
+                && hp_passed && sp_passed && armor_element_passed && stat_passed;
+
             if result.passed {
                 passed_count += 1;
             }
-            result_file.write_all(format!("|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|\n",
-                                          result.id, result.job, result.job_level, format_result!(result.passed, result.passed),
-                                          format_result!(str_passed, result.actual_str, result.actual_bonus_str, result.expected_str, result.expected_bonus_str),
-                                          format_result!(agi_passed, result.actual_agi, result.actual_bonus_agi, result.expected_agi, result.expected_bonus_agi),
-                                          format_result!(vit_passed, result.actual_vit, result.actual_bonus_vit, result.expected_vit, result.expected_bonus_vit),
-                                          format_result!(dex_passed, result.actual_dex, result.actual_bonus_dex, result.expected_dex, result.expected_bonus_dex),
-                                          format_result!(int_passed, result.actual_int, result.actual_bonus_int, result.expected_int, result.expected_bonus_int),
-                                          format_result!(luk_passed, result.actual_luk, result.actual_bonus_luk, result.expected_luk, result.expected_bonus_luk),
-                                          format_result!(aspd_passed, result.actual_aspd, result.expected_aspd),
-                                          format_result!(atk_left_passed, result.actual_atk_left,result.expected_atk_left),
-                                          format_result!(atk_right_passed, result.actual_atk_right,result.expected_atk_right),
-                                          format_result!(matk_min_passed,result.actual_matk_min, result.expected_matk_min),
-                                          format_result!(matk_max_passed,result.actual_matk_max, result.expected_matk_max),
-                                          format_result!(def_passed, result.actual_def, result.expected_def),
-                                          format_result!(mdef_passed, result.actual_mdef, result.expected_mdef),
-                                          format_result!(hit_passed, result.actual_hit, result.expected_hit),
-                                          format_result!(flee_passed, result.actual_flee, result.expected_flee),
-                                          format_result!(crit_passed, result.actual_crit, result.expected_crit),
-                                          format_result!(hp_passed, result.actual_hp, result.expected_hp),
-                                          format_result!(sp_passed, result.actual_sp, result.expected_sp),
-            ).as_bytes()).unwrap();
+
+            let text = format!("|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|\n",
+                               result.id, job, format_result!(stat_passed, format!("<ul>{}</ul>",bonuses_desc)), format_result!(stat_passed, format!("<ul>{}</ul>",fixtures_bonuses_desc)), format_result!(result.passed, result.passed),
+                               format_result!(str_passed, result.actual_status.base_str(), result.actual_status.bonus_str(), result.expected.base_str(), result.expected.bonus_str()),
+                               format_result!(agi_passed, result.actual_status.base_agi(), result.actual_status.bonus_agi(), result.expected.base_agi(), result.expected.bonus_agi()),
+                               format_result!(vit_passed, result.actual_status.base_vit(), result.actual_status.bonus_vit(), result.expected.base_vit(), result.expected.bonus_vit()),
+                               format_result!(dex_passed, result.actual_status.base_dex(), result.actual_status.bonus_dex(), result.expected.base_dex(), result.expected.bonus_dex()),
+                               format_result!(int_passed, result.actual_status.base_int(), result.actual_status.bonus_int(), result.expected.base_int(), result.expected.bonus_int()),
+                               format_result!(luk_passed, result.actual_status.base_luk(), result.actual_status.bonus_luk(), result.expected.base_luk(), result.expected.bonus_luk()),
+                               format_result!(aspd_passed, result.actual_status.aspd(), result.expected.aspd_displayed()),
+                               format_result!(atk_left_passed, result.actual_status.atk_left_side(),result.expected.atk_left()),
+                               format_result!(atk_right_passed, result.actual_status.atk_right_side(),result.expected.atk_right()),
+                               format_result!(matk_min_passed,result.actual_status.matk_min(), result.expected.matk_min()),
+                               format_result!(matk_max_passed,result.actual_status.matk_max(), result.expected.matk_max()),
+                               format_result!(def_passed, result.actual_status.def(), result.expected.def()),
+                               format_result!(mdef_passed, result.actual_status.mdef(), result.expected.mdef()),
+                               format_result!(hit_passed, result.actual_status.hit(), result.expected.hit()),
+                               format_result!(flee_passed, result.actual_status.flee(), result.expected.flee()),
+                               format_result!(crit_passed, result.actual_status.crit(), result.expected.crit()),
+                               format_result!(hp_passed, result.actual_status.max_hp(), result.expected.max_hp()),
+                               format_result!(sp_passed, result.actual_status.max_sp(), result.expected.max_sp()),
+                               format_result!(armor_element_passed, result.actual_status.element(), result.expected.element()),
+            );
+            if result.passed {
+                markdown_rows_passed.push(text);
+            } else {
+                markdown_rows_failed.push(text);
+            }
         }
+        markdown_rows_failed.iter().for_each(|r| { result_file.write(r.as_bytes()).unwrap(); });
+        markdown_rows_passed.iter().for_each(|r| { result_file.write(r.as_bytes()).unwrap(); });
         result_file.seek(SeekFrom::Start(0));
         result_file.write_all(format!("{}/{} tests passed\n", passed_count, results.len()).as_bytes()).unwrap();
+        if assert_passed {
+            assert_eq!(markdown_rows_failed.len(), 0);
+        }
     }
+
 }
 

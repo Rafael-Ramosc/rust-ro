@@ -1,9 +1,12 @@
 use std::mem;
 use std::sync::mpsc::SyncSender;
 use std::sync::Once;
+
 use models::enums::action::ActionType;
+use models::enums::bonus::BonusType;
 use models::enums::element::Element;
 use models::enums::EnumWithMaskValueU64;
+use models::enums::EnumStackable;
 use models::enums::size::Size;
 use models::enums::skill::SkillState;
 use models::enums::weapon::WeaponType;
@@ -11,7 +14,7 @@ use models::status::{StatusSnapshot};
 use packets::packets::PacketZcNotifyAct;
 use crate::server::model::map_item::{MapItemSnapshot, MapItemType};
 use crate::server::model::events::client_notification::{AreaNotification, AreaNotificationRangeType, Notification};
-
+use skills::OffensiveSkill;
 
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::service::status_service::StatusService;
@@ -25,7 +28,7 @@ static SERVICE_INSTANCE_INIT: Once = Once::new();
 
 pub struct BattleService {
     client_notification_sender: SyncSender<Notification>,
-    status_service: StatusService,
+    status_service: &'static StatusService,
     configuration_service: &'static GlobalConfigService,
     battle_result_mode: BattleResultMode,
 }
@@ -41,62 +44,104 @@ impl BattleService {
         unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
     }
 
-    pub(crate) fn new(client_notification_sender: SyncSender<Notification>, status_service: StatusService, configuration_service: &'static GlobalConfigService, battle_result_mode: BattleResultMode) -> Self {
+    pub(crate) fn new(client_notification_sender: SyncSender<Notification>, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService, battle_result_mode: BattleResultMode) -> Self {
         BattleService { client_notification_sender, status_service, configuration_service, battle_result_mode }
     }
 
-    pub fn init(client_notification_sender: SyncSender<Notification>, status_service: StatusService, configuration_service: &'static GlobalConfigService) {
+    pub fn init(client_notification_sender: SyncSender<Notification>, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService) {
         SERVICE_INSTANCE_INIT.call_once(|| unsafe {
             SERVICE_INSTANCE = Some(BattleService::new(client_notification_sender, status_service, configuration_service, BattleResultMode::Normal));
         });
     }
 
+    pub fn calculate_damage(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill: Option<&dyn OffensiveSkill>) -> i32 {
+        let mut damage = 0;
+        if let Some(skill) = skill {
+            if skill.is_physical() {
+                let mut skill_modifier = skill.dmg_atk().unwrap_or(1.0);
+                if skill.hit_count() > 1 {
+                    skill_modifier /= skill.hit_count() as f32;
+                }
+                damage = self.physical_damage_character_attack_monster(source_status, target_status, skill_modifier, skill.is_ranged(), &self.attack_element(source_status, Some(skill)));
+                if skill.hit_count() > 1 {
+                    damage *= skill.hit_count() as i32;
+                } else {
+                    damage = ((damage as f32 / skill.hit_count().abs() as f32).floor() * skill.hit_count().abs() as f32) as i32;
+                }
+            } else if skill.is_magic() {
+                let mut skill_modifier = skill.dmg_matk().unwrap_or(1.0);
+                if skill.hit_count() > 1 {
+                    skill_modifier /= skill.hit_count() as f32;
+                }
+                damage = self.magic_damage_character_attack_monster(source_status, target_status, skill_modifier, &skill.element());
+                if skill.hit_count() > 1 {
+                    damage *= skill.hit_count() as i32;
+                }
+            }
+        } else {
+            let is_ranged = source_status.right_hand_weapon().map(|w| w.weapon_type().is_ranged()).unwrap_or(false);
+            damage = self.physical_damage_character_attack_monster(source_status, target_status, 1.0, is_ranged, &self.attack_element(source_status, None));
+        }
+
+        damage
+    }
+
     /// (([((({(base_atk +
     /// + rnd(min(DEX,ATK), ATK)*SizeModifier) * SkillModifiers * (1 - DEF/100) - VitDEF + BaneSkill + UpgradeDamage}
     /// + MasterySkill + WeaponryResearchSkill + EnvenomSkill) * ElementalModifier) + Enhancements) * DamageBonusModifiers * DamageReductionModifiers] * NumberOfMultiHits) - KyrieEleisonEffect) / NumberOfMultiHits
-    pub fn physical_damage_character_attack_monster(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill_modifier: f32, is_ranged: bool) -> u32 {
-        let _rng = fastrand::Rng::new();
+    fn physical_damage_character_attack_monster(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill_modifier: f32, is_ranged: bool, element: &Element) -> i32 {
         let upgrade_bonus: f32 = 0.0; // TODO: weapon level1 : (+1~3 ATK for every overupgrade). weapon level2 : (+1~5 ATK for every overupgrade). weapon level3 : (+1~7 ATK for every overupgrade). weapon level4 : (+1~13 ATK for every overupgrade).
         let _imposito_magnus: u32 = 0;
         let base_atk = self.status_service.fist_atk(source_status, is_ranged) as f32 + upgrade_bonus + source_status.base_atk() as f32;
 
         let def: f32 = target_status.def() as f32 / 100.0;
-        let vitdef: f32 = self.status_service.mob_vit_def(target_status.vit() as u32) as f32; // TODO set to 0 if critical hit
+
+        // MOB vit def: VIT + rnd(0,[VIT/20]^2-1).
+        let vitdef: f32 = self.mob_vitdef(target_status); // TODO set to 0 if critical hit
         let bane_skill: f32 = 0.0; // TODO Beast Bane, Daemon Bane, Draconology
         let mastery_skill: f32 = 0.0;
         let weaponery_research_skill: f32 = 0.0;
         let evenom_skill: f32 = 0.0;
-        let elemental_modifier: f32 = 1.0;
-        let enchantements: f32 = 0.0;
-        let damage_bonus_modifier: f32 = 1.0;
-        let damage_reduction_modifier: f32 = 1.0;
+        let elemental_modifier: f32 = Self::element_modifier(element, target_status);
         let number_of_hits: f32 = 1.0;
-        let kyrie_eleison_effect: f32 = 0.0;
+        let _kyrie_eleison_effect: f32 = 0.0;
 
-        (
-            (
-                (
-                    (
-                        (
-                            (
-                                (
-                                    (
-                                        (
-                                            (base_atk + self.weapon_atk(source_status, target_status, is_ranged) as f32).floor() * skill_modifier * (1.0 - def)
-                                        )
-                                            - vitdef + bane_skill + source_status.weapon_upgrade_damage() as f32
-                                    )
-                                        + mastery_skill + weaponery_research_skill + evenom_skill
-                                )
-                                    * elemental_modifier
-                            ) + enchantements)
-                            * damage_bonus_modifier * damage_reduction_modifier
-                    ) * number_of_hits
-                )
-                    - kyrie_eleison_effect
-            )
-                / number_of_hits
-        ).floor() as u32
+        let weapon_atk = self.weapon_atk(source_status, target_status, is_ranged);
+        let mut atk = (base_atk + weapon_atk as f32).floor() * skill_modifier * (1.0 - def);
+        atk = (atk - vitdef + bane_skill + source_status.weapon_upgrade_damage() as f32).max(1.0);
+        atk += mastery_skill + weaponery_research_skill + evenom_skill;
+        atk *= elemental_modifier;
+        atk = self.apply_damage_bonus_modifier(atk, source_status, target_status);
+        atk *= number_of_hits;
+        atk.floor() as i32
+    }
+
+
+    pub fn mob_vitdef(&self, target_status: &StatusSnapshot) -> f32 {
+        let mut rng = fastrand::Rng::new();
+        let vitdef_lower_part = 0;
+        let vitdef_higher_part = 0.max(((target_status.vit() as f32 / 20.0).floor() as i16).pow(2) - 1) as u16;
+        let vitdef = match self.battle_result_mode {
+            BattleResultMode::TestMin => {target_status.vit() + vitdef_higher_part} // When mode is "min" it means when we do min damage, so mob has the higher vitdef
+            BattleResultMode::TestMax => {target_status.vit() + vitdef_lower_part}  // When mode is "max" it means when we do max damage, so mob has the lower vitdef
+            BattleResultMode::Normal => {target_status.vit() + rng.u16(vitdef_lower_part..=vitdef_higher_part)}
+        };
+        vitdef as f32
+    }
+
+
+    ///  [VIT*0.5] + rnd([VIT*0.3], max([VIT*0.3],[VIT^2/150]-1))
+    pub fn player_vitdef(&self, target_status: &StatusSnapshot) -> u16 {
+        let mut rng = fastrand::Rng::new();
+        let vitdef = (target_status.vit() as f32 * 0.5).floor()  as u16;
+        let vitdef_lower_part= (target_status.vit() as f32 * 0.3).floor() as u16;
+        let vitdef_higher_part= vitdef_lower_part.max(((target_status.vit().pow(2) as f32 / 150.0).floor() - 1.0 ) as u16);
+        // TODO handle bDef2Rate, bDef2 (and also from angelus and divine protection)
+        match self.battle_result_mode {
+            BattleResultMode::TestMin => {vitdef + vitdef_lower_part}
+            BattleResultMode::TestMax => {vitdef + vitdef_higher_part}
+            BattleResultMode::Normal => {vitdef + rng.u16(vitdef_lower_part..=vitdef_higher_part)}
+        }
     }
 
     //  rnd(min(DEX*(0.8+0.2*WeaponLevel),ATK), ATK)
@@ -155,7 +200,7 @@ impl BattleService {
 
 
     /// {rnd(minMATK,maxMATK) * ItemModifier * SkillModifier * (1-MDEF/100) - INT - VIT/2} * Elemental Modifier
-    pub fn magic_damage_character_attack_monster(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill_modifier: f32, element: &Element) -> u32 {
+    pub fn magic_damage_character_attack_monster(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill_modifier: f32, element: &Element) -> i32 {
         let mut rng = fastrand::Rng::new();
         let matk = match self.battle_result_mode {
             BattleResultMode::TestMin => { source_status.matk_min() }
@@ -165,7 +210,46 @@ impl BattleService {
         let elemental_modifier: f32 = Self::element_modifier(element, target_status);
         let mdef = target_status.mdef() as f32 / 100.0;
         // println!("({} * {} * {} * {} - {} - {}) * {}", matk, item_modifier, skill_modifier, (1.0 - mdef), target_status.int(), target_status.vit() as f32 / 2.0, elemental_modifier);
-        ((matk * skill_modifier * (1.0 - mdef)).floor() * elemental_modifier).floor() as u32
+        ((matk * skill_modifier * (1.0 - mdef)).floor() * elemental_modifier).floor() as i32
+    }
+
+    pub fn attack_element(&self, source_status: &StatusSnapshot, skill: Option<&dyn OffensiveSkill>) -> Element {
+         // TODO can be overidden by Enchant Poison, Aspersio
+        if let Some(skill) = skill {
+            if matches!(skill.element(), Element::Ammo) {
+                source_status.ammo().map(|ammo| *ammo.element()).unwrap_or(Element::Neutral)
+            } else if matches!(skill.element(), Element::Weapon) {
+                source_status.right_hand_weapon().map(|weapon| *weapon.element()).unwrap_or(Element::Neutral)
+            } else {
+                skill.element()
+            }
+        } else if let Some(weapon) = source_status.right_hand_weapon() {
+            if weapon.weapon_type().is_ranged() {
+                source_status.ammo().map(|ammo| *ammo.element()).unwrap_or(Element::Neutral)
+            } else {
+                source_status.right_hand_weapon().map(|weapon| *weapon.element()).unwrap_or(Element::Neutral)
+            }
+        } else {
+            Element::Neutral
+        }
+    }
+
+    fn apply_damage_bonus_modifier(&self, current_atk: f32, source_status: &StatusSnapshot, target_status: &StatusSnapshot) -> f32 {
+        // todo include Star crumb
+        // race, mob group, size, element (addRace, addRace2, addSize, addEle)
+        // star crumb, ranked blacksmith weapon, ranged attack bonus,
+        // based on def (bDefRatioAtk*)
+        // Turtle general, Randgris like card (addClass)
+        // Frenzy/Edp
+        // spirit ball
+
+        // Notes:
+        // star crumb: ignored by shield boomerang skill
+        // spirit ball, shouldcount spirit ball wehn casting fingeroffensive, otherwise use current value
+        let mut current_atk = current_atk;
+        BonusType::get_enum_value(&BonusType::PhysicalDamageAgainstElementPercentage(*target_status.element(), 0), &source_status.bonuses_raw()).map(|value| current_atk = (current_atk * (100.0 + value) / 100.0).floor());
+        BonusType::get_enum_value(&BonusType::PhysicalDamageAgainstRacePercentage(*target_status.race(), 0), &source_status.bonuses_raw()).map(|value| current_atk = (current_atk * (100.0 + value) / 100.0).floor());
+        current_atk
     }
 
     pub fn basic_attack(&self, character: &mut Character, target: MapItemSnapshot, source_status: &StatusSnapshot, target_status: &StatusSnapshot, tick: u128) -> Option<Damage> {
@@ -192,7 +276,7 @@ impl BattleService {
         let damage = if matches!(target.map_item.object_type(), MapItemType::Mob) {
             let mob = self.configuration_service.get_mob(target.map_item.client_item_class() as i32);
             packet_zc_notify_act3.set_attacked_mt(mob.damage_motion);
-            self.physical_damage_character_attack_monster(source_status, target_status, 1.0, source_status.right_hand_weapon_type().is_ranged())
+            self.calculate_damage(source_status, target_status, None)
         } else {
             0
         };
@@ -202,12 +286,17 @@ impl BattleService {
         self.client_notification_sender.send(
             Notification::Area(AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(),
                                                      AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, mem::take(packet_zc_notify_act3.raw_mut())))).expect("Failed to send notification to client");
-        Some(Damage {
-            target_id: attack.target,
-            attacker_id: character.char_id,
-            damage,
-            attacked_at: tick + attack_motion as u128,
-        })
+        if damage >= 0 {
+            Some(Damage {
+                target_id: attack.target,
+                attacker_id: character.char_id,
+                damage: damage as u16 as u32,
+                attacked_at: tick + attack_motion as u128,
+            })
+        } else {
+            // TODO handle heal if damage < 0
+            None
+        }
     }
 
     #[inline]
@@ -421,7 +510,7 @@ impl BattleService {
                 }
                 Element::Poison => {
                     if matches!(element, Element::Dark) || matches!(element, Element::Undead) {
-                        0.25
+                        0.5
                     } else if matches!(element, Element::Poison) {
                         0.0
                     } else {
@@ -482,7 +571,7 @@ impl BattleService {
             match target_status.element() {
                 Element::Neutral => {
                     if matches!(element, Element::Ghost) {
-                        0.25
+                        0.0
                     } else {
                         1.0
                     }
@@ -570,7 +659,9 @@ impl BattleService {
                     }
                 }
                 Element::Dark => {
-                    if matches!(element, Element::Dark) {
+                    if matches!(element, Element::Neutral) {
+                        1.0
+                    } else if matches!(element, Element::Dark) {
                         -0.25
                     } else if matches!(element, Element::Holy) {
                         1.5
@@ -772,12 +863,12 @@ impl BattleService {
                     if matches!(element, Element::Fire) {
                         2.0
                     } else if matches!(element, Element::Earth) {
-                        0.25
+                        -0.25
                     } else if matches!(element, Element::Wind) {
                         0.0
                     } else if matches!(element, Element::Ghost) || matches!(element, Element::Undead) {
                         0.25
-                    } else if matches!(element, Element::Holy) || matches!(element, Element::Dark) {
+                    } else if matches!(element, Element::Holy) || matches!(element, Element::Dark) || matches!(element, Element::Poison){
                         0.75
                     } else {
                         1.0
@@ -817,9 +908,11 @@ impl BattleService {
                     if matches!(element, Element::Undead) || matches!(element, Element::Dark) {
                         -0.25
                     } else if matches!(element, Element::Ghost) {
-                        0.5
+                        0.25
                     } else if matches!(element, Element::Holy) {
                         1.25
+                    }  else if matches!(element, Element::Neutral) {
+                        1.0
                     } else if matches!(element, Element::Poison) {
                         0.0
                     } else {
@@ -841,11 +934,13 @@ impl BattleService {
                 }
                 Element::Dark => {
                     if matches!(element, Element::Dark) {
-                        -0.5
+                        -1.0
                     } else if matches!(element, Element::Holy) {
-                        1.5
+                        2.0
+                    }  else if matches!(element, Element::Neutral) {
+                        1.0
                     } else if matches!(element, Element::Poison) {
-                        0.25
+                        -0.25
                     } else if matches!(element, Element::Undead) || matches!(element, Element::Ghost) {
                         0.0
                     } else {

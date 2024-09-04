@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// AL_DP
+// AL_DP - Divine Protection
 pub struct DivineProtection {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,7 @@ impl SkillBase for DivineProtection {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +99,7 @@ impl SkillBase for DivineProtection {
 }
 impl PassiveSkillBase for DivineProtection {
 }
-// AL_DEMONBANE
+// AL_DEMONBANE - Demon Bane
 pub struct DemonBane {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -158,7 +163,65 @@ impl SkillBase for DemonBane {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 3), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 3), 0, 23),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 6), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 6), 0, 23),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 9), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 9), 0, 23),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 12), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 12), 0, 23),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 15), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 15), 0, 23),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 18), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 18), 0, 23),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 21), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 21), 0, 23),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 24), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 24), 0, 23),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 27), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 27), 0, 23),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Demon, 30), 0, 23),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(RUndead, 30), 0, 23),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -171,7 +234,7 @@ impl SkillBase for DemonBane {
 }
 impl PassiveSkillBase for DemonBane {
 }
-// AL_RUWACH
+// AL_RUWACH - Ruwach
 pub struct Ruwach {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -242,17 +305,33 @@ impl SkillBase for Ruwach {
         if status.sp() > 10 { Ok(10) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Ruwach {
+impl OffensiveSkillBase for Ruwach {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+       Some(1.450)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Holy
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// AL_PNEUMA
+// AL_PNEUMA - Pneuma
 pub struct Pneuma {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -313,7 +392,7 @@ impl SkillBase for Pneuma {
         SkillTargetType::Ground
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -321,6 +400,18 @@ impl SkillBase for Pneuma {
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 10 { Ok(10) } else {Err(())}
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        2
     }
     #[inline(always)]
     fn is_ground_skill(&self) -> bool {
@@ -331,9 +422,11 @@ impl SkillBase for Pneuma {
         Some(self)
     }
 }
+impl SupportiveSkillBase for Pneuma {
+}
 impl GroundSkillBase for Pneuma {
 }
-// AL_TELEPORT
+// AL_TELEPORT - Teleport
 pub struct Teleport {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -400,7 +493,7 @@ impl SkillBase for Teleport {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -416,17 +509,17 @@ impl SkillBase for Teleport {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Teleport {
+impl InteractiveSkillBase for Teleport {
 }
-// AL_WARP
+// AL_WARP - Warp Portal
 pub struct WarpPortal {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -499,7 +592,7 @@ impl SkillBase for WarpPortal {
         SkillTargetType::Ground
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -533,6 +626,14 @@ impl SkillBase for WarpPortal {
        1000
     }
     #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -541,9 +642,11 @@ impl SkillBase for WarpPortal {
         Some(self)
     }
 }
+impl InteractiveSkillBase for WarpPortal {
+}
 impl GroundSkillBase for WarpPortal {
 }
-// AL_HEAL
+// AL_HEAL - Heal
 pub struct Heal {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -631,7 +734,7 @@ impl SkillBase for Heal {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         true
@@ -678,17 +781,29 @@ impl SkillBase for Heal {
        1000
     }
     #[inline(always)]
-    fn is_supportive_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SupportiveSkillBase for Heal {
+impl OffensiveSkillBase for Heal {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Holy
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// AL_INCAGI
+// AL_INCAGI - Increase AGI
 pub struct IncreaseAgi {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -776,10 +891,10 @@ impl SkillBase for IncreaseAgi {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -831,6 +946,63 @@ impl SkillBase for IncreaseAgi {
        1000
     }
     #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(3), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(4), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 80000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(5), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 100000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(6), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(7), 2, tick, 140000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 140000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(8), 2, tick, 160000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 160000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(9), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(10), 2, tick, 200000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 200000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(11), 2, tick, 220000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 220000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(12), 2, tick, 240000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 240000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
         true
     }
@@ -838,10 +1010,14 @@ impl SkillBase for IncreaseAgi {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for IncreaseAgi {
 }
-// AL_DECAGI
+// AL_DECAGI - Decrease AGI
 pub struct DecreaseAgi {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -929,10 +1105,10 @@ impl SkillBase for DecreaseAgi {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -980,25 +1156,89 @@ impl SkillBase for DecreaseAgi {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-3), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 53.0), 2, tick, 40000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-4), 2, tick, 50000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 50000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 56.0), 2, tick, 50000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-5), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 59.0), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-6), 2, tick, 70000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 70000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 62.0), 2, tick, 70000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-7), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 65.0), 2, tick, 80000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-8), 2, tick, 90000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 90000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 68.0), 2, tick, 90000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-9), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 71.0), 2, tick, 100000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-10), 2, tick, 110000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 110000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 74.0), 2, tick, 110000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-11), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 77.0), 2, tick, 120000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-12), 2, tick, 130000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-25), 2, tick, 130000),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(30, 80.0), 2, tick, 130000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
-}
-impl OffensiveSkillBase for DecreaseAgi {
     #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
+    fn _client_type(&self) -> usize {
+        16
     }
 }
-// AL_HOLYWATER
+impl SupportiveSkillBase for DecreaseAgi {
+}
+// AL_HOLYWATER - Aqua Benedicta
 pub struct AquaBenedicta {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1059,7 +1299,7 @@ impl SkillBase for AquaBenedicta {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1086,17 +1326,17 @@ impl SkillBase for AquaBenedicta {
        500
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for AquaBenedicta {
+impl InteractiveSkillBase for AquaBenedicta {
 }
-// AL_CRUCIS
+// AL_CRUCIS - Signum Crucis
 pub struct SignumCrucis {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1157,7 +1397,7 @@ impl SkillBase for SignumCrucis {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1175,17 +1415,21 @@ impl SkillBase for SignumCrucis {
        2000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for SignumCrucis {
+impl SupportiveSkillBase for SignumCrucis {
 }
-// AL_ANGELUS
+// AL_ANGELUS - Angelus
 pub struct Angelus {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1273,10 +1517,10 @@ impl SkillBase for Angelus {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1324,17 +1568,69 @@ impl SkillBase for Angelus {
        3500
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_party(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_party(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(5), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(10), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(15), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(20), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(25), 2, tick, 150000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(30), 2, tick, 180000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(35), 2, tick, 210000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(40), 2, tick, 240000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(45), 2, tick, 270000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(50), 2, tick, 300000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for Angelus {
+impl SupportiveSkillBase for Angelus {
 }
-// AL_BLESSING
+// AL_BLESSING - Blessing
 pub struct Blessing {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1422,10 +1718,10 @@ impl SkillBase for Blessing {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1465,6 +1761,73 @@ impl SkillBase for Blessing {
         Err(())
     }
     #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(1), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(1), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(1), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(2), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(2), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(2), 2, tick, 80000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(3), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(3), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(3), 2, tick, 100000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(4), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(4), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(4), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(5), 2, tick, 140000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(5), 2, tick, 140000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(5), 2, tick, 140000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(6), 2, tick, 160000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(6), 2, tick, 160000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(6), 2, tick, 160000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(7), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(7), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(7), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(8), 2, tick, 200000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(8), 2, tick, 200000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(8), 2, tick, 200000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(9), 2, tick, 220000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(9), 2, tick, 220000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(9), 2, tick, 220000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Dex(10), 2, tick, 240000),
+                TemporaryStatusBonus::with_duration(BonusType::Int(10), 2, tick, 240000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(10), 2, tick, 240000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
         true
     }
@@ -1472,10 +1835,14 @@ impl SkillBase for Blessing {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for Blessing {
 }
-// AL_CURE
+// AL_CURE - Cure
 pub struct Cure {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1533,10 +1900,10 @@ impl SkillBase for Cure {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1557,10 +1924,14 @@ impl SkillBase for Cure {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for Cure {
 }
-// AL_HOLYLIGHT
+// AL_HOLYLIGHT - Holy Light
 pub struct HolyLight {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1618,7 +1989,7 @@ impl SkillBase for HolyLight {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         true
@@ -1655,5 +2026,9 @@ impl OffensiveSkillBase for HolyLight {
     #[inline(always)]
     fn _element(&self) -> Element {
         Element::Holy
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

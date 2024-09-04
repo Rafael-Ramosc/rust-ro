@@ -16,7 +16,7 @@ struct SkillServiceTestContext {
     skill_service: SkillService,
     skill_min_service: SkillService,
     skill_max_service: SkillService,
-    status_service: StatusService,
+    status_service: &'static StatusService,
 }
 
 fn before_each() -> SkillServiceTestContext {
@@ -28,12 +28,13 @@ fn before_each_with_latch(latch_size: usize) -> SkillServiceTestContext {
     let (client_notification_sender, client_notification_receiver) = create_mpsc::<Notification>();
     let (persistence_event_sender, persistence_event_receiver) = create_mpsc::<PersistenceEvent>();
     let count_down_latch = CountDownLatch::new(latch_size);
+    StatusService::init(GlobalConfigService::instance(), "../native_functions_list.txt");
     SkillServiceTestContext {
         test_context: TestContext::new(client_notification_sender.clone(), client_notification_receiver, persistence_event_sender.clone(), persistence_event_receiver, count_down_latch),
-        skill_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance(), BattleResultMode::Normal), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
-        skill_min_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance(), BattleResultMode::TestMin), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
-        skill_max_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance(), BattleResultMode::TestMax), StatusService::new(GlobalConfigService::instance()), GlobalConfigService::instance()),
-        status_service: StatusService::new(GlobalConfigService::instance()),
+        skill_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::instance(), GlobalConfigService::instance(), BattleResultMode::Normal), StatusService::instance(), GlobalConfigService::instance()),
+        skill_min_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::instance(), GlobalConfigService::instance(), BattleResultMode::TestMin), StatusService::instance(), GlobalConfigService::instance()),
+        skill_max_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::instance(), GlobalConfigService::instance(), BattleResultMode::TestMax), StatusService::instance(), GlobalConfigService::instance()),
+        status_service: StatusService::instance(),
     }
 }
 
@@ -312,15 +313,19 @@ mod tests {
     }
 
     #[test]
+    #[ignore = "not yet implemented"]
     fn start_use_skill_should_validate_range_requirement() {}
 
     #[test]
+    #[ignore = "not yet implemented"]
     fn start_use_skill_should_consume_sp_on_success() {}
 
     #[test]
+    #[ignore = "not yet implemented"]
     fn start_use_skill_should_consume_zeny_on_success() {}
 
     #[test]
+    #[ignore = "not yet implemented"]
     fn start_use_skill_should_consume_item_on_success() {
         // freezing trap, acid demonstration, stone curse
     }
@@ -342,10 +347,10 @@ mod tests {
             weapon: String,
             passed: bool,
             comment: String,
-            actual_min: Option<u32>,
-            actual_max: Option<u32>,
-            expected_min: Option<u32>,
-            expected_max: Option<u32>,
+            actual_min: Option<i32>,
+            actual_max: Option<i32>,
+            expected_min: Option<i32>,
+            expected_max: Option<i32>,
         }
         let mut results: Vec<TestResult> = Vec::with_capacity(scenario.len());
         // When

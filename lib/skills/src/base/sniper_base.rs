@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// SN_SIGHT
+// SN_SIGHT - Falcon Eyes
 pub struct FalconEyes {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -111,7 +116,7 @@ impl SkillBase for FalconEyes {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -148,17 +153,89 @@ impl SkillBase for FalconEyes {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(1.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(2), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(2.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(4), 2, tick, 30000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(3.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(6), 2, tick, 30000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(4.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(8), 2, tick, 30000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(5.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(10), 2, tick, 30000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(6.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(12), 2, tick, 30000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(7.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(14), 2, tick, 30000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(8.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(16), 2, tick, 30000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(9.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(18), 2, tick, 30000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AllStats(5), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Crit(10.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(20), 2, tick, 30000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for FalconEyes {
+impl SupportiveSkillBase for FalconEyes {
 }
-// SN_FALCONASSAULT
+// SN_FALCONASSAULT - Falcon Assault
 pub struct FalconAssault {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -231,13 +308,13 @@ impl SkillBase for FalconAssault {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        false
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -293,8 +370,12 @@ impl OffensiveSkillBase for FalconAssault {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// SN_SHARPSHOOTING
+// SN_SHARPSHOOTING - Focused Arrow Strike
 pub struct FocusedArrowStrike {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -367,7 +448,7 @@ impl SkillBase for FocusedArrowStrike {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -453,10 +534,14 @@ impl OffensiveSkillBase for FocusedArrowStrike {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// SN_WINDWALK
+// SN_WINDWALK - Wind Walker
 pub struct WindWalker {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -550,7 +635,7 @@ impl SkillBase for WindWalker {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -625,13 +710,75 @@ impl SkillBase for WindWalker {
        2000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(1), 2, tick, 130000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(2), 2, tick, 130000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(1), 2, tick, 160000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(4), 2, tick, 160000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(2), 2, tick, 190000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(6), 2, tick, 190000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(2), 2, tick, 220000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(8), 2, tick, 220000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(3), 2, tick, 250000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(10), 2, tick, 250000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(3), 2, tick, 280000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(12), 2, tick, 280000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(4), 2, tick, 310000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(14), 2, tick, 310000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(4), 2, tick, 340000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(16), 2, tick, 340000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(5), 2, tick, 370000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(18), 2, tick, 370000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(5), 2, tick, 400000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(20), 2, tick, 400000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for WindWalker {
+impl SupportiveSkillBase for WindWalker {
 }

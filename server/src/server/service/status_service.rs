@@ -1,7 +1,17 @@
-use std::sync::{Once};
+use std::sync::{Arc, Once};
+use base64::engine::general_purpose;
+use base64::Engine;
+use rathena_script_lang_interpreter::lang::compiler::Compiler;
+use rathena_script_lang_interpreter::lang::vm::Vm;
 use models::enums::class::JobName;
 use models::status::{Status, StatusSnapshot};
-use models::enums::{EnumWithNumberValue, EnumWithStringValue};
+use models::enums::{EnumStackable, EnumWithNumberValue, EnumWithStringValue};
+use models::enums::bonus::BonusType;
+use models::item::Wearable;
+use models::status_bonus::StatusBonus;
+
+use crate::repository::model::item_model::ItemModel;
+use crate::server::script::item_script_handler::DynamicItemScriptHandler;
 use crate::server::service::global_config_service::GlobalConfigService;
 
 
@@ -11,22 +21,23 @@ static SERVICE_INSTANCE_INIT: Once = Once::new();
 #[allow(dead_code)]
 pub struct StatusService {
     configuration_service: &'static GlobalConfigService,
+    vm: Arc<Vm>,
 }
 
 impl StatusService {
-    pub fn new(configuration_service: &'static GlobalConfigService) -> StatusService {
-        StatusService { configuration_service }
+    pub fn new(configuration_service: &'static GlobalConfigService, native_function_file_path: &str) -> StatusService {
+        StatusService { configuration_service, vm: Arc::new(Vm::new(native_function_file_path, rathena_script_lang_interpreter::lang::vm::DebugFlag::None.value())) }
     }
     pub fn instance() -> &'static StatusService {
         unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
     }
 
-    pub fn init(configuration_service: &'static GlobalConfigService) {
+    pub fn init(configuration_service: &'static GlobalConfigService, native_function_file_path: &str) {
         SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(StatusService::new(configuration_service));
+            SERVICE_INSTANCE = Some(StatusService::new(configuration_service, native_function_file_path));
         });
     }
-
+    //#[metrics::elapsed]
     pub fn to_snapshot(&self, status: &Status) -> StatusSnapshot {
         let mut snapshot = StatusSnapshot::_from(status);
         let job = JobName::from_value(status.job as usize);
@@ -36,37 +47,100 @@ impl StatusService {
         job_config.bonus_stats()
             .get(index_for_job_level)
             .map(|bonus| {
-                snapshot.set_bonus_str(*bonus.get("str").unwrap_or(&0_u16));
-                snapshot.set_bonus_agi(*bonus.get("agi").unwrap_or(&0_u16));
-                snapshot.set_bonus_dex(*bonus.get("dex").unwrap_or(&0_u16));
-                snapshot.set_bonus_vit(*bonus.get("vit").unwrap_or(&0_u16));
-                snapshot.set_bonus_int(*bonus.get("int").unwrap_or(&0_u16));
-                snapshot.set_bonus_luk(*bonus.get("luk").unwrap_or(&0_u16));
+                snapshot.set_bonus_str(*bonus.get("str").unwrap_or(&0_i16));
+                snapshot.set_bonus_agi(*bonus.get("agi").unwrap_or(&0_i16));
+                snapshot.set_bonus_dex(*bonus.get("dex").unwrap_or(&0_i16));
+                snapshot.set_bonus_vit(*bonus.get("vit").unwrap_or(&0_i16));
+                snapshot.set_bonus_int(*bonus.get("int").unwrap_or(&0_i16));
+                snapshot.set_bonus_luk(*bonus.get("luk").unwrap_or(&0_i16));
             });
-        for equipment in status.all_equipped_items() {
+        let mut bonuses: Vec<BonusType> = vec![];
+
+        for equipment in status.equipped_weapons().iter() {
             let item_model = self.configuration_service.get_item(equipment.item_id());
-            if item_model.item_bonuses_are_dynamic {
-                // TODO
-            } else {
-                item_model.bonuses.iter().for_each(|bonus| bonus.add_bonus_to_status(&mut snapshot))
+            if equipment.card0 > 0 {
+                let item_model = self.configuration_service.get_item(equipment.card0 as i32);
+                self.collect_bonuses(status, &mut bonuses, item_model);
             }
+            if equipment.card1 > 0 {
+                let item_model = self.configuration_service.get_item(equipment.card1 as i32);
+                self.collect_bonuses(status, &mut bonuses, item_model);
+            }
+            if equipment.card2 > 0 {
+                let item_model = self.configuration_service.get_item(equipment.card2 as i32);
+                self.collect_bonuses(status, &mut bonuses, item_model);
+            }
+            if equipment.card3 > 0 {
+                let item_model = self.configuration_service.get_item(equipment.card3 as i32);
+                self.collect_bonuses(status, &mut bonuses, item_model);
+            }
+            self.collect_bonuses(status, &mut bonuses, item_model);
         }
+        status.equipped_ammo().map(|ammo| {
+            let item_model = self.configuration_service.get_item(ammo.item_id());
+            self.collect_bonuses(status, &mut bonuses, item_model);
+        });
+
+        for equipment in status.equipped_gears().iter() {
+            let item_model = self.configuration_service.get_item(equipment.item_id());
+            if equipment.card0 > 0 {
+                let item_model = self.configuration_service.get_item(equipment.card0 as i32);
+                self.collect_bonuses(status, &mut bonuses, item_model);
+            }
+            if let Some(def) = item_model.defense { snapshot.set_def(snapshot.def() + def) }
+            self.collect_bonuses(status, &mut bonuses, item_model);
+        }
+
+        // TODO card and item combo
+
+        bonuses = BonusType::merge_enums(&bonuses);
+        bonuses.iter().for_each(|bonus| bonus.add_bonus_to_status(&mut snapshot));
         // TODO [([base_hp*(1 + VIT/100)* trans_mod]+HPAdditions)*ItemHPMultipliers] https://irowiki.org/classic/Max_HP
         let hp_rebirth_modifier: f32 = if job.is_rebirth() { 1.25 } else { 1.0 };
-        println!("{}", job_config.base_hp()[index_for_base_level] as f32 * (1.0 + snapshot.vit() as f32 / 100.0));
         snapshot.set_max_hp((job_config.base_hp()[index_for_base_level] as f32 * (1.0 + snapshot.vit() as f32 / 100.0) * hp_rebirth_modifier).floor() as u32);
         // TODO https://irowiki.org/classic/Max_SP
-        snapshot.set_max_sp((job_config.base_sp()[index_for_base_level] as f32 * (1.0 + snapshot.int() as f32 / 100.0) * hp_rebirth_modifier ).floor() as u32);
+        snapshot.set_max_sp((job_config.base_sp()[index_for_base_level] as f32 * (1.0 + snapshot.int() as f32 / 100.0) * hp_rebirth_modifier).floor() as u32);
         // TODO 1 + YourLUK*0.3 + Critical Increasing Cards)*CritModifier - TargetLUK/5
         snapshot.set_crit(Self::truncate(snapshot.crit() + (1.0 + snapshot.luk() as f32 * 0.3), 1));
-        snapshot.set_hit(snapshot.hit() + status.base_level as u16 + snapshot.dex());
-        snapshot.set_flee(snapshot.flee() + status.base_level as u16 + snapshot.agi());
-        snapshot.set_aspd(self.aspd(&snapshot));
+        snapshot.set_hit((snapshot.hit() + status.base_level as i16 + snapshot.dex() as i16).max(0));
+        snapshot.set_flee((snapshot.flee() + status.base_level as i16 + snapshot.agi() as i16).max(0));
+        snapshot.set_aspd(snapshot.aspd() + self.aspd(&snapshot));
         snapshot.set_matk_min(((snapshot.int() + ((snapshot.int() as f32 / 7.0).floor() as u16).pow(2)) as f32 * snapshot.matk_item_modifier()).floor() as u16);
         snapshot.set_matk_max(((snapshot.int() + ((snapshot.int() as f32 / 5.0).floor() as u16).pow(2)) as f32 * snapshot.matk_item_modifier()).floor() as u16);
-        // TODO add bonuses from item and cards snapshot.bonuses.push(...)
+        snapshot.set_fist_atk(self.fist_atk(&snapshot, snapshot.right_hand_weapon_type().is_ranged()));
+        snapshot.set_atk_left_side(self.status_atk_left_side(&snapshot));
+        self.set_status_atk_right_side(&mut snapshot);
+        bonuses.iter().for_each(|bonus| bonus.add_percentage_bonus_to_status(&mut snapshot));
+        snapshot.set_bonuses(bonuses.iter().map(|b| StatusBonus::new(*b)).collect::<Vec<StatusBonus>>());
         snapshot
     }
+
+    #[inline]
+    pub fn collect_bonuses(&self, status: &Status, mut bonuses: &mut Vec<BonusType>, item_model: &ItemModel) {
+        if item_model.item_bonuses_are_dynamic {
+            self.collect_dynamic_script(status, &mut bonuses, &item_model);
+        } else {
+            item_model.bonuses.iter().for_each(|bonus| bonuses.push(*bonus))
+        }
+    }
+    // #[metrics::elapsed]
+    #[inline]
+    fn collect_dynamic_script(&self, status: &Status, bonuses: &mut &mut Vec<BonusType>, item_model: &&ItemModel) {
+        let dynamic_item_script_handler = DynamicItemScriptHandler::new(self.configuration_service, status, item_model.id as u32);
+        if self.vm.contains_class(format!("itemscript{}", item_model.id).as_str()) {
+            Vm::repl_on_registered_class(self.vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
+                .map_err(|e| error!("Failed to execute item script for item {}, due to \n{}", item_model.id, e)).unwrap();
+        } else if let Some(script_compilation) = &item_model.script_compilation {
+            let script = general_purpose::STANDARD.decode(script_compilation).unwrap();
+            let maybe_class = Compiler::from_binary(&script).unwrap().pop();
+            Vm::bootstrap_without_init(self.vm.clone(), vec![maybe_class.unwrap()]);
+            Vm::repl_on_registered_class(self.vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
+                .map_err(|e| error!("Failed to execute item script for item {}, due to \n{}", item_model.id, e.message)).unwrap();
+        }
+        bonuses.extend(dynamic_item_script_handler.drain());
+    }
+
+    #[inline]
     fn truncate(x: f32, decimals: u32) -> f32 {
         let y = 10i32.pow(decimals) as f32;
         (x * y).round() / y
@@ -96,8 +170,9 @@ impl StatusService {
         200.0 - (weapon_delay - ((((weapon_delay * (status.agi() as f32)) / 25.0).floor() + ((weapon_delay * (status.dex() as f32)) / 100.0).floor()) / 10.0) * (1.0 - speed_modifier))
     }
 
+    #[inline]
     fn weapon_delay(&self, status: &StatusSnapshot) -> u32 {
-        let weapon =  status.right_hand_weapon_type();
+        let weapon = status.right_hand_weapon_type();
         *self.configuration_service.get_job_config(status.job()).base_aspd().get(weapon.as_str()).unwrap_or(&2000)
     }
 
@@ -112,13 +187,15 @@ impl StatusService {
     ///For weapons, the true value is equal to: STR + [STR/10]^2 + [DEX/5] + [LUK/5] + WeaponAtk + AtkBonusCards where [] indicates you round the value inside down before continuing and ^2 indicates squaring.
     ///For missile weapons, the true value is equal to: DEX + [DEX/10]^2 + [STR/5] + [LUK/5] + WeaponAtk + AtkBonusCards where [] indicates you round the value inside down before continuing and ^2 indicates squaring.
     ///Not counting the value of WeaponAtk and AtkBonusCards, this true value is often referred to as the base damage. This base damage is basically the your Atk with bare fists.
-    pub fn status_atk_left_side(&self, status: &StatusSnapshot) -> i32 {
+    #[inline]
+    fn status_atk_left_side(&self, status: &StatusSnapshot) -> i32 {
         let imposito_magnus = 0;
         let _upgrade_damage = 0;
         let _atk_cards = 0;
-        (self.fist_atk(status, status.right_hand_weapon_type().is_ranged()) + status.weapon_atk() + imposito_magnus + status.weapon_upgrade_damage() + status.base_atk()) as i32
+        (status.fist_atk() + status.weapon_atk() + imposito_magnus + status.weapon_upgrade_damage() + status.base_atk()) as i32
     }
 
+    #[inline]
     pub(crate) fn fist_atk(&self, status: &StatusSnapshot, is_ranged: bool) -> u16 {
         let mut str;
         let dex;
@@ -139,36 +216,68 @@ impl StatusService {
         str
     }
 
-    pub fn atk_cards(&self, _status: &StatusSnapshot) -> u16 {
-        0
-    }
-
     /// UI right side atk in status info panel
     /// https://web.archive.org/web/20060717223009/http://rodatazone.simgaming.net/mechanics/substats.php
     /// https://web.archive.org/web/20060717222819/http://rodatazone.simgaming.net/items/upgrading.php
-    pub fn status_atk_right_side(&self, _status: &StatusSnapshot) -> i32 {
-        // TODO: it is refinement damage. do not mix with refinement bonus which refers to random additional atk for over upgrade
-        // refinement
-        //    Weapon Lv. 1 - Every +1 upgrade gives +2 ATK (+1~3 ATK for every overupgrade).
-        //     Weapon Lv. 2 - Every +1 upgrade gives +3 ATK (+1~5 ATK for every overupgrade).
-        //     Weapon Lv. 3 - Every +1 upgrade gives +5 ATK (+1~7 ATK for every overupgrade).
-        //     Weapon Lv. 4 - Every +1 upgrade gives +7 ATK (+1~13(?) ATK for every overupgrade).
-        //    Weapon Lv. 1 - Safety Level +7
-        //     Weapon Lv. 2 - Safety Level +6
-        //     Weapon Lv. 3 - Safety Level +5
-        //     Weapon Lv. 4 - Safety Level +4
-        0
+    #[inline]
+    pub fn set_status_atk_right_side(&self, status: &mut StatusSnapshot)  {
+        let mut atk_right = 0_i32;
+        let mut overupgrade_right_hand_atk_bonus = 0;
+        let mut overupgrade_left_hand_atk_bonus = 0;
+        status.right_hand_weapon().map(|w| {
+            if w.level() == 1 {
+                atk_right = 2 * w.refine() as i32;
+                if w.refine() > 7 {
+                    overupgrade_right_hand_atk_bonus = (w.refine() - 7) * 3;
+                }
+            } else if w.level() == 2 {
+                atk_right = 3 * w.refine() as i32;
+                if w.refine() > 6 {
+                    overupgrade_right_hand_atk_bonus = (w.refine() - 6) * 5;
+                }
+            } else if w.level() == 3 {
+                atk_right = 5 * w.refine() as i32;
+                if w.refine() > 5 {
+                    overupgrade_right_hand_atk_bonus = (w.refine() - 5) * 8;
+                }
+            } else if w.level() == 4 {
+                atk_right = 7 * w.refine() as i32;
+                if w.refine() > 4 {
+                    overupgrade_right_hand_atk_bonus = (w.refine() - 4) * 14;
+                }
+            }
+        });
+        status.left_hand_weapon().map(|w| {
+            if w.level() == 1 {
+                atk_right += 2 * w.refine() as i32;
+                if w.refine() > 7 {
+                    overupgrade_left_hand_atk_bonus = (w.refine() - 7) * 3;
+                }
+            } else if w.level() == 2 {
+                atk_right += 3 * w.refine() as i32;
+                if w.refine() > 6 {
+                    overupgrade_left_hand_atk_bonus = (w.refine() - 6) * 5;
+                }
+            } else if w.level() == 3 {
+                atk_right += 5 * w.refine() as i32;
+                if w.refine() > 5 {
+                    overupgrade_left_hand_atk_bonus = (w.refine() - 5) * 8;
+                }
+            } else if w.level() == 4 {
+                atk_right += 7 * w.refine() as i32;
+                if w.refine() > 4 {
+                    overupgrade_left_hand_atk_bonus = (w.refine() - 4) * 14;
+                }
+            }
+        });
+        status.set_atk_right_side(atk_right);
+        status.set_overupgrade_right_hand_atk_bonus(overupgrade_right_hand_atk_bonus);
+        status.set_overupgrade_left_hand_atk_bonus(overupgrade_left_hand_atk_bonus);
     }
 
-    /// VIT + rnd(0,[VIT/20]^2-1).
-    pub fn mob_vit_def(&self, vit: u32) -> u32 {
-        let mut rng = fastrand::Rng::new();
-        vit + rng.u32(0..1.max(1.max(((vit as f32 / 20.0).ceil() as u32).pow(2)) - 1))
-    }
-    /// [VIT*0.5] + rnd([VIT*0.3], max([VIT*0.3],[VIT^2/150]-1)).
-    pub fn character_vit_def(&self, _vit: u32) -> u32 {
-        0
-    }
 
-
+    #[inline]
+    pub fn character_vit_def(&self, status_snapshot: &StatusSnapshot) -> u16 {
+        status_snapshot.vit() // TODO angelus multiplier
+    }
 }

@@ -10,7 +10,7 @@ use models::enums::bonus::BonusType;
 use models::enums::element::Element;
 use models::enums::EnumWithNumberValue;
 use models::enums::item::ItemGroup;
-use models::enums::mob::{MobClass, MobRace};
+use models::enums::mob::{MobClass, MobGroup, MobRace};
 use models::enums::size::Size;
 use models::enums::skill_enums::SkillEnum;
 use models::enums::status::StatusEffect;
@@ -22,6 +22,7 @@ pub struct BonusScriptHandler {
     pub(crate) bonuses: RwLock<Vec<BonusType>>,
 }
 
+#[macro_export]
 macro_rules! bonus {
     ( $self:ident, $bonus:expr ) => {
        $self.bonuses.write().unwrap().push($bonus)
@@ -30,7 +31,12 @@ macro_rules! bonus {
 
 impl NativeMethodHandler for BonusScriptHandler {
     fn handle(&self, native: &Native, params: Vec<Value>, execution_thread: &Thread, _call_frame: &CallFrame, _source_line: &CompilationDetail, _class_name: String) {
-        if native.name.eq("bonus") {
+        if native.name.eq("skill") {
+            let skill_name = params[0].string_value().unwrap();
+            let skill = SkillEnum::from_name(skill_name.as_str());
+            let skill_level = params[1].number_value().unwrap() as u8;
+            bonus!(self, BonusType::EnableSkillId(skill.id(), skill_level))
+        } else if native.name.eq("bonus") {
             self.handle_bonus(params);
         } else if native.name.eq("bonus2") {
             self.handle_bonus2(params);
@@ -46,7 +52,7 @@ impl NativeMethodHandler for BonusScriptHandler {
                 execution_thread.push_constant_on_stack(value);
             }
         } else {
-            println!("Function {} is not implemented", native.name);
+         //   println!("Function {} is not implemented", native.name);
         }
     }
 }
@@ -111,196 +117,151 @@ impl BonusScriptHandler {
                 _ => {}
             }
         } else {
-            let value = params[1].number_value().unwrap() as i8;
+            let value = params[1].number_value().unwrap();
             match bonus.to_lowercase().as_str() {
                 "bagi" => {
-                    bonus!(self, BonusType::Agi(value));
+                    bonus!(self, BonusType::Agi(value as i8));
                 }
                 "badditemhealrate" => {
-                    bonus!(self, BonusType::HpRegenFromItemPercentage(value));
+                    bonus!(self, BonusType::HpRegenFromItemPercentage(value as i8));
                 }
                 "ballstats" => {
-                    bonus!(self, BonusType::AllStats(value));
+                    bonus!(self, BonusType::AllStats(value as i8));
                 }
                 "baspd" => {
-                    bonus!(self, BonusType::Aspd(value));
+                    bonus!(self, BonusType::Aspd(value as i8));
                 }
                 "baspdrate" => {
-                    bonus!(self, BonusType::AspdPercentage(value));
+                    bonus!(self, BonusType::AspdPercentage(value as f32));
                 }
                 "batkele" => {
                     bonus!(self, BonusType::ElementWeapon(Element::from_value(value as usize)));
                 }
                 "batkrate" => {
-                    bonus!(self, BonusType::AtkPercentage(value));
+                    bonus!(self, BonusType::AtkPercentage(value as i8));
                 }
                 "bbaseatk" => {
-                    bonus!(self, BonusType::Atk(value));
+                    bonus!(self, BonusType::Atk(value as i16));
                 }
                 "bbreakarmorrate" => {
-                    bonus!(self, BonusType::BreakArmorPercentage(value));
+                    bonus!(self, BonusType::BreakArmorPercentage((value / 100) as f32));
                 }
                 "bbreakweaponrate" => {
-                    bonus!(self, BonusType::BreakWeaponPercentage(value));
+                    bonus!(self, BonusType::BreakWeaponPercentage((value / 100) as i8));
                 }
                 "bcastrate" => {
-                    bonus!(self, BonusType::CastTimePercentage(value));
+                    bonus!(self, BonusType::CastTimePercentage(value as i8));
                 }
                 "bclasschange" => {
-                    bonus!(self, BonusType::ClassChangePercentageOnHit(value));
+                    bonus!(self, BonusType::ClassChangePercentageOnHit((value / 100) as i8));
                 }
                 "bcritatkrate" => {
-                    bonus!(self, BonusType::CriticalDamagePercentage(value));
+                    bonus!(self, BonusType::CriticalDamagePercentage(value as i8));
                 }
                 "bcritical" => {
-                    bonus!(self, BonusType::CriticalChance(value));
+                    bonus!(self, BonusType::Crit(value as f32));
                 }
                 "bcriticallong" => {
-                    bonus!(self, BonusType::LongRangeCriticalChance(value));
+                    bonus!(self, BonusType::LongRangeCriticalChance(value as i8));
                 }
                 "bdef" => {
-                    bonus!(self, BonusType::Def(value));
+                    bonus!(self, BonusType::Def(value as i16));
                 }
                 "bdef2rate" => {
-                    bonus!(self, BonusType::VitDefPercentage(value));
+                    bonus!(self, BonusType::VitDefPercentage(value as i8));
                 }
                 "bdefele" => {
                     bonus!(self, BonusType::ElementDefense(Element::from_value(value as usize)));
                 }
                 "bdefrate" => {
-                    bonus!(self, BonusType::DefPercentage(value));
+                    bonus!(self, BonusType::DefPercentage(value as i8));
                 }
                 "bdefratioatkclass" => {
-                    match MobClass::from_value(value as usize) {
-                        MobClass::Boss => bonus!(self, BonusType::IncreaseDamageAgainstClassBossBaseOnDef),
-                        MobClass::Normal => bonus!(self, BonusType::IncreaseDamageAgainstClassNormalBaseOnDef),
-                        MobClass::Guardian => bonus!(self, BonusType::IncreaseDamageAgainstClassGuardianBaseOnDef),
-                        MobClass::All => {
-                            bonus!(self, BonusType::IncreaseDamageAgainstClassBossBaseOnDef);
-                            bonus!(self, BonusType::IncreaseDamageAgainstClassNormalBaseOnDef);
-                            bonus!(self, BonusType::IncreaseDamageAgainstClassGuardianBaseOnDef);
-                        }
-                    }
+                    bonus!(self, BonusType::IncreaseDamageAgainstClassBaseOnDef(MobClass::from_value(value as usize)))
                 }
                 "bdelayrate" => {
-                    bonus!(self, BonusType::SkillDelayIncDecPercentage(value));
+                    bonus!(self, BonusType::SkillDelayIncDecPercentage(value as i8));
                 }
                 "bdex" => {
-                    bonus!(self, BonusType::Dex(value));
+                    bonus!(self, BonusType::Dex(value as i8));
                 }
                 "bdoublerate" => {
-                    bonus!(self, BonusType::DoubleAttackChancePercentage(value));
+                    bonus!(self, BonusType::DoubleAttackChancePercentage(value as i8));
                 }
                 "bflee" => {
-                    bonus!(self, BonusType::Flee(value));
+                    bonus!(self, BonusType::Flee(value as i16));
                 }
                 "bflee2" => {
-                    bonus!(self, BonusType::PerfectDodge(value));
+                    bonus!(self, BonusType::PerfectDodge(value as i8));
                 }
                 "bhpgainvalue" => {
-                    bonus!(self, BonusType::GainHpWhenKillingEnemy(value));
+                    bonus!(self, BonusType::GainHpWhenKillingEnemy(value as i8));
                 }
                 "bhprecovrate" => {
-                    bonus!(self, BonusType::NaturalHpRecoveryPercentage(value));
+                    bonus!(self, BonusType::NaturalHpRecoveryPercentage(value as i8));
                 }
                 "bhealpower" => {
-                    bonus!(self, BonusType::HealSkillPercentage(value));
+                    bonus!(self, BonusType::HealSkillPercentage(value as i8));
                 }
                 "bhealpower2" => {
-                    bonus!(self, BonusType::HpRegenFromSkillPercentage(value));
+                    bonus!(self, BonusType::HpRegenFromSkillPercentage(value as i8));
                 }
                 "bhit" => {
-                    bonus!(self, BonusType::Hit(value));
+                    bonus!(self, BonusType::Hit(value as i16));
                 }
                 "bhitrate" => {
-                    bonus!(self, BonusType::HitPercentage(value));
+                    bonus!(self, BonusType::HitPercentage(value as i8));
                 }
                 "bignoredefclass" => {
-                    match MobClass::from_value(value as usize) {
-                        MobClass::Normal => bonus!(self, BonusType::IgnoreDefClassNormal),
-                        MobClass::Boss => bonus!(self, BonusType::IgnoreDefClassBoss),
-                        MobClass::Guardian => bonus!(self, BonusType::IgnoreDefClassGuardian),
-                        MobClass::All => {
-                            bonus!(self, BonusType::IgnoreDefClassNormal);
-                            bonus!(self, BonusType::IgnoreDefClassBoss);
-                            bonus!(self, BonusType::IgnoreDefClassGuardian);
-                        }
-                    }
+                    bonus!(self, BonusType::IgnoreDefClass(MobClass::from_value(value as usize)))
                 }
                 "bignoredefrace" => {
-                    match MobRace::from_value(value as usize) {
-                        MobRace::Angel => bonus!(self, BonusType::IgnoreDefRaceAngel),
-                        MobRace::Brute => bonus!(self, BonusType::IgnoreDefRaceBrute),
-                        MobRace::DemiHuman => bonus!(self, BonusType::IgnoreDefRaceDemiHuman),
-                        MobRace::Demon => bonus!(self, BonusType::IgnoreDefRaceDemon),
-                        MobRace::Dragon => bonus!(self, BonusType::IgnoreDefRaceDragon),
-                        MobRace::Fish => bonus!(self, BonusType::IgnoreDefRaceFish),
-                        MobRace::Formless => bonus!(self, BonusType::IgnoreDefRaceFormless),
-                        MobRace::Insect => bonus!(self, BonusType::IgnoreDefRaceInsect),
-                        MobRace::Plant => bonus!(self, BonusType::IgnoreDefRacePlant),
-                        MobRace::PlayerHuman => bonus!(self, BonusType::IgnoreDefRacePlayerHuman),
-                        MobRace::PlayerDoram => bonus!(self, BonusType::IgnoreDefRacePlayerDoram),
-                        MobRace::Undead => bonus!(self, BonusType::IgnoreDefRaceUndead),
-                        MobRace::All => {
-                            bonus!(self, BonusType::IgnoreDefRaceAngel);
-                            bonus!(self, BonusType::IgnoreDefRaceBrute);
-                            bonus!(self, BonusType::IgnoreDefRaceDemiHuman);
-                            bonus!(self, BonusType::IgnoreDefRaceDemon);
-                            bonus!(self, BonusType::IgnoreDefRaceDragon);
-                            bonus!(self, BonusType::IgnoreDefRaceFish);
-                            bonus!(self, BonusType::IgnoreDefRaceFormless);
-                            bonus!(self, BonusType::IgnoreDefRaceInsect);
-                            bonus!(self, BonusType::IgnoreDefRacePlant);
-                            bonus!(self, BonusType::IgnoreDefRacePlayerHuman);
-                            bonus!(self, BonusType::IgnoreDefRacePlayerDoram);
-                            bonus!(self, BonusType::IgnoreDefRaceUndead);
-                        }
-                    }
+                    bonus!(self, BonusType::IgnoreDefRace(MobRace::from_value(value as usize)))
                 }
                 "bint" => {
-                    bonus!(self, BonusType::Int(value));
+                    bonus!(self, BonusType::Int(value as i8));
                 }
                 "blongatkdef" => {
-                    bonus!(self, BonusType::ResistanceRangeAttack(value));
+                    bonus!(self, BonusType::ResistanceRangeAttackPercentage(value as i8));
                 }
                 "blongatkrate" => {
-                    bonus!(self, BonusType::DamageRangedAtkPercentage(value));
+                    bonus!(self, BonusType::DamageRangedAtkPercentage(value as i8));
                 }
                 "bluk" => {
-                    bonus!(self, BonusType::Luk(value));
+                    bonus!(self, BonusType::Luk(value as i8));
                 }
                 "bmatkrate" => {
-                    bonus!(self, BonusType::MatkPercentage(value));
+                    bonus!(self, BonusType::MatkPercentage(value as i8));
                 }
                 "bmagicdamagereturn" => {
-                    bonus!(self, BonusType::MagicAttackReflectChancePercentage(value));
+                    bonus!(self, BonusType::MagicAttackReflectChancePercentage(value as i8));
                 }
                 "bmagichpgainvalue" => {
-                    bonus!(self, BonusType::GainHpWhenKillingEnemyWithMagicAttack(value));
+                    bonus!(self, BonusType::GainHpWhenKillingEnemyWithMagicAttack(value as i8));
                 }
                 "bmagicspgainvalue" => {
-                    bonus!(self, BonusType::GainSpWhenKillingEnemyWithMagicAttack(value));
+                    bonus!(self, BonusType::GainSpWhenKillingEnemyWithMagicAttack(value as i8));
                 }
                 "bmatk" => {
-                    bonus!(self, BonusType::Matk(value));
+                    bonus!(self, BonusType::Matk(value as i16));
                 }
                 "bmaxhp" => {
                     bonus!(self, BonusType::Maxhp(value));
                 }
                 "bmaxhprate" => {
-                    bonus!(self, BonusType::MaxhpPercentage(value));
+                    bonus!(self, BonusType::MaxhpPercentage(value as i8));
                 }
                 "bmaxsp" => {
                     bonus!(self, BonusType::Maxsp(value));
                 }
                 "bmaxsprate" => {
-                    bonus!(self, BonusType::MaxspPercentage(value));
+                    bonus!(self, BonusType::MaxspPercentage(value as i8));
                 }
                 "bmdef" => {
-                    bonus!(self, BonusType::Mdef(value));
+                    bonus!(self, BonusType::Mdef(value as i16));
                 }
                 "bnomagicdamage" => {
-                    bonus!(self, BonusType::ResistanceMagicAttackPercentage(value));
+                    bonus!(self, BonusType::ResistanceMagicAttackPercentage(value as i8));
                 }
                 "bnoregen" => {
                     if value == 1 {
@@ -310,34 +271,34 @@ impl BonusScriptHandler {
                     }
                 }
                 "bperfecthitrate" => {
-                    bonus!(self, BonusType::PerfectHitPercentage(value));
+                    bonus!(self, BonusType::PerfectHitPercentage(value as i8));
                 }
                 "bspdrainvalue" => {
-                    bonus!(self, BonusType::GainSpWhenHittingEnemy(value));
+                    bonus!(self, BonusType::GainSpWhenHittingEnemy(value as i8));
                 }
                 "bspgainvalue" => {
-                    bonus!(self, BonusType::GainSpWhenKillingEnemy(value));
+                    bonus!(self, BonusType::GainSpWhenKillingEnemy(value as i8));
                 }
                 "bsprecovrate" => {
-                    bonus!(self, BonusType::NaturalSpRecoveryPercentage(value));
+                    bonus!(self, BonusType::NaturalSpRecoveryPercentage(value as i8));
                 }
                 "bshortweapondamagereturn" => {
-                    bonus!(self, BonusType::MeleeAttackReflectChancePercentage(value));
+                    bonus!(self, BonusType::PhysicalAttackReflectChancePercentage(value as i8));
                 }
                 "bspeedaddrate" | "bspeedrate" => {
-                    bonus!(self, BonusType::SpeedPercentage(value));
+                    bonus!(self, BonusType::SpeedPercentage(value as i8));
                 }
                 "bsplashrange" => {
-                    bonus!(self, BonusType::SplashRadius(value));
+                    bonus!(self, BonusType::SplashRadius(value as i8));
                 }
                 "bstr" => {
-                    bonus!(self, BonusType::Str(value));
+                    bonus!(self, BonusType::Str(value as i8));
                 }
                 "busesprate" => {
-                    bonus!(self, BonusType::SpConsumption(value));
+                    bonus!(self, BonusType::SpConsumption(value as i8));
                 }
                 "bvit" => {
-                    bonus!(self, BonusType::Vit(value));
+                    bonus!(self, BonusType::Vit(value as i8));
                 }
                 _ => {}
             }
@@ -369,16 +330,7 @@ impl BonusScriptHandler {
             let value2 = params[2].number_value().unwrap();
             match bonus.to_lowercase().as_str() {
                 "baddclass" => {
-                    match MobClass::from_value(value1 as usize) {
-                        MobClass::Boss => bonus!(self, BonusType::PhysicalDamageAgainstClassBossPercentage(value2 as i8)),
-                        MobClass::Normal => bonus!(self, BonusType::PhysicalDamageAgainstClassNormalPercentage(value2 as i8)),
-                        MobClass::Guardian => bonus!(self, BonusType::PhysicalDamageAgainstClassGuardianPercentage(value2 as i8)),
-                        MobClass::All => {
-                            bonus!(self, BonusType::PhysicalDamageAgainstClassBossPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstClassNormalPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstClassGuardianPercentage(value2 as i8));
-                        }
-                    }
+                    bonus!(self, BonusType::PhysicalDamageAgainstClassPercentage(MobClass::from_value(value1 as usize), value2 as i8))
                 }
                 "badddamageclass" => {
                     BonusType::PhysicalDamageAgainstMobIdPercentage(value1 as u32, value2 as i8);
@@ -387,76 +339,16 @@ impl BonusScriptHandler {
                     BonusType::ResistancePhysicalAttackFromMobIdPercentage(value1 as u32, value2 as i8);
                 }
                 "baddeff" => {
-                    match StatusEffect::from_value(value1 as usize) {
-                        StatusEffect::Poison => bonus!(self, BonusType::ChanceToInflictStatusPoisonOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Stun => bonus!(self, BonusType::ChanceToInflictStatusStunOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Freeze => bonus!(self, BonusType::ChanceToInflictStatusFreezeOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Curse => bonus!(self, BonusType::ChanceToInflictStatusCurseOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Blind => bonus!(self, BonusType::ChanceToInflictStatusBlindOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Sleep => bonus!(self, BonusType::ChanceToInflictStatusSleepOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Silence => bonus!(self, BonusType::ChanceToInflictStatusSilenceOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Chaos => bonus!(self, BonusType::ChanceToInflictStatusChaosOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Bleeding => bonus!(self, BonusType::ChanceToInflictStatusBleedingOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Stone => bonus!(self, BonusType::ChanceToInflictStatusStoneOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Burning => bonus!(self, BonusType::ChanceToInflictStatusBurningOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Confuse => bonus!(self, BonusType::ChanceToInflictStatusConfuseOnAttackPercentage(value2 as i8)),
-                        StatusEffect::WeaponBreak => bonus!(self, BonusType::ChanceToInflictStatusWeaponBreakOnAttackPercentage(value2 as i8)),
-                        StatusEffect::ArmorBreak => bonus!(self, BonusType::ChanceToInflictStatusArmorBreakOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Coma => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackPercentage(value2 as i8)),
-                    }
+                    bonus!(self, BonusType::ChanceToInflictStatusOnAttackPercentage(StatusEffect::from_value(value1 as usize), value2 as f32 / 100.0))
                 }
                 "baddeff2" => {
-                    match StatusEffect::from_value(value1 as usize) {
-                        StatusEffect::Poison => bonus!(self, BonusType::ChanceToInflictStatusPoisonToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Stun => bonus!(self, BonusType::ChanceToInflictStatusStunToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Freeze => bonus!(self, BonusType::ChanceToInflictStatusFreezeToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Curse => bonus!(self, BonusType::ChanceToInflictStatusCurseToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Blind => bonus!(self, BonusType::ChanceToInflictStatusBlindToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Sleep => bonus!(self, BonusType::ChanceToInflictStatusSleepToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Silence => bonus!(self, BonusType::ChanceToInflictStatusSilenceToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Chaos => bonus!(self, BonusType::ChanceToInflictStatusChaosToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Bleeding => bonus!(self, BonusType::ChanceToInflictStatusBleedingToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Stone => bonus!(self, BonusType::ChanceToInflictStatusStoneToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Burning => bonus!(self, BonusType::ChanceToInflictStatusBurningToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Confuse => bonus!(self, BonusType::ChanceToInflictStatusConfuseToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::WeaponBreak => bonus!(self, BonusType::ChanceToInflictStatusWeaponBreakToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::ArmorBreak => bonus!(self, BonusType::ChanceToInflictStatusArmorBreakToSelfOnAttackPercentage(value2 as i8)),
-                        StatusEffect::Coma => bonus!(self, BonusType::ChanceToInflictStatusComaToSelfOnAttackPercentage(value2 as i8)),
-                    }
+                   bonus!(self, BonusType::ChanceToInflictStatusToSelfOnAttackPercentage(StatusEffect::from_value(value1 as usize), value2 as f32 / 100.0))
                 }
                 "baddeffwhenhit" => {
-                    match StatusEffect::from_value(value1 as usize) {
-                        StatusEffect::Poison => bonus!(self, BonusType::ChanceToInflictStatusPoisonWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Stun => bonus!(self, BonusType::ChanceToInflictStatusStunWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Freeze => bonus!(self, BonusType::ChanceToInflictStatusFreezeWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Curse => bonus!(self, BonusType::ChanceToInflictStatusCurseWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Blind => bonus!(self, BonusType::ChanceToInflictStatusBlindWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Sleep => bonus!(self, BonusType::ChanceToInflictStatusSleepWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Silence => bonus!(self, BonusType::ChanceToInflictStatusSilenceWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Chaos => bonus!(self, BonusType::ChanceToInflictStatusChaosWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Bleeding => bonus!(self, BonusType::ChanceToInflictStatusBleedingWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Stone => bonus!(self, BonusType::ChanceToInflictStatusStoneWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Burning => bonus!(self, BonusType::ChanceToInflictStatusBurningWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Confuse => bonus!(self, BonusType::ChanceToInflictStatusConfuseWhenHitPercentage(value2 as i8)),
-                        StatusEffect::WeaponBreak => bonus!(self, BonusType::ChanceToInflictStatusWeaponBreakWhenHitPercentage(value2 as i8)),
-                        StatusEffect::ArmorBreak => bonus!(self, BonusType::ChanceToInflictStatusArmorBreakWhenHitPercentage(value2 as i8)),
-                        StatusEffect::Coma => bonus!(self, BonusType::ChanceToInflictStatusComaWhenHitPercentage(value2 as i8)),
-                    }
+                    bonus!(self, BonusType::ChanceToInflictStatusOnAttackPercentage(StatusEffect::from_value(value1 as usize), value2 as f32 / 100.0))
                 }
                 "baddele" => {
-                    match Element::from_value(value1 as usize) {
-                        Element::Neutral => bonus!(self, BonusType::PhysicalDamageAgainstElementNeutralPercentage(value2 as i8)),
-                        Element::Water => bonus!(self, BonusType::PhysicalDamageAgainstElementWaterPercentage(value2 as i8)),
-                        Element::Earth => bonus!(self, BonusType::PhysicalDamageAgainstElementEarthPercentage(value2 as i8)),
-                        Element::Fire => bonus!(self, BonusType::PhysicalDamageAgainstElementFirePercentage(value2 as i8)),
-                        Element::Wind => bonus!(self, BonusType::PhysicalDamageAgainstElementWindPercentage(value2 as i8)),
-                        Element::Poison => bonus!(self, BonusType::PhysicalDamageAgainstElementPoisonPercentage(value2 as i8)),
-                        Element::Holy => bonus!(self, BonusType::PhysicalDamageAgainstElementHolyPercentage(value2 as i8)),
-                        Element::Dark => bonus!(self, BonusType::PhysicalDamageAgainstElementDarkPercentage(value2 as i8)),
-                        Element::Ghost => bonus!(self, BonusType::PhysicalDamageAgainstElementGhostPercentage(value2 as i8)),
-                        Element::Undead => bonus!(self, BonusType::PhysicalDamageAgainstElementUndeadPercentage(value2 as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::PhysicalDamageAgainstElementPercentage(Element::from_value(value1 as usize), value2 as i8))
                 }
                 "badditemgrouphealrate" => {
                     match ItemGroup::from_value(value1 as usize) {
@@ -487,133 +379,25 @@ impl BonusScriptHandler {
                     }
                 }
                 "baddrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Angel => bonus!(self, BonusType::PhysicalDamageAgainstRaceAngelPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::PhysicalDamageAgainstRaceBrutePercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::PhysicalDamageAgainstRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::PhysicalDamageAgainstRaceDemonPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::PhysicalDamageAgainstRaceDragonPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::PhysicalDamageAgainstRaceFishPercentage(value2 as i8)),
-                        MobRace::Formless => bonus!(self, BonusType::PhysicalDamageAgainstRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::PhysicalDamageAgainstRaceInsectPercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::PhysicalDamageAgainstRacePlantPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::PhysicalDamageAgainstRaceUndeadPercentage(value2 as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::PhysicalDamageAgainstRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "baddrace2" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Angel => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceAngelPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceAngelPercentage(value2 as i8));
-                        }
-                        MobRace::Brute => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceBrutePercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceBrutePercentage(value2 as i8));
-                        }
-                        MobRace::DemiHuman => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDemiHumanPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceDemiHumanPercentage(value2 as i8));
-                        }
-                        MobRace::Demon => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDemonPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceDemonPercentage(value2 as i8));
-                        }
-                        MobRace::Dragon => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDragonPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceDragonPercentage(value2 as i8));
-                        }
-                        MobRace::Fish => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceFishPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceFishPercentage(value2 as i8));
-                        }
-                        MobRace::Formless => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceFormlessPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceFormlessPercentage(value2 as i8));
-                        }
-                        MobRace::Insect => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceInsectPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceInsectPercentage(value2 as i8));
-                        }
-                        MobRace::Plant => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRacePlantPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRacePlantPercentage(value2 as i8));
-                        }
-                        MobRace::Undead => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceUndeadPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstRaceUndeadPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::DamageAgainstMobGroupPercentage(MobGroup::from_value(value1 as usize), value2 as i8))
                 }
                 "baddsize" => {
-                    match Size::from_value(value1 as usize) {
-                        Size::Small => bonus!(self, BonusType::PhysicalDamageAgainstSizeSmallPercentage(value2 as i8)),
-                        Size::Medium => bonus!(self, BonusType::PhysicalDamageAgainstSizeMediumPercentage(value2 as i8)),
-                        Size::Large => bonus!(self, BonusType::PhysicalDamageAgainstSizeLargePercentage(value2 as i8)),
-                        Size::All => {
-                            bonus!(self, BonusType::PhysicalDamageAgainstSizeSmallPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstSizeMediumPercentage(value2 as i8));
-                            bonus!(self, BonusType::PhysicalDamageAgainstSizeLargePercentage(value2 as i8));
-                        }
-                    }
+                    bonus!(self, BonusType::PhysicalDamageAgainstSizePercentage(Size::from_value(value1 as usize), value2 as i8))
                 }
                 "bcomaclass" => {
-                    match MobClass::from_value(value1 as usize) {
-                        MobClass::Boss => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnBossClassPercentage((value2 / 100_i32) as i8)),
-                        MobClass::Normal => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnNormalClassPercentage((value2 / 100_i32) as i8)),
-                        MobClass::Guardian => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnGuardianClassPercentage((value2 / 100_i32) as i8)),
-                        MobClass::All => {
-                            bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnBossClassPercentage((value2 / 100_i32) as i8));
-                            bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnNormalClassPercentage((value2 / 100_i32) as i8));
-                            bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnGuardianClassPercentage((value2 / 100_i32) as i8));
-                        }
-                    }
+                    bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnClassPercentage(MobClass::from_value(value1 as usize), value2 as f32 / 100.0))
                 }
                 "bcomarace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Angel => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceAngelPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceBrutePercentage((value2 / 100_i32) as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceDemiHumanPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceDemonPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceDragonPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceFishPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Formless => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceFormlessPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceInsectPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRacePlantPercentage((value2 / 100_i32) as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackRaceUndeadPercentage((value2 / 100_i32) as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::ChanceToInflictStatusComaOnAttackOnRacePercentage(MobRace::from_value(value1 as usize),  value2 as f32 / 100.0))
                 }
                 "bcriticaladdrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Angel => bonus!(self, BonusType::CriticalAgainstRaceAngelPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::CriticalAgainstRaceBrutePercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::CriticalAgainstRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::CriticalAgainstRaceDemonPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::CriticalAgainstRaceDragonPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::CriticalAgainstRaceFishPercentage(value2 as i8)),
-                        MobRace::Formless => bonus!(self, BonusType::CriticalAgainstRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::CriticalAgainstRaceInsectPercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::CriticalAgainstRacePlantPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::CriticalAgainstRaceUndeadPercentage(value2 as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::CriticalAgainstRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "bexpaddrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::GainExpWhenKillingRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::GainExpWhenKillingRaceUndeadPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::GainExpWhenKillingRaceBrutePercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::GainExpWhenKillingRacePlantPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::GainExpWhenKillingRaceInsectPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::GainExpWhenKillingRaceFishPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::GainExpWhenKillingRaceDemonPercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::GainExpWhenKillingRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Angel => bonus!(self, BonusType::GainExpWhenKillingRaceAngelPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::GainExpWhenKillingRaceDragonPercentage(value2 as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::GainExpWhenKillingRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "bgetzenynum" => {
                     bonus!(self, BonusType::GainZenyWhenKillingMonster(value1 as u16, value2 as i8));
@@ -628,170 +412,28 @@ impl BonusScriptHandler {
                     bonus!(self, BonusType::HpRegenEveryMs(value1 as u16, value2 as u16));
                 }
                 "bignoredefracerate" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::IgnoreDefRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::IgnoreDefRaceUndeadPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::IgnoreDefRaceBrutePercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::IgnoreDefRacePlantPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::IgnoreDefRaceInsectPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::IgnoreDefRaceFishPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::IgnoreDefRaceDemonPercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::IgnoreDefRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Angel => bonus!(self, BonusType::IgnoreDefRaceAngelPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::IgnoreDefRaceDragonPercentage(value2 as i8)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::IgnoreDefRaceFormlessPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceUndeadPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceBrutePercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRacePlantPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceInsectPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceFishPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceDemonPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceDemiHumanPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceAngelPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreDefRaceDragonPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::IgnoreDefRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "bignoremdefracerate" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::IgnoreMDefRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::IgnoreMDefRaceUndeadPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::IgnoreMDefRaceBrutePercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::IgnoreMDefRacePlantPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::IgnoreMDefRaceInsectPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::IgnoreMDefRaceFishPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::IgnoreMDefRaceDemonPercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::IgnoreMDefRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Angel => bonus!(self, BonusType::IgnoreMDefRaceAngelPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::IgnoreMDefRaceDragonPercentage(value2 as i8)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::IgnoreMDefRaceFormlessPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceUndeadPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceBrutePercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRacePlantPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceInsectPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceFishPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceDemonPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceDemiHumanPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceAngelPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefRaceDragonPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::IgnoreMDefRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "bignoremdefclassrate" => {
-                    match MobClass::from_value(value1 as usize) {
-                        MobClass::Normal => bonus!(self, BonusType::IgnoreMDefClassNormalPercentage(value2 as i8)),
-                        MobClass::Boss => bonus!(self, BonusType::IgnoreMDefClassBossPercentage(value2 as i8)),
-                        MobClass::Guardian => bonus!(self, BonusType::IgnoreMDefClassGuardianPercentage(value2 as i8)),
-                        MobClass::All => {
-                            bonus!(self, BonusType::IgnoreMDefClassNormalPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefClassBossPercentage(value2 as i8));
-                            bonus!(self, BonusType::IgnoreMDefClassGuardianPercentage(value2 as i8));
-                        }
-                    }
+                    bonus!(self, BonusType::IgnoreMDefClassPercentage(MobClass::from_value(value1 as usize), value2 as i8))
                 }
                 "bmagicaddrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::MagicalDamageAgainstRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::MagicalDamageAgainstRaceUndeadPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::MagicalDamageAgainstRaceBrutePercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::MagicalDamageAgainstRacePlantPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::MagicalDamageAgainstRaceInsectPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::MagicalDamageAgainstRaceFishPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::MagicalDamageAgainstRaceDemonPercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::MagicalDamageAgainstRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Angel => bonus!(self, BonusType::MagicalDamageAgainstRaceAngelPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::MagicalDamageAgainstRaceDragonPercentage(value2 as i8)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceFormlessPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceUndeadPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceBrutePercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRacePlantPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceInsectPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceFishPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDemonPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDemiHumanPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceAngelPercentage(value2 as i8));
-                            bonus!(self, BonusType::MagicalDamageAgainstRaceDragonPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::MagicalDamageAgainstRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "breseff" => {
-                    match StatusEffect::from_value(value1 as usize) {
-                        StatusEffect::Poison => bonus!(self, BonusType::ResistanceToStatusPoisonPercentage(value2 as i8)),
-                        StatusEffect::Bleeding => bonus!(self, BonusType::ResistanceToStatusBleedingPercentage(value2 as i8)),
-                        StatusEffect::Blind => bonus!(self, BonusType::ResistanceToStatusBlindPercentage(value2 as i8)),
-                        StatusEffect::Burning => bonus!(self, BonusType::ResistanceToStatusBurningPercentage(value2 as i8)),
-                        StatusEffect::Confuse => bonus!(self, BonusType::ResistanceToStatusConfusePercentage(value2 as i8)),
-                        StatusEffect::Curse => bonus!(self, BonusType::ResistanceToStatusCursePercentage(value2 as i8)),
-                        StatusEffect::Freeze => bonus!(self, BonusType::ResistanceToStatusFreezePercentage(value2 as i8)),
-                        StatusEffect::Silence => bonus!(self, BonusType::ResistanceToStatusSilencePercentage(value2 as i8)),
-                        StatusEffect::Sleep => bonus!(self, BonusType::ResistanceToStatusSleepPercentage(value2 as i8)),
-                        StatusEffect::Stone => bonus!(self, BonusType::ResistanceToStatusStonePercentage(value2 as i8)),
-                        StatusEffect::Stun => bonus!(self, BonusType::ResistanceToStatusStunPercentage(value2 as i8)),
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::ResistanceToStatusPercentage(StatusEffect::from_value(value1 as usize), (value2 / 100) as f32))
                 }
                 "bspdrainrate" => {
                     bonus!(self, BonusType::SpDrainWhenAttackingPercentage(value2 as i8, (value1 / 10_i32) as i8));
                 }
                 "bspdrainvaluerace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::SpDrainWhenAttackingRaceFormless(value2 as u16)),
-                        MobRace::Undead => bonus!(self, BonusType::SpDrainWhenAttackingRaceUndead(value2 as u16)),
-                        MobRace::Brute => bonus!(self, BonusType::SpDrainWhenAttackingRaceBrute(value2 as u16)),
-                        MobRace::Plant => bonus!(self, BonusType::SpDrainWhenAttackingRacePlant(value2 as u16)),
-                        MobRace::Insect => bonus!(self, BonusType::SpDrainWhenAttackingRaceInsect(value2 as u16)),
-                        MobRace::Fish => bonus!(self, BonusType::SpDrainWhenAttackingRaceFish(value2 as u16)),
-                        MobRace::Demon => bonus!(self, BonusType::SpDrainWhenAttackingRaceDemon(value2 as u16)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::SpDrainWhenAttackingRaceDemiHuman(value2 as u16)),
-                        MobRace::Angel => bonus!(self, BonusType::SpDrainWhenAttackingRaceAngel(value2 as u16)),
-                        MobRace::Dragon => bonus!(self, BonusType::SpDrainWhenAttackingRaceDragon(value2 as u16)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceFormless(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceUndead(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceBrute(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRacePlant(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceInsect(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceFish(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceDemon(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceDemiHuman(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceAngel(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenAttackingRaceDragon(value2 as u16));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::SpDrainWhenAttackingRace(MobRace::from_value(value1 as usize), value2 as u16))
                 }
                 "bspgainrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::SpDrainWhenKillingRaceFormless(value2 as u16)),
-                        MobRace::Undead => bonus!(self, BonusType::SpDrainWhenKillingRaceUndead(value2 as u16)),
-                        MobRace::Brute => bonus!(self, BonusType::SpDrainWhenKillingRaceBrute(value2 as u16)),
-                        MobRace::Plant => bonus!(self, BonusType::SpDrainWhenKillingRacePlant(value2 as u16)),
-                        MobRace::Insect => bonus!(self, BonusType::SpDrainWhenKillingRaceInsect(value2 as u16)),
-                        MobRace::Fish => bonus!(self, BonusType::SpDrainWhenKillingRaceFish(value2 as u16)),
-                        MobRace::Demon => bonus!(self, BonusType::SpDrainWhenKillingRaceDemon(value2 as u16)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::SpDrainWhenKillingRaceDemiHuman(value2 as u16)),
-                        MobRace::Angel => bonus!(self, BonusType::SpDrainWhenKillingRaceAngel(value2 as u16)),
-                        MobRace::Dragon => bonus!(self, BonusType::SpDrainWhenKillingRaceDragon(value2 as u16)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceFormless(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceUndead(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceBrute(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRacePlant(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceInsect(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceFish(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceDemon(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceDemiHuman(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceAngel(value2 as u16));
-                            bonus!(self, BonusType::SpDrainWhenKillingRaceDragon(value2 as u16));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::SpDrainWhenKillingRace(MobRace::from_value(value1 as usize), value2 as u16))
                 }
                 "bsplossrate" => {
                     bonus!(self, BonusType::SpLossEveryMs(value1 as u16, value2 as u16));
@@ -803,83 +445,16 @@ impl BonusScriptHandler {
                     bonus!(self, BonusType::SpRegenEveryMs(value2 as u16, (value1 / 10_i32) as u16));
                 }
                 "bsubclass" => {
-                    match MobClass::from_value(value1 as usize) {
-                        MobClass::Boss => bonus!(self, BonusType::ResistanceDamageFromClassBossPercentage(value2 as i8)),
-                        MobClass::Normal => bonus!(self, BonusType::ResistanceDamageFromClassNormalPercentage(value2 as i8)),
-                        MobClass::Guardian => bonus!(self, BonusType::ResistanceDamageFromClassGuardianPercentage(value2 as i8)),
-                        MobClass::All => {
-                            bonus!(self, BonusType::ResistanceDamageFromClassBossPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromClassNormalPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromClassGuardianPercentage(value2 as i8));
-                        }
-                    }
+                    bonus!(self, BonusType::ResistanceDamageFromClassPercentage(MobClass::from_value(value1 as usize), value2 as i8))
                 }
                 "bsubele" => {
-                    match Element::from_value(value1 as usize) {
-                        Element::Neutral => bonus!(self, BonusType::ResistanceDamageFromElementNeutralPercentage(value2 as i8)),
-                        Element::Water => bonus!(self, BonusType::ResistanceDamageFromElementWaterPercentage(value2 as i8)),
-                        Element::Earth => bonus!(self, BonusType::ResistanceDamageFromElementEarthPercentage(value2 as i8)),
-                        Element::Fire => bonus!(self, BonusType::ResistanceDamageFromElementFirePercentage(value2 as i8)),
-                        Element::Wind => bonus!(self, BonusType::ResistanceDamageFromElementWindPercentage(value2 as i8)),
-                        Element::Poison => bonus!(self, BonusType::ResistanceDamageFromElementPoisonPercentage(value2 as i8)),
-                        Element::Holy => bonus!(self, BonusType::ResistanceDamageFromElementHolyPercentage(value2 as i8)),
-                        Element::Dark => bonus!(self, BonusType::ResistanceDamageFromElementDarkPercentage(value2 as i8)),
-                        Element::Ghost => bonus!(self, BonusType::ResistanceDamageFromElementGhostPercentage(value2 as i8)),
-                        Element::Undead => bonus!(self, BonusType::ResistanceDamageFromElementUndeadPercentage(value2 as i8)),
-                        Element::All => {
-                            bonus!(self, BonusType::ResistanceDamageFromElementNeutralPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementWaterPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementEarthPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementFirePercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementWindPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementPoisonPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementHolyPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementDarkPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementGhostPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromElementUndeadPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::ResistanceDamageFromElementPercentage(Element::from_value(value1 as usize), value2 as i8))
                 }
                 "bsubrace" => {
-                    match MobRace::from_value(value1 as usize) {
-                        MobRace::Formless => bonus!(self, BonusType::ResistanceDamageFromRaceFormlessPercentage(value2 as i8)),
-                        MobRace::Undead => bonus!(self, BonusType::ResistanceDamageFromRaceUndeadPercentage(value2 as i8)),
-                        MobRace::Brute => bonus!(self, BonusType::ResistanceDamageFromRaceBrutePercentage(value2 as i8)),
-                        MobRace::Plant => bonus!(self, BonusType::ResistanceDamageFromRacePlantPercentage(value2 as i8)),
-                        MobRace::Insect => bonus!(self, BonusType::ResistanceDamageFromRaceInsectPercentage(value2 as i8)),
-                        MobRace::Fish => bonus!(self, BonusType::ResistanceDamageFromRaceFishPercentage(value2 as i8)),
-                        MobRace::Demon => bonus!(self, BonusType::ResistanceDamageFromRaceDemonPercentage(value2 as i8)),
-                        MobRace::DemiHuman => bonus!(self, BonusType::ResistanceDamageFromRaceDemiHumanPercentage(value2 as i8)),
-                        MobRace::Angel => bonus!(self, BonusType::ResistanceDamageFromRaceAngelPercentage(value2 as i8)),
-                        MobRace::Dragon => bonus!(self, BonusType::ResistanceDamageFromRaceDragonPercentage(value2 as i8)),
-                        MobRace::All => {
-                            bonus!(self, BonusType::ResistanceDamageFromRaceFormlessPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceUndeadPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceBrutePercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRacePlantPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceInsectPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceFishPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceDemonPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceDemiHumanPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceAngelPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromRaceDragonPercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::ResistanceDamageFromRacePercentage(MobRace::from_value(value1 as usize), value2 as i8))
                 }
                 "bsubsize" => {
-                    match Size::from_value(value1 as usize) {
-                        Size::Small => bonus!(self, BonusType::ResistanceDamageFromSizeSmallPercentage(value2 as i8)),
-                        Size::Medium => bonus!(self, BonusType::ResistanceDamageFromSizeMediumPercentage(value2 as i8)),
-                        Size::Large => bonus!(self, BonusType::ResistanceDamageFromSizeLargePercentage(value2 as i8)),
-                        Size::All => {
-                            bonus!(self, BonusType::ResistanceDamageFromSizeSmallPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromSizeMediumPercentage(value2 as i8));
-                            bonus!(self, BonusType::ResistanceDamageFromSizeLargePercentage(value2 as i8));
-                        }
-                        _ => {}
-                    }
+                    bonus!(self, BonusType::ResistanceDamageFromSizePercentage(Size::from_value(value1 as usize), value2 as i8))
                 }
                 _ => {}
             }
@@ -936,10 +511,22 @@ mod tests {
         let vm = Arc::new(Vm::new("../native_functions_list.txt", DebugFlag::None.value()));
         // When
         let script_handler = BonusScriptHandler { bonuses: RwLock::new(vec![]) };
-        Vm::repl(vm.clone(), compilation_result.unwrap().pop().as_ref().unwrap(),
-                 Box::new(&script_handler));
+        Vm::repl(vm.clone(), compilation_result.unwrap().pop().as_ref().unwrap(), Box::new(&script_handler), vec![]);
         // Then
         assert!(matches!(script_handler.bonuses.read().unwrap()[0], BonusType::Str(10)))
+    }
+
+    #[test]
+    fn test_simple_bonus_negative() {
+        // Given
+        let script = "bonus bStr, -10;";
+        let compilation_result = Compiler::compile_script("test".to_string(), script, "../native_functions_list.txt", rathena_script_lang_interpreter::lang::compiler::DebugFlag::All.value());
+        let vm = Arc::new(Vm::new("../native_functions_list.txt", DebugFlag::All.value()));
+        // When
+        let script_handler = BonusScriptHandler { bonuses: RwLock::new(vec![]) };
+        Vm::repl(vm.clone(), compilation_result.unwrap().pop().as_ref().unwrap(), Box::new(&script_handler), vec![]);
+        // Then
+        assert!(matches!(script_handler.bonuses.read().unwrap()[0], BonusType::Str(-10)))
     }
 
     #[test]
@@ -950,8 +537,7 @@ mod tests {
         let vm = Arc::new(Vm::new("../native_functions_list.txt", DebugFlag::None.value()));
         // When
         let script_handler = BonusScriptHandler { bonuses: RwLock::new(vec![]) };
-        Vm::repl(vm.clone(), compilation_result.unwrap().pop().as_ref().unwrap(),
-                 Box::new(&script_handler));
+        Vm::repl(vm.clone(), compilation_result.unwrap().pop().as_ref().unwrap(), Box::new(&script_handler), vec![]);
         // Then
         assert!(matches!(script_handler.bonuses.read().unwrap()[0], BonusType::ElementWeapon(Element::Water)))
     }

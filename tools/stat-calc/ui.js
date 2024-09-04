@@ -139,54 +139,7 @@ let WeaponName = [
 
 
 let SubName = ["%", "sec", "Damage", "Critical Damage", "Critical Rate", "Over 1000 Hits", "Too High to Calculate", "Immesurable", "X", "Cast Time", "Off", "On"];
-let JobEquipItemOBJ = [
-    [0, 50, 100, 999],
-    [0, 1, 51, 101, 70, 71, 72, 74, 75, 78, 83, 84, 85, 86, 87, 999],
-    [0, 1, 52, 102, 72, 74, 75, 78, 80, 83, 84, 85, 999],
-    [0, 1, 53, 103, 71, 73, 74, 77, 78, 85, 89, 999],
-    [0, 1, 54, 104, 75, 76, 83, 89, 999],
-    [0, 1, 55, 105, 71, 77, 89, 999],
-    [0, 1, 56, 106, 70, 71, 72, 73, 74, 75, 78, 83, 84, 85, 86, 999],
-    [0, 1, 51, 61, 107, 70, 71, 72, 74, 75, 78, 79, 83, 84, 85, 86, 87, 999],
-    [0, 1, 52, 62, 108, 72, 74, 75, 78, 79, 81, 83, 84, 85, 999],
-    [0, 1, 53, 63, 109, 71, 73, 74, 77, 78, 79, 81, 85, 89, 999],
-    [0, 1, 54, 64, 110, 75, 76, 79, 80, 83, 88, 89, 999],
-    [0, 1, 55, 65, 111, 71, 77, 79, 89, 999],
-    [0, 1, 56, 66, 112, 70, 71, 72, 73, 74, 75, 78, 79, 83, 84, 85, 86, 999],
-    [0, 1, 51, 61, 113, 70, 71, 72, 74, 75, 78, 79, 83, 84, 85, 86, 87, 999],
-    [0, 1, 52, 62, 114, 72, 74, 75, 76, 78, 79, 80, 83, 84, 85, 88, 999],
-    [0, 1, 53, 63, 115, 71, 73, 74, 77, 78, 79, 85, 89, 999],
-    [0, 1, 54, 64, 116, 74, 75, 76, 79, 83, 89, 999],
-    [0, 1, 54, 64, 117, 74, 75, 76, 79, 83, 89, 999],
-    [0, 1, 55, 65, 118, 71, 77, 79, 89, 999],
-    [0, 1, 56, 66, 119, 70, 71, 72, 73, 74, 75, 78, 79, 83, 84, 85, 86, 999],
-    [0, 50, 120, 999],
-    [0, 1, 51, 61, 107, 121, 70, 71, 72, 74, 75, 78, 79, 82, 83, 84, 85, 86, 87, 999],
-    [0, 1, 52, 62, 108, 122, 72, 74, 75, 78, 79, 81, 82, 83, 84, 85, 999],
-    [0, 1, 53, 63, 109, 123, 71, 73, 74, 77, 78, 79, 81, 82, 85, 89, 999],
-    [0, 1, 54, 64, 110, 124, 75, 76, 79, 82, 83, 88, 89, 999],
-    [0, 1, 55, 65, 111, 125, 71, 77, 79, 82, 89, 999],
-    [0, 1, 56, 66, 112, 126, 70, 71, 72, 73, 74, 75, 78, 79, 82, 83, 84, 85, 86, 999],
-    [0, 1, 51, 61, 113, 127, 70, 71, 72, 74, 75, 78, 79, 82, 83, 84, 85, 86, 87, 999],
-    [0, 1, 52, 62, 114, 128, 72, 74, 75, 76, 78, 79, 80, 82, 83, 84, 85, 88, 999],
-    [0, 1, 53, 63, 115, 129, 71, 73, 74, 77, 78, 79, 82, 85, 89, 999],
-    [0, 1, 54, 64, 116, 130, 74, 75, 76, 79, 82, 83, 89, 999],
-    [0, 1, 54, 64, 117, 131, 74, 75, 76, 79, 82, 83, 89, 999],
-    [0, 1, 55, 65, 118, 132, 71, 77, 79, 82, 89, 999],
-    [0, 1, 56, 66, 119, 133, 70, 71, 72, 73, 74, 75, 78, 79, 82, 83, 84, 85, 86, 999],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0],
-    [0, 1, 83, 84, 85, 86, 999],
-    [0, 1, 79, 83, 84, 85, 86, 87, 999],
-    [0, 1, 55, 65, 111, 71, 77, 79, 999],
-    [0, 1, 58, 52, 999],
-    [0, 1, 59, 83, 999],
-];
+
 
 let n_A_JOB, n_A_WeaponType, n_A_Weapon2Type, isRebirth, SuperNoviceFullWeaponCHECK, loadedTestCase, testcases;
 let n_ECname = new Array();
@@ -473,7 +426,7 @@ function ClickWeaponType(n) {
         document.calcForm.A_Arrow.style.visibility = "visible";
         document.calcForm.A_Arrow.options.length = 0;
         if (n == 10 || n == 14 || n == 15) {
-            j = 17;
+            j = 16;
             for (let i = 0; i <= 4; i++)
                 global.ArrowOBJ[i] = global.ArrowOBJbackup[i];
         } else if (n == 17 || n == 18 || n == 19 || n == 20) {
@@ -606,7 +559,7 @@ function ClickActiveSkill(wAS) {
 
 function refreshEnemyStats(enemyStats) {
     myInnerHtml("Enemy_Race", global.RaceOBJ[enemyStats.race], 0);
-    if (enemyStats.element > 0 && global.elementOBJ[enemyStats.element] === undefined) {
+    if (enemyStats.element > 0 && global.elementOBJ[enemyStats.element] !== undefined) {
         let w = Math.floor(enemyStats.element / 10);
         myInnerHtml("Enemy_Element", (global.elementOBJ[w] + enemyStats.element % 10), 0);
     }
@@ -614,6 +567,7 @@ function refreshEnemyStats(enemyStats) {
     myInnerHtml("Enemy_HP", enemyStats.hp, 0);
     myInnerHtml("Enemy_ATK", enemyStats.atk1, 0);
     myInnerHtml("Enemy_ATK2", enemyStats.atk2, 0);
+    myInnerHtml("Enemy_VIT", enemyStats.vit, 0);
     myInnerHtml("Enemy_PerfectHit", enemyStats.perfectHit, 0);
     myInnerHtml("Enemey_PerfectDodge", enemyStats.perfectDodge, 0);
     myInnerHtml("Enemy_Def", enemyStats.def, 0);
@@ -651,6 +605,8 @@ function refreshPlayerStats(playerStats) {
     myInnerHtml("A_ATK_RIGHT", playerStats.atkRight, 0);
     myInnerHtml("A_MATK_1", playerStats.matk[0], 0);
     myInnerHtml("A_MATK_2", playerStats.matk[2], 0);
+    myInnerHtml("MinVitDef", playerStats.vitDEF[0], 0);
+    myInnerHtml("MaxVitDef", playerStats.vitDEF[2], 0);
 }
 
 function refreshBattleResults(battleResults) {
@@ -1306,8 +1262,8 @@ function checkIfClassCanWearEquipment(nJEIS) {
         if (global.ItemOBJ[i][11] == 200)
             return 0;
     }
-    for (let nJEISi = 0; JobEquipItemOBJ[n_A_JOB][nJEISi] != 999; nJEISi++) {
-        if (JobEquipItemOBJ[n_A_JOB][nJEISi] == nJEIS)
+    for (let nJEISi = 0; global.JobEquipItemOBJ[n_A_JOB][nJEISi] != 999; nJEISi++) {
+        if (global.JobEquipItemOBJ[n_A_JOB][nJEISi] == nJEIS)
             return 1;
     }
     return 0;
@@ -1598,6 +1554,7 @@ function LoadForm(json) {
         ClickWeaponType2(json.A_Weapon2Type);
     }
     document.calcForm.A_weapon1.value = json.A_weapon1;
+    document.calcForm.A_Arrow.value = json.A_Arrow;
     ClickB_Item(json.A_weapon1);
     if (json.A_weapon2) {
         document.calcForm.A_weapon2.value = json.A_weapon2;

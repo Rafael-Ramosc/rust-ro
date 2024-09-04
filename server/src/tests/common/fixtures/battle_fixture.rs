@@ -1,13 +1,27 @@
 use std::{env, fs};
 use std::fmt::Formatter;
 use std::path::Path;
+
 use serde::{Deserialize, Deserializer};
 use serde::de::{MapAccess, SeqAccess, Visitor};
-#[derive(Deserialize, GettersAll, Debug)]
+use configuration::bonus_type_wrapper::BonusTypeWrapper;
+use models::enums::element::Element;
+use configuration::serde_helper::deserialize_number_enum;
+use crate::models::enums::EnumWithNumberValue;
+
+
+
+
+
+
+
+
+#[derive(Deserialize, GettersAll, Debug, Clone, Default)]
 pub struct BattleFixture {
     #[serde(rename = "_id")]
     id: String,
     job: String,
+    desc: Option<String>,
     #[serde(rename = "baseLevel")]
     base_level: u32,
     #[serde(rename = "jobLevel")]
@@ -32,10 +46,14 @@ pub struct BattleFixture {
     skill_to_use: SkillLevel,
     #[serde(default, rename = "supportiveSkills")]
     supportive_skills: Vec<SkillLevel>,
-    #[serde(rename = "arrow")]
+    #[serde(rename = "ammo")]
     ammo: Option<String>,
+    #[serde(rename = "ammoId")]
+    ammo_id: Option<u32>,
     #[serde(rename = "targetName")]
     target: String,
+    #[serde(rename = "targetId")]
+    target_id: u32,
     // Expectation
     #[serde(rename = "maxHp")]
     max_hp: u16,
@@ -53,19 +71,19 @@ pub struct BattleFixture {
     bonus_int: i16,
     #[serde(rename = "bonusLuk")]
     bonus_luk: i16,
-    hit: u16,
-    flee: u16,
+    hit: i16,
+    flee: i16,
     #[serde(rename = "battleHit")]
     battle_hit: u16,
     #[serde(rename = "battleFlee")]
     battle_flee: u16,
     crit: f32,
-    #[serde(rename = "critATK")]
-    crit_atk: Vec<u16>,
-    #[serde(rename = "battleCritAtk")]
-    battle_crit_atk: Vec<u16>,
-    def: u16,
-    mdef: u16,
+    #[serde(default, rename = "critATK")]
+    crit_atk: Vec<i16>,
+    #[serde(default, rename = "battleCritAtk")]
+    battle_crit_atk: Vec<i16>,
+    def: i16,
+    mdef: i16,
     cast: f32,
     #[serde(rename = "perfectDodge")]
     perfect_dodge: f32,
@@ -85,11 +103,11 @@ pub struct BattleFixture {
     #[serde(rename = "maxWeaponAttackCalc")]
     max_weapon_attack_calc: f32,
     #[serde(rename = "minDmg")]
-    min_dmg: u32,
+    min_dmg: i32,
     #[serde(rename = "avgDmg")]
     avg_dmg: f32,
     #[serde(rename = "maxDmg")]
-    max_dmg: u32,
+    max_dmg: i32,
     #[serde(rename = "minDamageReceived")]
     min_dmg_received: Option<f32>,
     #[serde(rename = "avgDamageReceived")]
@@ -99,9 +117,11 @@ pub struct BattleFixture {
     #[serde(rename = "matkMin")]
     matk_min: u16,
     #[serde(rename = "matkMax")]
-    matk_max: u16
+    matk_max: u16,
+    #[serde(deserialize_with = "deserialize_number_enum")]
+    element: Element
 }
-#[derive(GettersAll, Debug)]
+#[derive(GettersAll, Debug, Clone, Default)]
 pub struct Equipments {
     weapon: Option<Equipment>,
     weapon_left: Option<Equipment>,
@@ -125,28 +145,53 @@ impl BattleFixture {
         let fixtures: Vec<BattleFixture> = serde_json::from_str(&fs::read_to_string(path).unwrap()).unwrap();
         fixtures
     }
+
+    pub fn all_equipments(&self) -> Vec<&Equipment> {
+        let mut equipments = vec![];
+        if let Some(e) = self.equipments.weapon().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.weapon_left().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.accessory1().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.accessory2().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.upper_headgear().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.middle_headgear().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.lower_headgear().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.body().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.shoulder().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.shoes().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        if let Some(e) = self.equipments.shield().as_ref().filter(|e| e.item_id() > 0) { equipments.push(e) }
+        equipments
+    }
 }
 
-#[derive(Deserialize, GettersAll, Debug)]
+#[derive(Deserialize, GettersAll, Debug, Clone, Default)]
 pub struct SkillLevel {
     level: u8,
     skid: u32,
 }
 
-#[derive(Deserialize, GettersAll, Debug)]
+#[derive(Deserialize, GettersAll, Debug, Clone, Default)]
 pub struct Equipment {
-    #[serde(rename = "itemId")]
+    #[serde(default, rename = "itemId")]
     item_id: i32,
+    #[serde(default)]
+    name: String,
+    #[serde(default)]
     refinement: u8,
     #[serde(default)]
     cards: Vec<Card>,
+    #[serde(default)]
+    bonuses: Vec<BonusTypeWrapper>
 }
 
-#[derive(Deserialize, GettersAll, Debug)]
+#[derive(Deserialize, GettersAll, Debug, Clone, Default)]
 pub struct Card {
     #[serde(rename = "itemId")]
-    item_id: u32,
+    item_id: i16,
+    name: String,
+    #[serde(default)]
+    bonuses: Vec<BonusTypeWrapper>
 }
+
 
 fn deserialize_equipments<'de, D>(deserializer: D) -> Result<Equipments, D::Error>
     where
@@ -175,8 +220,8 @@ impl <'de>Visitor<'de> for EquipmentVisitor {
         let mut weapon_left: Option<Equipment> = None;
         let mut body: Option<Equipment> = None;
         let mut shield: Option<Equipment> = None;
-        let shoes: Option<Equipment> = None;
-        let shoulder: Option<Equipment> = None;
+        let mut shoes: Option<Equipment> = None;
+        let mut shoulder: Option<Equipment> = None;
         let mut accessory1: Option<Equipment> = None;
         let mut accessory2: Option<Equipment> = None;
         let mut upper_headgear: Option<Equipment> = None;
@@ -187,12 +232,14 @@ impl <'de>Visitor<'de> for EquipmentVisitor {
                 "accessory1" => accessory1 = map.next_value::<Option<Equipment>>()?,
                 "accessory2" => accessory2 = map.next_value::<Option<Equipment>>()?,
                 "weapon" => weapon = map.next_value::<Option<Equipment>>()?,
-                "weapon_left" => weapon_left = map.next_value::<Option<Equipment>>()?,
+                "weaponLeft" => weapon_left = map.next_value::<Option<Equipment>>()?,
                 "body" => body = map.next_value::<Option<Equipment>>()?,
+                "shoulder" => shoulder = map.next_value::<Option<Equipment>>()?,
+                "shoes" => shoes = map.next_value::<Option<Equipment>>()?,
                 "shield" => shield = map.next_value::<Option<Equipment>>()?,
-                "upper_headgear" => upper_headgear = map.next_value::<Option<Equipment>>()?,
-                "middle_headgear" => middle_headgear = map.next_value::<Option<Equipment>>()?,
-                "lower_headgear" => lower_headgear = map.next_value::<Option<Equipment>>()?,
+                "upperHeadgear" => upper_headgear = map.next_value::<Option<Equipment>>()?,
+                "middleHeadgear" => middle_headgear = map.next_value::<Option<Equipment>>()?,
+                "lowerHeadgear" => lower_headgear = map.next_value::<Option<Equipment>>()?,
                 _ => { map.next_value::<Option<Equipment>>()?;}
             }
         }
@@ -211,3 +258,5 @@ impl <'de>Visitor<'de> for EquipmentVisitor {
         })
     }
 }
+
+

@@ -15,7 +15,7 @@ use models::enums::EnumWithNumberValue;
 use models::enums::skill_enums::SkillEnum;
 
 
-use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues};
+use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues, PacketZcNotifyMove};
 use crate::repository::model::item_model::InventoryItemModel;
 use crate::repository::{CharacterRepository};
 use crate::server::model::events::game_event::{CharacterKillMonster, CharacterLook, CharacterUpdateStat, CharacterZeny, GameEvent};
@@ -31,6 +31,7 @@ use crate::server::model::events::map_event::{MapEvent, MobDropItems};
 use crate::server::model::map_instance::{MapInstance, MapInstanceKey};
 use models::position::Position;
 use models::status::{KnownSkill, Status};
+use crate::server::model::movement::Movable;
 use crate::server::model::tasks_queue::TasksQueue;
 use crate::server::service::character::skill_tree_service::SkillTreeService;
 
@@ -43,6 +44,7 @@ use crate::server::state::map_instance::MapInstanceState;
 use crate::server::state::server::ServerState;
 use crate::util::packet::chain_packets;
 use crate::util::string::StringUtil;
+use crate::util::tick::get_tick_client;
 
 static mut SERVICE_INSTANCE: Option<CharacterService> = None;
 static SERVICE_INSTANCE_INIT: Once = Once::new();
@@ -54,7 +56,7 @@ pub struct CharacterService {
     configuration_service: &'static GlobalConfigService,
     skill_tree_service: SkillTreeService,
     server_task_queue: Arc<TasksQueue<GameEvent>>,
-    status_service: StatusService,
+    status_service: &'static StatusService,
 }
 
 impl CharacterService {
@@ -62,10 +64,10 @@ impl CharacterService {
         unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
     }
 
-    pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) -> Self {
+    pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: &'static StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) -> Self {
         Self { client_notification_sender, persistence_event_sender, repository, configuration_service, skill_tree_service, server_task_queue, status_service }
     }
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) {
+    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: &'static StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) {
         SERVICE_INSTANCE_INIT.call_once(|| unsafe {
             SERVICE_INSTANCE = Some(CharacterService { client_notification_sender, persistence_event_sender, repository, configuration_service, skill_tree_service, server_task_queue, status_service });
         });
@@ -107,9 +109,9 @@ impl CharacterService {
         inventory_print(Box::new(|(_, item)| item.item_type().is_equipment()));
         inventory_print(Box::new(|(_, item)| item.item_type().is_etc()));
         writeln!(stdout, "Equipped items:").unwrap();
-        character.status.equipped_gears().iter().for_each(|item| writeln!(stdout, " [{}] - {}  at {:?}", item.inventory_index, item.item_id, item.location).unwrap());
+        character.status.equipped_gears().iter().for_each(|item| writeln!(stdout, " [{}] - {}  at {:?}", item.inventory_index(), item.item_id(), item.location()).unwrap());
         writeln!(stdout, "Equipped weapon:").unwrap();
-        character.status.equipped_weapons().iter().for_each(|item| writeln!(stdout, " [{}] - {} ({:?}) at {:?}", item.inventory_index, item.item_id, item.weapon_type, item.location).unwrap());
+        character.status.equipped_weapons().iter().for_each(|item| writeln!(stdout, " [{}] - {} ({:?}) at {:?}", item.inventory_index(), item.item_id(), item.weapon_type(), item.location()).unwrap());
         stdout.flush().unwrap();
     }
 
@@ -692,11 +694,11 @@ impl CharacterService {
         packet_aspd.fill_raw();
         let mut packet_atk = PacketZcParChange::new(self.configuration_service.packetver());
         packet_atk.set_var_id(StatusTypes::Atk1.value() as u16);
-        packet_atk.set_count(StatusService::instance().status_atk_left_side(&character_status));
+        packet_atk.set_count(character_status.atk_left_side());
         packet_atk.fill_raw();
         let mut packet_atk2 = PacketZcParChange::new(self.configuration_service.packetver());
         packet_atk2.set_var_id(StatusTypes::Atk2.value() as u16);
-        packet_atk2.set_count(StatusService::instance().status_atk_right_side(&character_status));
+        packet_atk2.set_count(character_status.atk_right_side());
         packet_atk2.fill_raw();
         let mut packet_def = PacketZcParChange::new(self.configuration_service.packetver());
         packet_def.set_var_id(StatusTypes::Def1.value() as u16);
@@ -803,6 +805,36 @@ impl CharacterService {
                         packet_zc_item_entry.fill_raw();
                         packets.extend(packet_zc_item_entry.raw);
                     }
+                } else if matches!(map_item.object_type(), MapItemType::Mob) {
+                    if let Some(mob) = map_instance_state.get_mob(map_item.id()) {
+                        let mut packet_zc_notify_standentry = PacketZcNotifyStandentry7::new(self.configuration_service.packetver());
+                        packet_zc_notify_standentry.set_job(map_item.client_item_class());
+                        packet_zc_notify_standentry.set_packet_length(PacketZcNotifyStandentry7::base_len(self.configuration_service.packetver()) as i16);
+                        // packet_zc_notify_standentry.set_name(name);
+                        packet_zc_notify_standentry.set_pos_dir(position.to_pos());
+                        packet_zc_notify_standentry.set_objecttype(map_item.object_type_value() as u8);
+                        packet_zc_notify_standentry.set_aid(map_item.id());
+                        packet_zc_notify_standentry.set_gid(map_item.id());
+                        packet_zc_notify_standentry.set_clevel(3);
+                        packet_zc_notify_standentry.set_speed(mob.status.speed() as i16);
+                        packet_zc_notify_standentry.set_hp(mob.status.hp());
+                        packet_zc_notify_standentry.set_max_hp(mob.status.max_hp());
+                        packet_zc_notify_standentry.fill_raw_with_packetver(Some(self.configuration_service.packetver()));
+                        packets.extend(packet_zc_notify_standentry.raw);
+                        if mob.is_moving() {
+                            let mut packet_zc_notify_move = PacketZcNotifyMove::new(self.configuration_service.packetver());
+                            packet_zc_notify_move.set_gid(mob.id);
+                            packet_zc_notify_move.move_data = mob.position().to_move_data(mob.movements.first().unwrap().position());
+                            // packet_zc_notify_move.move_data = mob_movement.from.to_move_data(&mob_movement.to);
+                            packet_zc_notify_move.set_move_start_time(get_tick_client());
+                            packet_zc_notify_move.fill_raw();
+                            #[cfg(feature = "debug_mob_movement")]
+                            {
+                                info!("A moving mob appeared! {} moving from {} to {}.", mob.id, mob.position(), mob.movements.first().unwrap().position());
+                            }
+                            packets.extend(packet_zc_notify_move.raw);
+                        }
+                    }
                 } else {
                     let mut packet_zc_notify_standentry = PacketZcNotifyStandentry7::new(self.configuration_service.packetver());
                     packet_zc_notify_standentry.set_job(map_item.client_item_class());
@@ -812,14 +844,6 @@ impl CharacterService {
                     packet_zc_notify_standentry.set_objecttype(map_item.object_type_value() as u8);
                     packet_zc_notify_standentry.set_aid(map_item.id());
                     packet_zc_notify_standentry.set_gid(map_item.id());
-                    if matches!(map_item.object_type(), MapItemType::Mob) {
-                        if let Some(mob) = map_instance_state.get_mob(map_item.id()) {
-                            packet_zc_notify_standentry.set_clevel(3);
-                            packet_zc_notify_standentry.set_speed(mob.status.speed() as i16);
-                            packet_zc_notify_standentry.set_hp(mob.status.hp());
-                            packet_zc_notify_standentry.set_max_hp(mob.status.max_hp());
-                        }
-                    }
                     packet_zc_notify_standentry.fill_raw_with_packetver(Some(self.configuration_service.packetver()));
                     packets.extend(packet_zc_notify_standentry.raw);
                 }

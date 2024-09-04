@@ -256,6 +256,11 @@ impl InventoryService {
                 packets.extend(packet);
             }
         });
+        character.status.equipped_weapons().iter().for_each(|item| {
+            if let Some(packet) = self.sprite_change_packet_for_item(character, item, false) {
+                packets.extend(packet);
+            }
+        });
         self.client_notification_sender.send(Notification::Area(AreaNotification {
             map_name: character.current_map_name().clone(),
             map_instance_id: character.current_map_instance(),
@@ -391,6 +396,9 @@ impl InventoryService {
                 let packet_zc_attack_range = self.packet_attack_range(character);
                 packets_raws_by_value.extend(packet_zc_attack_range.raw);
             }
+            if let Some(equipped_item) = equipped_item.as_ref() {
+                if let Some(script_change_packet) = self.sprite_change_packet_for_item(character, equipped_item, false) { packets_raws_by_value.extend(script_change_packet); }
+            }
         } else {
             packet_zc_req_wear_equip_ack.fill_raw();
             packets_raws_by_value.extend(packet_zc_req_wear_equip_ack.raw);
@@ -424,6 +432,7 @@ impl InventoryService {
                 let packet_zc_attack_range = self.packet_attack_range(character);
                 packets_raws_by_value.extend(packet_zc_attack_range.raw);
             }
+            if let Some(script_change_packet) = self.sprite_change_packet_for_item(character, takeoff_equipement, true) { packets_raws_by_value.extend(script_change_packet); }
         } else {
             packet_zc_req_takeoff_equip_ack2.set_result(1);
         }

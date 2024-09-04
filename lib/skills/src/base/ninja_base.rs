@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// NJ_TOBIDOUGU
+// NJ_TOBIDOUGU - Shuriken Training
 pub struct ShurikenTraining {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,55 @@ impl SkillBase for ShurikenTraining {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 3), 0, 522),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 6), 0, 522),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 9), 0, 522),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 12), 0, 522),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 15), 0, 522),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 18), 0, 522),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 21), 0, 522),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 24), 0, 522),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 27), 0, 522),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Shuriken, 30), 0, 522),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +147,7 @@ impl SkillBase for ShurikenTraining {
 }
 impl PassiveSkillBase for ShurikenTraining {
 }
-// NJ_SYURIKEN
+// NJ_SYURIKEN - Throw Shuriken
 pub struct ThrowShuriken {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -152,7 +205,7 @@ impl SkillBase for ThrowShuriken {
        2
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -192,10 +245,14 @@ impl OffensiveSkillBase for ThrowShuriken {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// NJ_KUNAI
+// NJ_KUNAI - Throw Kunai
 pub struct ThrowKunai {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -268,7 +325,7 @@ impl SkillBase for ThrowKunai {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -327,10 +384,14 @@ impl OffensiveSkillBase for ThrowKunai {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// NJ_HUUMA
+// NJ_HUUMA - Throw Huuma Shuriken
 pub struct ThrowHuumaShuriken {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -403,7 +464,7 @@ impl SkillBase for ThrowHuumaShuriken {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -496,10 +557,14 @@ impl OffensiveSkillBase for ThrowHuumaShuriken {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// NJ_ZENYNAGE
+// NJ_ZENYNAGE - Throw Zeny
 pub struct ThrowZeny {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -557,13 +622,13 @@ impl SkillBase for ThrowZeny {
        50
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        false
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -625,8 +690,12 @@ impl OffensiveSkillBase for ThrowZeny {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_TATAMIGAESHI
+// NJ_TATAMIGAESHI - Improvised Defense
 pub struct ImprovisedDefense {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -690,7 +759,7 @@ impl SkillBase for ImprovisedDefense {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -701,54 +770,21 @@ impl SkillBase for ImprovisedDefense {
        3000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _client_type(&self) -> usize {
+        4
     }
 }
-impl OffensiveSkillBase for ImprovisedDefense {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _dmg_atk(&self) -> Option<f32> {
-        if self.level == 1 {
-            return Some(1.100)
-        }
-        if self.level == 2 {
-            return Some(1.200)
-        }
-        if self.level == 3 {
-            return Some(1.300)
-        }
-        if self.level == 4 {
-            return Some(1.400)
-        }
-        if self.level == 5 {
-            return Some(1.500)
-        }
-        None
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Weapon
-    }
+impl SupportiveSkillBase for ImprovisedDefense {
 }
-impl SelfSkillBase for ImprovisedDefense {
-}
-// NJ_KASUMIKIRI
+// NJ_KASUMIKIRI - Vanishing Slash
 pub struct VanishingSlash {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -836,13 +872,13 @@ impl SkillBase for VanishingSlash {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -934,8 +970,12 @@ impl OffensiveSkillBase for VanishingSlash {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_SHADOWJUMP
+// NJ_SHADOWJUMP - Shadow Leap
 pub struct ShadowLeap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1029,7 +1069,7 @@ impl SkillBase for ShadowLeap {
 }
 impl GroundSkillBase for ShadowLeap {
 }
-// NJ_KIRIKAGE
+// NJ_KIRIKAGE - Shadow Slash
 pub struct ShadowSlash {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1102,13 +1142,13 @@ impl SkillBase for ShadowSlash {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1175,8 +1215,12 @@ impl OffensiveSkillBase for ShadowSlash {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_UTSUSEMI
+// NJ_UTSUSEMI - Cicada Skin Sheeding
 pub struct CicadaSkinSheeding {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1280,18 +1324,8 @@ impl SkillBase for CicadaSkinSheeding {
     fn _base_after_cast_act_delay(&self) -> u32 {
        1000
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
 }
-impl SelfSkillBase for CicadaSkinSheeding {
-}
-// NJ_BUNSINJYUTSU
+// NJ_BUNSINJYUTSU - Mirror Image
 pub struct MirrorImage {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1382,7 +1416,7 @@ impl SkillBase for MirrorImage {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1468,17 +1502,29 @@ impl SkillBase for MirrorImage {
        1000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for MirrorImage {
+impl OffensiveSkillBase for MirrorImage {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_NINPOU
+// NJ_NINPOU - Spirit of the Blade
 pub struct SpiritoftheBlade {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1549,17 +1595,45 @@ impl SkillBase for SpiritoftheBlade {
         if status.sp() > 10 { Ok(10) } else {Err(())}
     }
     #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        TemporaryStatusBonuses::default()
     }
 }
-impl PassiveSkillBase for SpiritoftheBlade {
-}
-// NJ_KOUENKA
+// NJ_KOUENKA - Crimson Fire Petal
 pub struct CrimsonFirePetal {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1647,10 +1721,10 @@ impl SkillBase for CrimsonFirePetal {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1805,8 +1879,12 @@ impl OffensiveSkillBase for CrimsonFirePetal {
     fn _element(&self) -> Element {
         Element::Fire
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_KAENSIN
+// NJ_KAENSIN - Crimson Fire Formation
 pub struct CrimsonFireFormation {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1867,7 +1945,7 @@ impl SkillBase for CrimsonFireFormation {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1923,17 +2001,33 @@ impl SkillBase for CrimsonFireFormation {
        1000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for CrimsonFireFormation {
+impl OffensiveSkillBase for CrimsonFireFormation {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+       Some(0.500)
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_BAKUENRYU
+// NJ_BAKUENRYU - Raging Fire Dragon
 pub struct RagingFireDragon {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2006,10 +2100,10 @@ impl SkillBase for RagingFireDragon {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2086,8 +2180,12 @@ impl OffensiveSkillBase for RagingFireDragon {
     fn _element(&self) -> Element {
         Element::Fire
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_HYOUSENSOU
+// NJ_HYOUSENSOU - Spear of Ice
 pub struct SpearofIce {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2175,10 +2273,10 @@ impl SkillBase for SpearofIce {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2333,8 +2431,12 @@ impl OffensiveSkillBase for SpearofIce {
     fn _element(&self) -> Element {
         Element::Water
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_SUITON
+// NJ_SUITON - Hidden Water
 pub struct HiddenWater {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2425,7 +2527,7 @@ impl SkillBase for HiddenWater {
         SkillTargetType::Ground
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2477,6 +2579,72 @@ impl SkillBase for HiddenWater {
        3000
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(0), 2, tick, 15000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 15000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-3), 2, tick, 20000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 20000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-3), 2, tick, 25000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 25000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-3), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 30000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-5), 2, tick, 35000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 35000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-5), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 40000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-5), 2, tick, 45000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 45000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-8), 2, tick, 50000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 50000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-8), 2, tick, 55000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 55000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(-8), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-50), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -2485,9 +2653,23 @@ impl SkillBase for HiddenWater {
         Some(self)
     }
 }
+impl OffensiveSkillBase for HiddenWater {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for HiddenWater {
 }
-// NJ_HYOUSYOURAKU
+// NJ_HYOUSYOURAKU - Ice Meteor
 pub struct IceMeteor {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2563,7 +2745,7 @@ impl SkillBase for IceMeteor {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2619,17 +2801,75 @@ impl SkillBase for IceMeteor {
        2000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for IceMeteor {
+impl OffensiveSkillBase for IceMeteor {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.500)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(2.500)
+        }
+        if self.level == 4 {
+            return Some(3.000)
+        }
+        if self.level == 5 {
+            return Some(3.500)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Water
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 50 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 60 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        effects
+    }
 }
-// NJ_HUUJIN
+// NJ_HUUJIN - Wind Blade
 pub struct WindBlade {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2717,10 +2957,10 @@ impl SkillBase for WindBlade {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2879,8 +3119,12 @@ impl OffensiveSkillBase for WindBlade {
     fn _element(&self) -> Element {
         Element::Wind
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_RAIGEKISAI
+// NJ_RAIGEKISAI - Lightning Strike of Destruction
 pub struct LightningStrikeofDestruction {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2956,7 +3200,7 @@ impl SkillBase for LightningStrikeofDestruction {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -2993,17 +3237,48 @@ impl SkillBase for LightningStrikeofDestruction {
        4000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for LightningStrikeofDestruction {
+impl OffensiveSkillBase for LightningStrikeofDestruction {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(2.000)
+        }
+        if self.level == 2 {
+            return Some(2.400)
+        }
+        if self.level == 3 {
+            return Some(2.800)
+        }
+        if self.level == 4 {
+            return Some(3.200)
+        }
+        if self.level == 5 {
+            return Some(3.600)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Wind
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_KAMAITACHI
+// NJ_KAMAITACHI - Kamaitachi
 pub struct Kamaitachi {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -3076,10 +3351,10 @@ impl SkillBase for Kamaitachi {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -3152,8 +3427,12 @@ impl OffensiveSkillBase for Kamaitachi {
     fn _element(&self) -> Element {
         Element::Wind
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// NJ_NEN
+// NJ_NEN - Soul
 pub struct Soul {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -3273,17 +3552,40 @@ impl SkillBase for Soul {
         0
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Int(1), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(1), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Int(2), 2, tick, 45000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(2), 2, tick, 45000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Int(3), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(3), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Int(4), 2, tick, 75000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(4), 2, tick, 75000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Int(5), 2, tick, 90000),
+                TemporaryStatusBonus::with_duration(BonusType::Str(5), 2, tick, 90000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
 }
-impl SelfSkillBase for Soul {
-}
-// NJ_ISSEN
+// NJ_ISSEN - Final Strike
 pub struct FinalStrike {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -3371,13 +3673,13 @@ impl SkillBase for FinalStrike {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -3430,5 +3732,9 @@ impl OffensiveSkillBase for FinalStrike {
     #[inline(always)]
     fn _element(&self) -> Element {
         Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// HT_SKIDTRAP
+// HT_SKIDTRAP - Skid Trap
 pub struct SkidTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -96,6 +101,14 @@ impl SkillBase for SkidTrap {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -104,9 +117,23 @@ impl SkillBase for SkidTrap {
         Some(self)
     }
 }
+impl OffensiveSkillBase for SkidTrap {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for SkidTrap {
 }
-// HT_LANDMINE
+// HT_LANDMINE - Land Mine
 pub struct LandMine {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -185,6 +212,42 @@ impl SkillBase for LandMine {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Stun, 10.0), 2, tick, 200000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Stun, 10.0), 2, tick, 160000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Stun, 10.0), 2, tick, 120000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Stun, 10.0), 2, tick, 80000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Stun, 10.0), 2, tick, 40000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -193,9 +256,23 @@ impl SkillBase for LandMine {
         Some(self)
     }
 }
+impl OffensiveSkillBase for LandMine {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Earth
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for LandMine {
 }
-// HT_ANKLESNARE
+// HT_ANKLESNARE - Ankle Snare
 pub struct AnkleSnare {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -274,6 +351,14 @@ impl SkillBase for AnkleSnare {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -282,9 +367,23 @@ impl SkillBase for AnkleSnare {
         Some(self)
     }
 }
+impl OffensiveSkillBase for AnkleSnare {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for AnkleSnare {
 }
-// HT_SHOCKWAVE
+// HT_SHOCKWAVE - Shockwave Trap
 pub struct ShockwaveTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -363,6 +462,14 @@ impl SkillBase for ShockwaveTrap {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -371,9 +478,23 @@ impl SkillBase for ShockwaveTrap {
         Some(self)
     }
 }
+impl OffensiveSkillBase for ShockwaveTrap {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for ShockwaveTrap {
 }
-// HT_SANDMAN
+// HT_SANDMAN - Sandman
 pub struct Sandman {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -452,6 +573,42 @@ impl SkillBase for Sandman {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Sleep, 50.0), 2, tick, 150000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Sleep, 60.0), 2, tick, 120000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Sleep, 70.0), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Sleep, 80.0), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Sleep, 90.0), 2, tick, 30000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -460,9 +617,23 @@ impl SkillBase for Sandman {
         Some(self)
     }
 }
+impl OffensiveSkillBase for Sandman {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for Sandman {
 }
-// HT_FLASHER
+// HT_FLASHER - Flasher
 pub struct Flasher {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -541,6 +712,14 @@ impl SkillBase for Flasher {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -549,9 +728,23 @@ impl SkillBase for Flasher {
         Some(self)
     }
 }
+impl OffensiveSkillBase for Flasher {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for Flasher {
 }
-// HT_FREEZINGTRAP
+// HT_FREEZINGTRAP - Freezing Trap
 pub struct FreezingTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -615,7 +808,7 @@ impl SkillBase for FreezingTrap {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -628,6 +821,34 @@ impl SkillBase for FreezingTrap {
             return Err(UseSkillFailure::NeedItem);
         }
         Ok(Some(required_items))
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Freeze, 100.0), 2, tick, 150000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Freeze, 100.0), 2, tick, 120000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Freeze, 100.0), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Freeze, 100.0), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Freeze, 100.0), 2, tick, 30000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_offensive_skill(&self) -> bool {
@@ -659,10 +880,14 @@ impl OffensiveSkillBase for FreezingTrap {
     fn _element(&self) -> Element {
         Element::Water
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
 impl GroundSkillBase for FreezingTrap {
 }
-// HT_BLASTMINE
+// HT_BLASTMINE - Blast Mine
 pub struct BlastMine {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -741,6 +966,14 @@ impl SkillBase for BlastMine {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -749,9 +982,23 @@ impl SkillBase for BlastMine {
         Some(self)
     }
 }
+impl OffensiveSkillBase for BlastMine {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Wind
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for BlastMine {
 }
-// HT_CLAYMORETRAP
+// HT_CLAYMORETRAP - Claymore Trap
 pub struct ClaymoreTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -830,6 +1077,14 @@ impl SkillBase for ClaymoreTrap {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -838,9 +1093,23 @@ impl SkillBase for ClaymoreTrap {
         Some(self)
     }
 }
+impl OffensiveSkillBase for ClaymoreTrap {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Fire
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for ClaymoreTrap {
 }
-// HT_REMOVETRAP
+// HT_REMOVETRAP - Remove Trap
 pub struct RemoveTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -910,8 +1179,18 @@ impl SkillBase for RemoveTrap {
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 5 { Ok(5) } else {Err(())}
     }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
 }
-// HT_TALKIEBOX
+impl InteractiveSkillBase for RemoveTrap {
+}
+// HT_TALKIEBOX - Talkie Box
 pub struct TalkieBox {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -990,6 +1269,14 @@ impl SkillBase for TalkieBox {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -998,9 +1285,23 @@ impl SkillBase for TalkieBox {
         Some(self)
     }
 }
+impl OffensiveSkillBase for TalkieBox {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for TalkieBox {
 }
-// HT_BEASTBANE
+// HT_BEASTBANE - Beast Bane
 pub struct BeastBane {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1064,7 +1365,65 @@ impl SkillBase for BeastBane {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 4), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 4), 0, 126),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 8), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 8), 0, 126),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 12), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 12), 0, 126),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 16), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 16), 0, 126),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 20), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 20), 0, 126),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 24), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 24), 0, 126),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 28), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 28), 0, 126),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 32), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 32), 0, 126),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 36), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 36), 0, 126),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Insect, 40), 0, 126),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkBaneAgainstRace(Brute, 40), 0, 126),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -1077,7 +1436,7 @@ impl SkillBase for BeastBane {
 }
 impl PassiveSkillBase for BeastBane {
 }
-// HT_FALCON
+// HT_FALCON - Falconry Mastery
 pub struct FalconryMastery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1154,7 +1513,7 @@ impl SkillBase for FalconryMastery {
 }
 impl PassiveSkillBase for FalconryMastery {
 }
-// HT_STEELCROW
+// HT_STEELCROW - Steel Crow
 pub struct SteelCrow {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1231,7 +1590,7 @@ impl SkillBase for SteelCrow {
 }
 impl PassiveSkillBase for SteelCrow {
 }
-// HT_BLITZBEAT
+// HT_BLITZBEAT - Blitz Beat
 pub struct BlitzBeat {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1304,7 +1663,7 @@ impl SkillBase for BlitzBeat {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Passive
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1349,40 +1708,17 @@ impl SkillBase for BlitzBeat {
        1000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_passive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
         Some(self)
     }
 }
-impl OffensiveSkillBase for BlitzBeat {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-        if self.level == 1 {
-            return 1
-        }
-        if self.level == 2 {
-            return 2
-        }
-        if self.level == 3 {
-            return 3
-        }
-        if self.level == 4 {
-            return 4
-        }
-        if self.level == 5 {
-            return 5
-        }
-        0
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
-    }
+impl PassiveSkillBase for BlitzBeat {
 }
-// HT_DETECTING
+// HT_DETECTING - Detect
 pub struct Detect {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1462,6 +1798,14 @@ impl SkillBase for Detect {
         }
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -1470,9 +1814,23 @@ impl SkillBase for Detect {
         Some(self)
     }
 }
+impl OffensiveSkillBase for Detect {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for Detect {
 }
-// HT_SPRINGTRAP
+// HT_SPRINGTRAP - Spring Trap
 pub struct SpringTrap {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1551,8 +1909,18 @@ impl SkillBase for SpringTrap {
             Err(())
         }
     }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
 }
-// HT_PHANTASMIC
+impl InteractiveSkillBase for SpringTrap {
+}
+// HT_PHANTASMIC - Phantasmic Arrow
 pub struct PhantasmicArrow {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1610,13 +1978,13 @@ impl SkillBase for PhantasmicArrow {
        10
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1630,26 +1998,8 @@ impl SkillBase for PhantasmicArrow {
             Err(())
         }
     }
-    #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
-        Some(self)
-    }
 }
-impl OffensiveSkillBase for PhantasmicArrow {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Weapon
-    }
-}
-// HT_POWER
+// HT_POWER - Beast Strafing
 pub struct BeastStrafing {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1707,7 +2057,7 @@ impl SkillBase for BeastStrafing {
        12
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1756,5 +2106,9 @@ impl OffensiveSkillBase for BeastStrafing {
     #[inline(always)]
     fn _element(&self) -> Element {
         Element::Weapon
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

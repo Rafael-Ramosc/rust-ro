@@ -33,7 +33,7 @@ impl MapInstanceLoop {
                 loop {
                     let tick = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
                     let now = Instant::now();
-                    if last_mobs_action.elapsed().as_millis() >= (GlobalConfigService::instance().config().game.mob_action_refresh_frequency * 1000.0) as u128 {
+                    if !map_instance.state().mob_movement_paused() && last_mobs_action.elapsed().as_millis() >= (GlobalConfigService::instance().config().game.mob_action_refresh_frequency * 1000.0) as u128 {
                         let map_instance_state = map_instance.state_mut().as_mut();
                         MapInstanceService::instance().mobs_action(map_instance_state, tick);
                         last_mobs_action = now;
@@ -76,6 +76,10 @@ impl MapInstanceLoop {
                                 MapEvent::AdminKillAllMobs(char_id) => {
                                     MapInstanceService::instance().kill_all_mobs(map_instance.state_mut().as_mut(), map_instance.task_queue(), char_id);
                                 }
+                                MapEvent::AdminTogglePauseMobMovement => {
+                                    let map_instance_state = map_instance.state_mut().as_mut();
+                                    map_instance_state.set_mob_movement_paused(!map_instance_state.mob_movement_paused());
+                                }
                             }
                         }
                     }
@@ -98,9 +102,8 @@ impl MapInstanceLoop {
                     for mob in mobs.values_mut().filter(|mob| mob.is_moving()) {
                         let speed = mob.status.speed();
                         if let Some(movement) = mob.peek_movement() {
-                            let mob_model = GlobalConfigService::instance().get_mob_safe(mob.mob_id as i32).unwrap_or_else(|| panic!("Expected to find mob for id {}, {}, game id {} but found none", mob.mob_id, mob.name, mob.id));
                             if tick >= movement.move_at() {
-                                if tick < mob.last_attacked_at + (mob_model.damage_motion as u128) {
+                                if tick < mob.last_attacked_at + (mob.damage_motion as u128) {
                                     info!("Mob delayed movement because he is attacked");
                                     continue;
                                 }

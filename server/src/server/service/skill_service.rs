@@ -27,19 +27,19 @@ pub struct SkillService {
     persistence_event_sender: SyncSender<PersistenceEvent>,
     configuration_service: &'static GlobalConfigService,
     battle_service: BattleService,
-    status_service: StatusService,
+    status_service: &'static StatusService,
 }
 
 
 impl SkillService {
-    pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: StatusService, configuration_service: &'static GlobalConfigService) -> SkillService {
+    pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService) -> SkillService {
         SkillService { client_notification_sender, persistence_event_sender, configuration_service, battle_service, status_service }
     }
     pub fn instance() -> &'static SkillService {
         unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
     }
 
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: StatusService, configuration_service: &'static GlobalConfigService) {
+    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService) {
         SERVICE_INSTANCE_INIT.call_once(|| unsafe {
             SERVICE_INSTANCE = Some(SkillService::new(client_notification_sender, persistence_event_sender, battle_service, status_service, configuration_service));
         });
@@ -113,7 +113,7 @@ impl SkillService {
             damage = self.do_use_skill(character, target, source_status, target_status, tick);
         }
 
-        validate_sp.unwrap() > 0;
+        validate_sp.unwrap();
         damage
     }
 
@@ -135,12 +135,12 @@ impl SkillService {
         packet_zc_notify_skill2.set_skid(skill.id() as u16);
         let target_id = target.as_ref().unwrap().map_item().id();
         packet_zc_notify_skill2.set_target_id(target_id);
-        packet_zc_notify_skill2.set_damage(damage as i32);
+        packet_zc_notify_skill2.set_damage(damage);
         packet_zc_notify_skill2.set_start_time(0);
 
         let attack_motion = self.status_service.attack_motion(source_status);
         packet_zc_notify_skill2.set_attack_mt(attack_motion as i32);
-        packet_zc_notify_skill2.set_attacked_mt(attack_motion  as i32);
+        packet_zc_notify_skill2.set_attacked_mt(attack_motion as i32);
         packet_zc_notify_skill2.set_level(skill.level() as i16);
 
         packet_zc_notify_skill2.set_count(skill.hit_count().abs() as i16);
@@ -153,12 +153,17 @@ impl SkillService {
             AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(), AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, mem::take(packet_zc_notify_skill2.raw_mut()))
         )).unwrap();
 
-        Some(Damage {
-            target_id,
-            attacker_id: character.char_id,
-            damage,
-            attacked_at: tick + attack_motion as u128,
-        })
+        if damage > 0 {
+            Some(Damage {
+                target_id,
+                attacker_id: character.char_id,
+                damage: damage as u32,
+                attacked_at: tick + attack_motion as u128,
+            })
+        } else {
+            // TODO handle heal if damage < 0
+            None
+        }
     }
 
     pub fn after_skill_used(&self, character: &mut Character, tick: u128) {
@@ -178,30 +183,8 @@ impl SkillService {
         self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_ack_touseskill.raw_mut())))).unwrap();
     }
 
-    pub fn calculate_damage(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill: &dyn OffensiveSkill) -> u32 {
-
-        let mut damage = 0;
-        if skill.is_physical() {
-            let mut skill_modifier = skill.dmg_atk().unwrap_or(1.0);
-            if skill.hit_count() > 1 {
-                skill_modifier /= skill.hit_count() as f32;
-            }
-            damage = self.battle_service.physical_damage_character_attack_monster(source_status, target_status, skill_modifier, skill.is_ranged());
-            if skill.hit_count() > 1 {
-                damage *= skill.hit_count() as u32;
-            } else {
-                damage = ((damage as f32 / skill.hit_count().abs() as f32).floor() * skill.hit_count().abs() as f32) as u32;
-            }
-        } else if skill.is_magic() {
-            let mut skill_modifier = skill.dmg_matk().unwrap_or(1.0);
-            if skill.hit_count() > 1 {
-                skill_modifier /= skill.hit_count() as f32;
-            }
-            damage = self.battle_service.magic_damage_character_attack_monster(source_status, target_status, skill_modifier, &skill.element());
-            if skill.hit_count() > 1 {
-                damage *= skill.hit_count() as u32;
-            }
-        }
-        damage
+    pub fn calculate_damage(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill: &dyn OffensiveSkill) -> i32 {
+        self.battle_service.calculate_damage(source_status, target_status, Some(skill))
     }
+
 }

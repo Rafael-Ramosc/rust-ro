@@ -2,20 +2,29 @@
 use std::sync::Arc;
 use std::thread;
 use eframe::{CreationContext, egui, HardwareAcceleration, Theme};
+use eframe::egui::ViewportCommand;
 use egui::{Align, ComboBox, Layout, Pos2, Rect, Ui, Vec2, Visuals};
 use crate::server::Server;
 use lazy_static::lazy_static;
 use crate::debugger::frame_history;
 use crate::debugger::map_instance_view::MapInstanceView;
+use crate::server::model::events::map_event::MapEvent;
 use crate::server::state::character::Character;
 use crate::server::model::map_item::MapItem;
 use crate::server::model::map_item::MapItemType;
+
+#[cfg(target_os = "linux")]
+use winit::platform::x11::EventLoopBuilderExtX11;
+#[cfg(target_os = "windows")]
+use winit::platform::windows::EventLoopBuilderExtWindows;
+use winit::raw_window_handle::HasWindowHandle;
 
 pub struct VisualDebugger {
     pub name: String,
     pub server: Arc<Server>,
     pub selected_map: Option<String>,
     pub selected_tab: String,
+    pub selected_map_item: Option<MapItem>,
     pub init: bool,
     frame_history: frame_history::FrameHistory,
     map_instance_view: MapInstanceView,
@@ -28,14 +37,11 @@ lazy_static! {
 impl eframe::App for VisualDebugger {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         self.frame_history
-            .on_new_frame(ctx.input().time, frame.info().cpu_usage);
-        frame.set_window_title(&format!("{} {}", self.name, self.frame_history.info()));
+            .on_new_frame(ctx.input(|i| i.time), frame.info().cpu_usage);
+        let handle = frame.window_handle().unwrap();
+        ctx.send_viewport_cmd(ViewportCommand::Title(format!("{} {}", self.name, self.frame_history.info())));
         if !self.init {
             ctx.set_visuals(Visuals::light());
-            frame.set_window_size(Vec2 {
-                x: 1024.0,
-                y: 768.0,
-            });
             self.init = true;
         }
         egui::TopBottomPanel::top("wrap_app_top_bar").show(ctx, |ui| {
@@ -59,10 +65,12 @@ impl VisualDebugger {
             server: server.clone(),
             selected_map: None,
             selected_tab: "Map".to_string(),
+            selected_map_item: None,
             frame_history: Default::default(),
             init: false,
             map_instance_view: MapInstanceView {
                 cursor_pos: Default::default(),
+                clicked: false,
                 zoom: 1.0,
                 zoom_center: Pos2 { x: 0.0, y: 0.0 },
                 zoom_draw_rect: Rect { min: Pos2 { x: 0.0, y: 0.0 }, max: Pos2 { x: 0.0, y: 0.0 } },
@@ -72,19 +80,7 @@ impl VisualDebugger {
 
         thread::spawn(|| {
             let native_options = eframe::NativeOptions {
-                always_on_top: false,
-                maximized: false,
-                decorated: true,
-                fullscreen: false,
-                drag_and_drop_support: true,
-                icon_data: None,
-                initial_window_pos: None,
-                initial_window_size: None,
-                min_window_size: None,
-                max_window_size: None,
-                resizable: true,
-                transparent: false,
-                mouse_passthrough: false,
+                viewport:  egui::ViewportBuilder::default().with_inner_size([1024.0, 768.0]),
                 vsync: true,
                 multisampling: 0,
                 depth_buffer: 0,
@@ -94,12 +90,18 @@ impl VisualDebugger {
                 follow_system_theme: cfg!(target_os = "macos") || cfg!(target_os = "windows"),
                 default_theme: Theme::Dark,
                 run_and_return: true,
-                event_loop_builder: None,
+                event_loop_builder: Some(Box::new(move |builder| {
+                    builder.with_any_thread(true);
+                })),
+                window_builder: None,
                 shader_version: None,
                 centered: false,
+                persist_window: false,
+                persistence_path: None,
             };
-            eframe::run_native("Debugger", native_options, Box::new(|_cc: &CreationContext| Box::new(app))).unwrap();
+            eframe::run_native("Debugger", native_options, Box::new(|_cc: &CreationContext| Ok(Box::new(app)))).unwrap();
         });
+
     }
     fn ui(&mut self, ui: &mut Ui) {
         self.maps_combobox(ui);
@@ -146,10 +148,28 @@ impl VisualDebugger {
                     ui.with_layout(Layout::top_down(Align::Min), |ui| {
                         ui.heading(map_name.to_string());
                         ui.separator();
+                        if ui.button("Toggle mob movement").clicked() {
+                            map_instance.add_to_next_tick(MapEvent::AdminTogglePauseMobMovement);
+                        }
+                        if ui.button("Killall mob").clicked() {
+                            map_instance.add_to_next_tick(MapEvent::AdminKillAllMobs(150000));
+                        }
+                        ui.separator();
                         ui.label("Characters:");
                         characters.iter().for_each(|character| {
                             ui.label(format!("{} {},{}", character.name, character.x(), character.y()));
                         });
+
+                        if let Some(map_item) = self.selected_map_item.as_ref() {
+                            ui.separator();
+                            let state = map_instance.state();
+                            if let Some(mob_ref) = state.get_mob(map_item.id()) {
+                                ui.label(format!("Selected map item: {}: {} ({})", map_item.object_type(), mob_ref.name_english, map_item.id()));
+                                if *map_item.object_type() == MapItemType::Mob {
+                                    ui.label(format!("{},{}", mob_ref.x(),mob_ref.y()));
+                                }
+                            }
+                        }
                         if self.map_instance_view.cursor_pos.is_some() {
                             ui.separator();
                             let i = self.map_instance_view.cursor_pos.as_ref().unwrap().x as u16;
@@ -158,9 +178,12 @@ impl VisualDebugger {
                             let map_item = map_items_clone.iter().find(|(_, map_item)| {
                                 let position = self.server.state().map_item_x_y(map_item, &map_name, map_instance_id).unwrap();
                                 position.x() == i && position.y() == j
-                            });
-                            if map_item.is_some() {
-                                let (_, map_item) = map_item.unwrap();
+                            }).map(|(_, map_item)| map_item);
+                            if self.map_instance_view.clicked {
+                                self.selected_map_item = map_item.cloned();
+                            }
+
+                            if let Some(map_item) = map_item {
                                 // map_items_mut_clone.remove(&*map_item.clone());
                                 let item_name = self.server.state().map_item_name(map_item, &map_name, map_instance_id).unwrap();
                                 ui.label(format!("{}: {}", map_item.object_type(), item_name));
@@ -194,7 +217,7 @@ impl VisualDebugger {
             });
         egui::CentralPanel::default()
             .show(ui.ctx(), |ui| {
-                self.map_instance_view.draw_map_instance_view(ui, map_instance, map_items_clone);
+                self.map_instance_view.draw_map_instance_view(ui, map_instance, map_items_clone, &self.selected_map_item);
             });
     }
 }

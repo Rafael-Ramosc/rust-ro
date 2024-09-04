@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// CR_TRUST
+// CR_TRUST - Faith
 pub struct Faith {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -84,6 +89,64 @@ impl SkillBase for Faith {
         false
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(-56), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 5), 0, 248),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(-112), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 10), 0, 248),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(88), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 15), 0, 248),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(32), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 20), 0, 248),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(-24), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 25), 0, 248),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(-80), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 30), 0, 248),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(120), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 35), 0, 248),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(64), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 40), 0, 248),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(8), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 45), 0, 248),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MaxhpPercentage(-48), 0, 248),
+                TemporaryStatusBonus::with_passive_skill(BonusType::ResistanceDamageFromElementPercentage(Holy, 50), 0, 248),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
     }
@@ -94,7 +157,7 @@ impl SkillBase for Faith {
 }
 impl PassiveSkillBase for Faith {
 }
-// CR_AUTOGUARD
+// CR_AUTOGUARD - Guard
 pub struct Guard {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -188,7 +251,7 @@ impl SkillBase for Guard {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -234,17 +297,79 @@ impl SkillBase for Guard {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 5.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(5), 2, tick, 300000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 10.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(10), 2, tick, 300000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 15.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(14), 2, tick, 300000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 20.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(18), 2, tick, 300000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 25.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(21), 2, tick, 300000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 30.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(24), 2, tick, 300000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 35.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(26), 2, tick, 300000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 40.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(28), 2, tick, 300000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 45.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(29), 2, tick, 300000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(249, 50.0), 2, tick, 300000),
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(30), 2, tick, 300000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for Guard {
+impl SupportiveSkillBase for Guard {
 }
-// CR_SHIELDCHARGE
+// CR_SHIELDCHARGE - Smite
 pub struct Smite {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -302,7 +427,7 @@ impl SkillBase for Smite {
        10
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -360,8 +485,39 @@ impl OffensiveSkillBase for Smite {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 35 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
 }
-// CR_SHIELDBOOMERANG
+// CR_SHIELDBOOMERANG - Shield Boomerang
 pub struct ShieldBoomerang {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -419,7 +575,7 @@ impl SkillBase for ShieldBoomerang {
        12
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -481,8 +637,12 @@ impl OffensiveSkillBase for ShieldBoomerang {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// CR_REFLECTSHIELD
+// CR_REFLECTSHIELD - Shield Reflect
 pub struct ShieldReflect {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -576,7 +736,7 @@ impl SkillBase for ShieldReflect {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -622,17 +782,69 @@ impl SkillBase for ShieldReflect {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(13), 2, tick, 300000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(16), 2, tick, 300000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(19), 2, tick, 300000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(22), 2, tick, 300000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(25), 2, tick, 300000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(28), 2, tick, 300000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(31), 2, tick, 300000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(34), 2, tick, 300000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(37), 2, tick, 300000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(40), 2, tick, 300000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for ShieldReflect {
+impl SupportiveSkillBase for ShieldReflect {
 }
-// CR_HOLYCROSS
+// CR_HOLYCROSS - Holy Cross
 pub struct HolyCross {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -720,7 +932,7 @@ impl SkillBase for HolyCross {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -814,8 +1026,49 @@ impl OffensiveSkillBase for HolyCross {
     fn _element(&self) -> Element {
         Element::Holy
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 35 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 6 {
+        }
+        if self.level == 7 {
+        }
+        if self.level == 8 {
+        }
+        if self.level == 9 {
+        }
+        if self.level == 10 {
+        }
+        effects
+    }
 }
-// CR_GRANDCROSS
+// CR_GRANDCROSS - Grand Cross
 pub struct GrandCross {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -909,7 +1162,7 @@ impl SkillBase for GrandCross {
         true
     }
     fn _is_physical(&self) -> bool {
-        false
+        true
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -959,14 +1212,6 @@ impl SkillBase for GrandCross {
     }
     #[inline(always)]
     fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
-        Some(self)
-    }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
         Some(self)
     }
 }
@@ -1047,10 +1292,12 @@ impl OffensiveSkillBase for GrandCross {
     fn _element(&self) -> Element {
         Element::Holy
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-impl SelfSkillBase for GrandCross {
-}
-// CR_DEVOTION
+// CR_DEVOTION - Sacrifice
 pub struct Sacrifice {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1108,7 +1355,7 @@ impl SkillBase for Sacrifice {
        25
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1132,10 +1379,14 @@ impl SkillBase for Sacrifice {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for Sacrifice {
 }
-// CR_PROVIDENCE
+// CR_PROVIDENCE - Resistant Souls
 pub struct ResistantSouls {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1193,7 +1444,7 @@ impl SkillBase for ResistantSouls {
        30
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1210,6 +1461,38 @@ impl SkillBase for ResistantSouls {
        3000
     }
     #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromRacePercentage(Demon, 5), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromElementPercentage(Holy, 5), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromRacePercentage(Demon, 10), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromElementPercentage(Holy, 10), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromRacePercentage(Demon, 15), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromElementPercentage(Holy, 15), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromRacePercentage(Demon, 20), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromElementPercentage(Holy, 20), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromRacePercentage(Demon, 25), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceDamageFromElementPercentage(Holy, 25), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
         true
     }
@@ -1217,10 +1500,14 @@ impl SkillBase for ResistantSouls {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for ResistantSouls {
 }
-// CR_DEFENDER
+// CR_DEFENDER - Defending Aura
 pub struct DefendingAura {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1284,7 +1571,7 @@ impl SkillBase for DefendingAura {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1304,17 +1591,54 @@ impl SkillBase for DefendingAura {
        800
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-20.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-33), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-15.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-33), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-10.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-33), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-5.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-33), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(0.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-33), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for DefendingAura {
+impl SupportiveSkillBase for DefendingAura {
 }
-// CR_SPEARQUICKEN
+// CR_SPEARQUICKEN - Spear Quicken
 pub struct SpearQuicken {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1408,7 +1732,7 @@ impl SkillBase for SpearQuicken {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1453,17 +1777,69 @@ impl SkillBase for SpearQuicken {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(21.0), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(22.0), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(23.0), 2, tick, 90000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(24.0), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(25.0), 2, tick, 150000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(26.0), 2, tick, 180000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(27.0), 2, tick, 210000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(28.0), 2, tick, 240000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(29.0), 2, tick, 270000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(30.0), 2, tick, 300000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for SpearQuicken {
+impl SupportiveSkillBase for SpearQuicken {
 }
-// CR_SHRINK
+// CR_SHRINK - Shrink
 pub struct Shrink {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1527,7 +1903,7 @@ impl SkillBase for Shrink {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1542,14 +1918,4 @@ impl SkillBase for Shrink {
             Err(())
         }
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-}
-impl SelfSkillBase for Shrink {
 }

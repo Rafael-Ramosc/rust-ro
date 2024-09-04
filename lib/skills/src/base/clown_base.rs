@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// CG_ARROWVULCAN
+// CG_ARROWVULCAN - Vulcan Arrow
 pub struct VulcanArrow {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -105,7 +110,7 @@ impl SkillBase for VulcanArrow {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -315,10 +320,14 @@ impl OffensiveSkillBase for VulcanArrow {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// CG_MOONLIT
+// CG_MOONLIT - Sheltering Bliss
 pub struct ShelteringBliss {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -427,17 +436,17 @@ impl SkillBase for ShelteringBliss {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_performance_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for ShelteringBliss {
+impl PerformanceSkillBase for ShelteringBliss {
 }
-// CG_MARIONETTE
+// CG_MARIONETTE - Marionette Control
 pub struct MarionetteControl {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -495,7 +504,7 @@ impl SkillBase for MarionetteControl {
        100
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -515,10 +524,14 @@ impl SkillBase for MarionetteControl {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for MarionetteControl {
 }
-// CG_LONGINGFREEDOM
+// CG_LONGINGFREEDOM - Longing for Freedom
 pub struct LongingforFreedom {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -589,17 +602,40 @@ impl SkillBase for LongingforFreedom {
         if status.sp() > 15 { Ok(15) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-40.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-40), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-30.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-30), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-20.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-20), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(-10.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-10), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(0.0), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(0), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
 }
-impl SelfSkillBase for LongingforFreedom {
-}
-// CG_HERMODE
+// CG_HERMODE - Wand of Hermode
 pub struct WandofHermode {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -708,14 +744,6 @@ impl SkillBase for WandofHermode {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-    #[inline(always)]
     fn is_performance_skill(&self) -> bool {
         true
     }
@@ -724,11 +752,9 @@ impl SkillBase for WandofHermode {
         Some(self)
     }
 }
-impl SelfSkillBase for WandofHermode {
-}
 impl PerformanceSkillBase for WandofHermode {
 }
-// CG_TAROTCARD
+// CG_TAROTCARD - Tarot Card of Fate
 pub struct TarotCardofFate {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -786,10 +812,10 @@ impl SkillBase for TarotCardofFate {
        40
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        false
+        true
     }
     fn _is_physical(&self) -> bool {
         false
@@ -823,5 +849,9 @@ impl OffensiveSkillBase for TarotCardofFate {
     #[inline(always)]
     fn _element(&self) -> Element {
         Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

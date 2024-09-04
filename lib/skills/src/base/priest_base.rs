@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// PR_MACEMASTERY
+// PR_MACEMASTERY - Mace Mastery
 pub struct MaceMastery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,55 @@ impl SkillBase for MaceMastery {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 3), 0, 65),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 6), 0, 65),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 9), 0, 65),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 12), 0, 65),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 15), 0, 65),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 18), 0, 65),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 21), 0, 65),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 24), 0, 65),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 27), 0, 65),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Mace, 30), 0, 65),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +147,7 @@ impl SkillBase for MaceMastery {
 }
 impl PassiveSkillBase for MaceMastery {
 }
-// PR_IMPOSITIO
+// PR_IMPOSITIO - Impositio Manus
 pub struct ImpositioManus {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -167,10 +220,10 @@ impl SkillBase for ImpositioManus {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -199,6 +252,33 @@ impl SkillBase for ImpositioManus {
        3000
     }
     #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(5), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(10), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(15), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(20), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(25), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
         true
     }
@@ -206,10 +286,14 @@ impl SkillBase for ImpositioManus {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for ImpositioManus {
 }
-// PR_SUFFRAGIUM
+// PR_SUFFRAGIUM - Suffragium
 pub struct Suffragium {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -267,10 +351,10 @@ impl SkillBase for Suffragium {
        8
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -291,10 +375,14 @@ impl SkillBase for Suffragium {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for Suffragium {
 }
-// PR_ASPERSIO
+// PR_ASPERSIO - Aspersio
 pub struct Aspersio {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -367,10 +455,10 @@ impl SkillBase for Aspersio {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -414,10 +502,14 @@ impl SkillBase for Aspersio {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for Aspersio {
 }
-// PR_BENEDICTIO
+// PR_BENEDICTIO - B.S. Sacramenti
 pub struct BsSacramenti {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -478,7 +570,7 @@ impl SkillBase for BsSacramenti {
         SkillTargetType::Ground
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -486,6 +578,18 @@ impl SkillBase for BsSacramenti {
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 20 { Ok(20) } else {Err(())}
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        2
     }
     #[inline(always)]
     fn is_ground_skill(&self) -> bool {
@@ -496,9 +600,11 @@ impl SkillBase for BsSacramenti {
         Some(self)
     }
 }
+impl SupportiveSkillBase for BsSacramenti {
+}
 impl GroundSkillBase for BsSacramenti {
 }
-// PR_SANCTUARY
+// PR_SANCTUARY - Sanctuary
 pub struct Sanctuary {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -589,7 +695,7 @@ impl SkillBase for Sanctuary {
         SkillTargetType::Ground
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -641,6 +747,18 @@ impl SkillBase for Sanctuary {
        5000
     }
     #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        2
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -649,9 +767,11 @@ impl SkillBase for Sanctuary {
         Some(self)
     }
 }
+impl SupportiveSkillBase for Sanctuary {
+}
 impl GroundSkillBase for Sanctuary {
 }
-// PR_SLOWPOISON
+// PR_SLOWPOISON - Slow Poison
 pub struct SlowPoison {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -721,10 +841,10 @@ impl SkillBase for SlowPoison {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -753,10 +873,14 @@ impl SkillBase for SlowPoison {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for SlowPoison {
 }
-// PR_STRECOVERY
+// PR_STRECOVERY - Status Recovery
 pub struct StatusRecovery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -814,10 +938,10 @@ impl SkillBase for StatusRecovery {
        5
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -838,10 +962,14 @@ impl SkillBase for StatusRecovery {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for StatusRecovery {
 }
-// PR_KYRIE
+// PR_KYRIE - Kyrie Eleison
 pub struct KyrieEleison {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -929,7 +1057,7 @@ impl SkillBase for KyrieEleison {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         true
@@ -980,6 +1108,53 @@ impl SkillBase for KyrieEleison {
        2000
     }
     #[inline(always)]
+    fn _has_bonuses_to_target(&self) -> bool {
+        true
+    }
+    fn _bonuses_to_target(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(5), 2, tick, 120000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(6), 2, tick, 120000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(6), 2, tick, 120000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(7), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(7), 2, tick, 120000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(8), 2, tick, 120000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(8), 2, tick, 120000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(9), 2, tick, 120000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(9), 2, tick, 120000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(10), 2, tick, 120000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
         true
     }
@@ -987,10 +1162,14 @@ impl SkillBase for KyrieEleison {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for KyrieEleison {
 }
-// PR_MAGNIFICAT
+// PR_MAGNIFICAT - Magnificat
 pub struct Magnificat {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1048,10 +1227,10 @@ impl SkillBase for Magnificat {
        40
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1069,17 +1248,21 @@ impl SkillBase for Magnificat {
        2000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for Magnificat {
+impl SupportiveSkillBase for Magnificat {
 }
-// PR_GLORIA
+// PR_GLORIA - Gloria
 pub struct Gloria {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1137,7 +1320,7 @@ impl SkillBase for Gloria {
        20
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         true
@@ -1154,17 +1337,49 @@ impl SkillBase for Gloria {
        2000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 10000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 15000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 20000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 25000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 30000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for Gloria {
+impl SupportiveSkillBase for Gloria {
 }
-// PR_LEXDIVINA
+// PR_LEXDIVINA - Lex Divina
 pub struct LexDivina {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1252,10 +1467,10 @@ impl SkillBase for LexDivina {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1312,8 +1527,64 @@ impl OffensiveSkillBase for LexDivina {
     fn _element(&self) -> Element {
         Element::Neutral
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 6 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 7 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 8 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 9 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        if self.level == 10 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Silence);
+            }
+        }
+        effects
+    }
 }
-// PR_TURNUNDEAD
+// PR_TURNUNDEAD - Turn Undead
 pub struct TurnUndead {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1371,7 +1642,7 @@ impl SkillBase for TurnUndead {
        20
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         true
@@ -1409,8 +1680,12 @@ impl OffensiveSkillBase for TurnUndead {
     fn _element(&self) -> Element {
         Element::Holy
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// PR_LEXAETERNA
+// PR_LEXAETERNA - Lex Aeterna
 pub struct LexAeterna {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1468,10 +1743,10 @@ impl SkillBase for LexAeterna {
        10
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1485,21 +1760,21 @@ impl SkillBase for LexAeterna {
        3000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
-}
-impl OffensiveSkillBase for LexAeterna {
     #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
+    fn _client_type(&self) -> usize {
+        16
     }
 }
-// PR_MAGNUS
+impl SupportiveSkillBase for LexAeterna {
+}
+// PR_MAGNUS - Magnus Exorcismus
 pub struct MagnusExorcismus {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1646,6 +1921,14 @@ impl SkillBase for MagnusExorcismus {
        4000
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -1654,9 +1937,87 @@ impl SkillBase for MagnusExorcismus {
         Some(self)
     }
 }
+impl OffensiveSkillBase for MagnusExorcismus {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+        if self.level == 1 {
+            return 1
+        }
+        if self.level == 2 {
+            return 2
+        }
+        if self.level == 3 {
+            return 3
+        }
+        if self.level == 4 {
+            return 4
+        }
+        if self.level == 5 {
+            return 5
+        }
+        if self.level == 6 {
+            return 6
+        }
+        if self.level == 7 {
+            return 7
+        }
+        if self.level == 8 {
+            return 8
+        }
+        if self.level == 9 {
+            return 9
+        }
+        if self.level == 10 {
+            return 10
+        }
+        0
+    }
+    #[inline(always)]
+    fn _dmg_matk(&self) -> Option<f32> {
+        if self.level == 1 {
+            return Some(1.000)
+        }
+        if self.level == 2 {
+            return Some(2.000)
+        }
+        if self.level == 3 {
+            return Some(3.000)
+        }
+        if self.level == 4 {
+            return Some(4.000)
+        }
+        if self.level == 5 {
+            return Some(5.000)
+        }
+        if self.level == 6 {
+            return Some(6.000)
+        }
+        if self.level == 7 {
+            return Some(7.000)
+        }
+        if self.level == 8 {
+            return Some(8.000)
+        }
+        if self.level == 9 {
+            return Some(9.000)
+        }
+        if self.level == 10 {
+            return Some(10.000)
+        }
+        None
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Holy
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
+}
 impl GroundSkillBase for MagnusExorcismus {
 }
-// PR_REDEMPTIO
+// PR_REDEMPTIO - Redemptio
 pub struct Redemptio {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1717,7 +2078,7 @@ impl SkillBase for Redemptio {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        true
+        false
     }
     fn _is_physical(&self) -> bool {
         false
@@ -1730,14 +2091,4 @@ impl SkillBase for Redemptio {
     fn _base_cast_time(&self) -> u32 {
        4000
     }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-}
-impl SelfSkillBase for Redemptio {
 }

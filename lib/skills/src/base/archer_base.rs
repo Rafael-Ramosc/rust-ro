@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// AC_OWL
+// AC_OWL - Owl's Eye
 pub struct OwlsEye {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -84,6 +89,54 @@ impl SkillBase for OwlsEye {
         false
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(1), 0, 43),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(2), 0, 43),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(3), 0, 43),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(4), 0, 43),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(5), 0, 43),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(6), 0, 43),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(7), 0, 43),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(8), 0, 43),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(9), 0, 43),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::Dex(10), 0, 43),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
     }
@@ -94,7 +147,7 @@ impl SkillBase for OwlsEye {
 }
 impl PassiveSkillBase for OwlsEye {
 }
-// AC_VULTURE
+// AC_VULTURE - Vulture's Eye
 pub struct VulturesEye {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -171,7 +224,7 @@ impl SkillBase for VulturesEye {
 }
 impl PassiveSkillBase for VulturesEye {
 }
-// AC_CONCENTRATION
+// AC_CONCENTRATION - Improve Concentration
 pub struct ImproveConcentration {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -265,7 +318,7 @@ impl SkillBase for ImproveConcentration {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -302,17 +355,79 @@ impl SkillBase for ImproveConcentration {
         Err(())
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(3), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(3), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(4), 2, tick, 80000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(4), 2, tick, 80000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(5), 2, tick, 100000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(5), 2, tick, 100000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(6), 2, tick, 120000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(6), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(7), 2, tick, 140000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(7), 2, tick, 140000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(8), 2, tick, 160000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(8), 2, tick, 160000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(9), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(9), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(10), 2, tick, 200000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(10), 2, tick, 200000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(11), 2, tick, 220000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(11), 2, tick, 220000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Agi(12), 2, tick, 240000),
+                TemporaryStatusBonus::with_duration(BonusType::Dex(12), 2, tick, 240000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for ImproveConcentration {
+impl SupportiveSkillBase for ImproveConcentration {
 }
-// AC_DOUBLE
+// AC_DOUBLE - Double Strafe
 pub struct DoubleStrafe {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -370,7 +485,7 @@ impl SkillBase for DoubleStrafe {
        12
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -448,10 +563,14 @@ impl OffensiveSkillBase for DoubleStrafe {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// AC_SHOWER
+// AC_SHOWER - Arrow Shower
 pub struct ArrowShower {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -595,12 +714,16 @@ impl OffensiveSkillBase for ArrowShower {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
 impl GroundSkillBase for ArrowShower {
 }
-// AC_MAKINGARROW
+// AC_MAKINGARROW - Arrow Crafting
 pub struct ArrowCrafting {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -664,7 +787,7 @@ impl SkillBase for ArrowCrafting {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -680,17 +803,17 @@ impl SkillBase for ArrowCrafting {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for ArrowCrafting {
+impl InteractiveSkillBase for ArrowCrafting {
 }
-// AC_CHARGEARROW
+// AC_CHARGEARROW - Arrow Repel
 pub struct ArrowRepel {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -748,7 +871,7 @@ impl SkillBase for ArrowRepel {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -800,6 +923,10 @@ impl OffensiveSkillBase for ArrowRepel {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }

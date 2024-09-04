@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// MC_INCCARRY
+// MC_INCCARRY - Enlarge Weight Limit
 pub struct EnlargeWeightLimit {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -84,17 +89,17 @@ impl SkillBase for EnlargeWeightLimit {
         false
     }
     #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl PassiveSkillBase for EnlargeWeightLimit {
+impl InteractiveSkillBase for EnlargeWeightLimit {
 }
-// MC_DISCOUNT
+// MC_DISCOUNT - Discount
 pub struct Discount {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -161,17 +166,17 @@ impl SkillBase for Discount {
         false
     }
     #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl PassiveSkillBase for Discount {
+impl InteractiveSkillBase for Discount {
 }
-// MC_OVERCHARGE
+// MC_OVERCHARGE - Overcharge
 pub struct Overcharge {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -238,17 +243,17 @@ impl SkillBase for Overcharge {
         false
     }
     #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl PassiveSkillBase for Overcharge {
+impl InteractiveSkillBase for Overcharge {
 }
-// MC_PUSHCART
+// MC_PUSHCART - Pushcart
 pub struct Pushcart {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -315,6 +320,54 @@ impl SkillBase for Pushcart {
         false
     }
     #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-45), 0, 39),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-40), 0, 39),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-35), 0, 39),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-30), 0, 39),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-25), 0, 39),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-20), 0, 39),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-15), 0, 39),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-10), 0, 39),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-5), 0, 39),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(0), 0, 39),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
     fn is_passive_skill(&self) -> bool {
         true
     }
@@ -325,7 +378,7 @@ impl SkillBase for Pushcart {
 }
 impl PassiveSkillBase for Pushcart {
 }
-// MC_IDENTIFY
+// MC_IDENTIFY - Item Appraisal
 pub struct ItemAppraisal {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -396,17 +449,17 @@ impl SkillBase for ItemAppraisal {
         if status.sp() > 10 { Ok(10) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for ItemAppraisal {
+impl InteractiveSkillBase for ItemAppraisal {
 }
-// MC_VENDING
+// MC_VENDING - Vending
 pub struct Vending {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -486,17 +539,17 @@ impl SkillBase for Vending {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Vending {
+impl InteractiveSkillBase for Vending {
 }
-// MC_MAMMONITE
+// MC_MAMMONITE - Mammonite
 pub struct Mammonite {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -554,7 +607,7 @@ impl SkillBase for Mammonite {
        5
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -652,8 +705,12 @@ impl OffensiveSkillBase for Mammonite {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// MC_CARTREVOLUTION
+// MC_CARTREVOLUTION - Cart Revolution
 pub struct CartRevolution {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -711,7 +768,7 @@ impl SkillBase for CartRevolution {
        12
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -754,8 +811,12 @@ impl OffensiveSkillBase for CartRevolution {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// MC_CHANGECART
+// MC_CHANGECART - Change Cart
 pub struct ChangeCart {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -835,17 +896,17 @@ impl SkillBase for ChangeCart {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for ChangeCart {
+impl InteractiveSkillBase for ChangeCart {
 }
-// MC_LOUD
+// MC_LOUD - Crazy Uproar
 pub struct CrazyUproar {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -909,110 +970,36 @@ impl SkillBase for CrazyUproar {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 8 { Ok(8) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-}
-impl SelfSkillBase for CrazyUproar {
-}
-// MC_CARTDECORATE
-pub struct DecorateCart {
-    pub(crate) level: u8,
-    pub(crate) cast_time: u32,
-    pub(crate) after_cast_act_delay: u32,
-    pub(crate) after_cast_walk_delay: u32,
-}
-impl SkillBase for DecorateCart {
-    #[inline(always)]
-    fn as_any(&self) -> &dyn Any {
-        self
-    }
-    fn _id(&self) -> u32 {
-        2544
-    }
-    fn _level(&self) -> u8 {
-        self.level
-    }
-    #[inline(always)]
-    fn _cast_time(&self) -> u32 {
-        self.cast_time
-    }
-    #[inline(always)]
-    fn _after_cast_act_delay(&self) -> u32 {
-        self.after_cast_act_delay
-    }
-    #[inline(always)]
-    fn _after_cast_walk_delay(&self) -> u32 {
-        self.after_cast_walk_delay
-    }
-    #[inline(always)]
-    fn _update_cast_time(&mut self, new_value: u32) {
-        self.cast_time = new_value;
-    }
-    #[inline(always)]
-    fn _update_after_cast_act_delay(&mut self, new_value: u32) {
-        self.after_cast_act_delay = new_value;
-    }
-    #[inline(always)]
-    fn _update_after_cast_walk_delay(&mut self, new_value: u32) {
-        self.after_cast_walk_delay = new_value;
-    }
-    #[inline(always)]
-    fn _range(&self) -> i8 {
-        0
-    }
-    fn _is_ranged(&self) -> bool {
-        false
-    }
-    #[inline(always)]
-    fn _max_level(&self) -> u8 {
-        1
-    }
-    #[inline(always)]
-    fn _sp_cost(&self) -> u16 {
-       40
-    }
-    fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
-    }
-    fn _is_magic(&self) -> bool {
-        false
-    }
-    fn _is_physical(&self) -> bool {
-        false
-    }
-    #[inline(always)]
-    fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
-        if status.sp() > 40 { Ok(40) } else {Err(())}
-    }
-    #[inline(always)]
-    fn _validate_state(&self, status: &StatusSnapshot) -> SkillRequirementResult<()> {
-        if status.state() > 0 {
-            // Cart
-            if status.state() & 16 > 0 { Ok(()) } else { Err(()) }
-        } else {
-            Err(())
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Str(4), 2, tick, 300000),]);
         }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for DecorateCart {
+impl SupportiveSkillBase for CrazyUproar {
 }

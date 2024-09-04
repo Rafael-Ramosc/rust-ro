@@ -3,12 +3,12 @@ use lazy_static::lazy_static;
 use tokio::runtime::Runtime;
 use packets::packets::{PacketCzPlayerChat, PacketZcNotifyPlayerchat};
 use crate::server::model::session::Session;
-use regex::Regex;
 use models::enums::class::JobName;
 use models::enums::EnumWithStringValue;
 use models::enums::EnumWithNumberValue;
 use std::fmt::Write;
 use std::time::Instant;
+use regex_lite::Regex;
 
 use packets::packets::Packet;
 use crate::load_scripts;
@@ -82,7 +82,7 @@ pub fn handle_atcommand(server: &Server, context: Request, packet: &PacketCzPlay
             packet_zc_notify_playerchat.set_msg(result);
         }
         "job" | "jobchange" => {
-            let result = handle_set_job(server, context.session(), context.runtime(), args);
+            let result = handle_set_job(server, context.session().char_id(), args);
             packet_zc_notify_playerchat.set_msg(result);
         }
         "rates" => {
@@ -246,7 +246,7 @@ pub fn handle_set_job_level(server: &Server, session: Arc<Session>, _runtime: &R
     String::new()
 }
 
-pub fn handle_set_job(server: &Server, session: Arc<Session>, _runtime: &Runtime, args: Vec::<&str>) -> String {
+pub fn handle_set_job(server: &Server, char_id: u32, args: Vec::<&str>) -> String {
     if args.is_empty() {
         return "@job command accept 1 parameters but received none".to_string();
     }
@@ -256,7 +256,7 @@ pub fn handle_set_job(server: &Server, session: Arc<Session>, _runtime: &Runtime
         JobName::try_from_string(args.first().unwrap())
     };
     if let Ok(job) = maybe_job {
-        server.add_to_next_tick(GameEvent::CharacterChangeJob(CharacterChangeJob { char_id: session.char_id(), job, should_reset_skills: true }));
+        server.add_to_next_tick(GameEvent::CharacterChangeJob(CharacterChangeJob { char_id, job, should_reset_skills: true }));
         return "Your job has been changed.".to_string();
     }
     format!("Job {} not found", args.first().unwrap())

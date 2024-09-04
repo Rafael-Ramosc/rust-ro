@@ -10,6 +10,7 @@ pub mod server_helper;
 pub mod item_helper;
 pub mod sync_helper;
 pub mod fixtures;
+#[cfg(feature = "integration_tests")]
 pub mod integration_test;
 
 
@@ -17,6 +18,8 @@ use std::{fs, thread};
 use std::sync::mpsc::SyncSender;
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex, Once};
+use log::{LevelFilter};
+use simple_logger::SimpleLogger;
 
 use crate::repository::model::item_model::{ItemModel, ItemModels};
 use crate::repository::model::mob_model::{MobModel, MobModels};
@@ -28,8 +31,10 @@ use crate::server::model::events::persistence_event::PersistenceEvent;
 use crate::server::service::item_service::ItemService;
 
 
+
 use crate::tests::common::mocked_repository::MockedRepository;
 use crate::tests::common::sync_helper::{CountDownLatch, IncrementLatch};
+
 
 
 static mut CONFIGS: Option<Config> = None;
@@ -130,6 +135,8 @@ pub fn create_mpsc<T>() -> (SyncSender<T>, Receiver<T>) {
 
 pub fn before_all() {
     INIT.call_once(|| {
+        SimpleLogger::new().with_level(LevelFilter::Info).init().unwrap();
+
         unsafe {
             let mut config: Config = serde_json::from_str(&fs::read_to_string("../config.template.json").unwrap()).unwrap();
             let file_path = "../config/status_point_reward.json";

@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// AS_RIGHT
+// AS_RIGHT - Righthand Mastery
 pub struct RighthandMastery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,35 @@ impl SkillBase for RighthandMastery {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-40), 0, 132),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-30), 0, 132),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-20), 0, 132),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-10), 0, 132),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(0), 0, 132),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +127,7 @@ impl SkillBase for RighthandMastery {
 }
 impl PassiveSkillBase for RighthandMastery {
 }
-// AS_LEFT
+// AS_LEFT - Lefthand Mastery
 pub struct LefthandMastery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -158,7 +191,35 @@ impl SkillBase for LefthandMastery {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-60), 0, 133),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-50), 0, 133),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-40), 0, 133),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-30), 0, 133),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(-20), 0, 133),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -171,7 +232,7 @@ impl SkillBase for LefthandMastery {
 }
 impl PassiveSkillBase for LefthandMastery {
 }
-// AS_KATAR
+// AS_KATAR - Katar Mastery
 pub struct KatarMastery {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -235,7 +296,55 @@ impl SkillBase for KatarMastery {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 3), 0, 134),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 6), 0, 134),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 9), 0, 134),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 12), 0, 134),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 15), 0, 134),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 18), 0, 134),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 21), 0, 134),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 24), 0, 134),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 27), 0, 134),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Katar, 30), 0, 134),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -248,7 +357,7 @@ impl SkillBase for KatarMastery {
 }
 impl PassiveSkillBase for KatarMastery {
 }
-// AS_CLOAKING
+// AS_CLOAKING - Cloaking
 pub struct Cloaking {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -312,24 +421,72 @@ impl SkillBase for Cloaking {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 15 { Ok(15) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-27), 2, tick, 500),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-24), 2, tick, 1000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-21), 2, tick, 2000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-18), 2, tick, 3000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-15), 2, tick, 4000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-12), 2, tick, 5000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-9), 2, tick, 6000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-6), 2, tick, 7000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-3), 2, tick, 8000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(0), 2, tick, 9000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Cloaking {
+impl InteractiveSkillBase for Cloaking {
 }
-// AS_SONICBLOW
+// AS_SONICBLOW - Sonic Blow
 pub struct SonicBlow {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -417,7 +574,7 @@ impl SkillBase for SonicBlow {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -523,8 +680,64 @@ impl OffensiveSkillBase for SonicBlow {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 12 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 14 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 16 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 18 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 6 {
+            if chance <= 22 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 7 {
+            if chance <= 24 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 8 {
+            if chance <= 26 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 9 {
+            if chance <= 28 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 10 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
 }
-// AS_GRIMTOOTH
+// AS_GRIMTOOTH - Grimtooth
 pub struct Grimtooth {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -582,7 +795,7 @@ impl SkillBase for Grimtooth {
        3
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -610,6 +823,29 @@ impl SkillBase for Grimtooth {
         } else {
             Err(())
         }
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_offensive_skill(&self) -> bool {
@@ -648,8 +884,12 @@ impl OffensiveSkillBase for Grimtooth {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
+    }
 }
-// AS_ENCHANTPOISON
+// AS_ENCHANTPOISON - Enchant Poison
 pub struct EnchantPoison {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -707,17 +947,65 @@ impl SkillBase for EnchantPoison {
        20
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Support
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 20 { Ok(20) } else {Err(())}
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 3.0), 2, tick, 30000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 3.0), 2, tick, 45000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 4.0), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 4.0), 2, tick, 75000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 5.0), 2, tick, 90000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 5.0), 2, tick, 105000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 6.0), 2, tick, 120000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 6.0), 2, tick, 135000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 7.0), 2, tick, 150000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 7.0), 2, tick, 165000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_supportive_skill(&self) -> bool {
@@ -727,10 +1015,14 @@ impl SkillBase for EnchantPoison {
     fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        16
+    }
 }
 impl SupportiveSkillBase for EnchantPoison {
 }
-// AS_POISONREACT
+// AS_POISONREACT - Poison React
 pub struct PoisonReact {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -821,10 +1113,10 @@ impl SkillBase for PoisonReact {
         SkillTargetType::MySelf
     }
     fn _is_magic(&self) -> bool {
-        false
+        true
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -861,69 +1153,79 @@ impl SkillBase for PoisonReact {
         Err(())
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
-        Some(self)
-    }
-    #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-}
-impl OffensiveSkillBase for PoisonReact {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _dmg_atk(&self) -> Option<f32> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
-            return Some(1.300)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 20000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 20000),]);
         }
         if self.level == 2 {
-            return Some(1.600)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 25000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 25000),]);
         }
         if self.level == 3 {
-            return Some(1.900)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 30000),]);
         }
         if self.level == 4 {
-            return Some(2.200)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 35000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 35000),]);
         }
         if self.level == 5 {
-            return Some(2.500)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 40000),]);
         }
         if self.level == 6 {
-            return Some(2.800)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 45000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 45000),]);
         }
         if self.level == 7 {
-            return Some(3.100)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 50000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 50000),]);
         }
         if self.level == 8 {
-            return Some(3.400)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 55000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 55000),]);
         }
         if self.level == 9 {
-            return Some(3.700)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 60000),]);
         }
         if self.level == 10 {
-            return Some(4.000)
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AutospellSkillIdChancePercentage(139, 50.0), 2, tick, 65000),
+                TemporaryStatusBonus::with_duration(BonusType::ChanceToInflictStatusOnAttackPercentage(Poisoned, 50.0), 2, tick, 65000),]);
         }
-        None
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
     }
 }
-impl SelfSkillBase for PoisonReact {
+impl SupportiveSkillBase for PoisonReact {
 }
-// AS_VENOMDUST
+// AS_VENOMDUST - Venom Dust
 pub struct VenomDust {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -987,7 +1289,7 @@ impl SkillBase for VenomDust {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1002,6 +1304,14 @@ impl SkillBase for VenomDust {
         Ok(Some(required_items))
     }
     #[inline(always)]
+    fn is_offensive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -1010,9 +1320,75 @@ impl SkillBase for VenomDust {
         Some(self)
     }
 }
+impl OffensiveSkillBase for VenomDust {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Poison
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 6 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 7 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 8 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 9 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 10 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        effects
+    }
+}
 impl GroundSkillBase for VenomDust {
 }
-// AS_SPLASHER
+// AS_SPLASHER - Venom Splasher
 pub struct VenomSplasher {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1100,7 +1476,7 @@ impl SkillBase for VenomSplasher {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -1206,8 +1582,64 @@ impl OffensiveSkillBase for VenomSplasher {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 6 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 7 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 8 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 9 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        if self.level == 10 {
+            if chance <= 100 {
+                effects.push(StatusEffect::Poisoned);
+            }
+        }
+        effects
+    }
 }
-// AS_SONICACCEL
+// AS_SONICACCEL - Sonic Acceleration
 pub struct SonicAcceleration {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1271,20 +1703,10 @@ impl SkillBase for SonicAcceleration {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn is_passive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_passive_skill(&self) -> Option<&dyn PassiveSkill> {
-        Some(self)
+        false
     }
 }
-impl PassiveSkillBase for SonicAcceleration {
-}
-// AS_VENOMKNIFE
+// AS_VENOMKNIFE - Throw Venom Knife
 pub struct ThrowVenomKnife {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1342,13 +1764,13 @@ impl SkillBase for ThrowVenomKnife {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -1361,23 +1783,5 @@ impl SkillBase for ThrowVenomKnife {
         } else {
             Err(())
         }
-    }
-    #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
-        Some(self)
-    }
-}
-impl OffensiveSkillBase for ThrowVenomKnife {
-    #[inline(always)]
-    fn _hit_count(&self) -> i8 {
-       1
-    }
-    #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
     }
 }

@@ -1,0 +1,328 @@
+[
+  {
+    "job": "LordKnight",
+    "baseLevel": 92,
+    "jobLevel": 1,
+    "baseStr": 50,
+    "baseAgi": 50,
+    "baseVit": 50,
+    "baseDex": 50,
+    "baseInt": 50,
+    "baseLuk": 50,
+    "bonusStr": 2,
+    "bonusAgi": 0,
+    "bonusVit": 0,
+    "bonusDex": 3,
+    "bonusInt": 1,
+    "bonusLuk": 0,
+    "maxHp": 14628,
+    "maxSp": 539,
+    "hit": 155,
+    "flee": 145,
+    "crit": 16,
+    "def": 21,
+    "cast": 0,
+    "atkLeft": 122,
+    "atkRight": 0,
+    "skillToUse": {
+      "index": 0,
+      "name": "Basic Attack",
+      "skid": 0,
+      "level": 1
+    },
+    "baseATK": 127,
+    "totalDef": 21,
+    "perfectDodge": 6,
+    "aspd": 0.7480000000000001,
+    "aspdForDisplay": 162.6,
+    "critATK": [
+      174,
+      174,
+      174
+    ],
+    "equipments": {
+      "weapon": {
+        "index": 16,
+        "name": "Sword",
+        "refinement": 0,
+        "itemId": 1101,
+        "cards": [
+          {
+            "index": 363,
+            "name": "Valkyrie Randgris",
+            "itemId": 4407,
+            "bonuses": []
+          },
+          {
+            "index": 157,
+            "name": "Metaling",
+            "itemId": 4341,
+            "bonuses": []
+          },
+          {
+            "index": 326,
+            "name": "Zipper Bear",
+            "itemId": 4281,
+            "bonuses": [
+              {
+                "bonus": "Atk",
+                "value": 30
+              }
+            ]
+          },
+          {
+            "index": 253,
+            "name": "Fur Seal",
+            "itemId": 4312,
+            "bonuses": [
+              {
+                "bonus": "Hit",
+                "value": 10
+              },
+              {
+                "bonus": "Flee",
+                "value": 3
+              }
+            ]
+          }
+        ],
+        "atk": 25,
+        "type": 2,
+        "level": 1,
+        "starCrumb": 0,
+        "craftedByTop10Smith": 0,
+        "element": 0,
+        "minPlus": 0,
+        "overUpgradeBonusATK": 0,
+        "upgradeBonusATK": 0
+      },
+      "upperHeadgear": {
+        "index": 459,
+        "name": "Alice Doll",
+        "refinement": 0,
+        "itemId": 5137,
+        "bonuses": [
+          {
+            "bonus": "Str",
+            "value": 1
+          },
+          {
+            "bonus": "PhysicalDamageAgainstRaceDemiHumanPercentage",
+            "value": 10
+          }
+        ],
+        "cards": [
+          {
+            "index": 383,
+            "name": "Rideword",
+            "itemId": 4185,
+            "bonuses": [
+              {
+                "bonus": "Int",
+                "value": 1
+              }
+            ]
+          }
+        ],
+        "def": 0
+      },
+      "middleHeadgear": {
+        "index": 245,
+        "name": "Sunglasses",
+        "refinement": 0,
+        "itemId": 2201,
+        "bonuses": [
+          {
+            "bonus": "ResistanceToStatusBlindPercentage",
+            "value": 5
+          }
+        ],
+        "cards": [
+          {
+            "index": 342,
+            "name": "Dryad",
+            "itemId": 4177,
+            "bonuses": [
+              {
+                "bonus": "ResistanceDamageFromElementEarthPercentage",
+                "value": 10
+              }
+            ]
+          }
+        ],
+        "def": 0
+      },
+      "shield": {
+        "index": 306,
+        "name": "Guard",
+        "refinement": 0,
+        "itemId": 2101,
+        "cards": [
+          {
+            "index": 310,
+            "name": "Sting",
+            "itemId": 4226,
+            "bonuses": [
+              {
+                "bonus": "Def",
+                "value": 2
+              }
+            ]
+          }
+        ],
+        "def": 3
+      },
+      "body": {
+        "index": 303,
+        "name": "Full Plate",
+        "refinement": 0,
+        "itemId": 2316,
+        "cards": [
+          {
+            "index": 384,
+            "name": "Rybio",
+            "itemId": 4194,
+            "bonuses": []
+          }
+        ],
+        "def": 10
+      },
+      "shoulder": {
+        "index": 706,
+        "name": "Wool Scarf",
+        "refinement": 0,
+        "itemId": 2528,
+        "bonuses": [
+          {
+            "bonus": "Mdef",
+            "value": 4
+          }
+        ],
+        "cards": [
+          {
+            "index": 295,
+            "name": "Wanderer",
+            "itemId": 4210,
+            "bonuses": []
+          }
+        ],
+        "def": 3
+      },
+      "shoes": {
+        "index": 716,
+        "name": "Tidal Shoes",
+        "refinement": 0,
+        "itemId": 2424,
+        "bonuses": [
+          {
+            "bonus": "ResistanceDamageFromElementWaterPercentage",
+            "value": 5
+          }
+        ],
+        "cards": [
+          {
+            "index": 362,
+            "name": "Freezer",
+            "itemId": 4319,
+            "bonuses": [
+              {
+                "bonus": "Maxhp",
+                "value": 300
+              }
+            ]
+          }
+        ],
+        "def": 3
+      },
+      "accessory1": {
+        "index": 332,
+        "name": "Glove [1]",
+        "refinement": 0,
+        "itemId": 2624,
+        "bonuses": [
+          {
+            "bonus": "Dex",
+            "value": 1
+          }
+        ],
+        "cards": [
+          {
+            "index": 297,
+            "name": "Sea-Otter Card",
+            "itemId": 4326,
+            "bonuses": []
+          }
+        ],
+        "def": 0
+      },
+      "accessory2": {
+        "index": 732,
+        "name": "Orlean's Gloves",
+        "refinement": 0,
+        "itemId": 2785,
+        "bonuses": [
+          {
+            "bonus": "Dex",
+            "value": 2
+          },
+          {
+            "bonus": "MatkPercentage",
+            "value": 3
+          }
+        ],
+        "cards": [
+          {
+            "index": 144,
+            "name": "Vitata",
+            "itemId": 4053,
+            "bonuses": [
+              {
+                "bonus": "EnableSkill",
+                "value": 28,
+                "value2": 1
+              }
+            ]
+          }
+        ],
+        "def": 0
+      },
+      "SET_11": {
+        "index": 754
+      }
+    },
+    "arrow": 0,
+    "totalGearRefinement": 0,
+    "speedPotion": 0,
+    "element": 0,
+    "mdef": 4,
+    "targetId": 1219,
+    "targetName": "Abysmal Knight",
+    "battleHit": 88,
+    "battleFlee": 5,
+    "critChance": 5.9,
+    "battleCritAtk": [
+      174
+    ],
+    "baseAttackCalc": 127,
+    "minWeaponAttackCalc": 18,
+    "maxWeaponAttackCalc": 18,
+    "avgWeaponAttackCalc": 18,
+    "afterCastDelay": 0,
+    "minDmg": 1,
+    "maxDmg": 1,
+    "avgDmg": 78,
+    "dps": 100.08,
+    "averageReceivedDamage": -609.54,
+    "avgDamageReceived": 1441,
+    "minDamageReceived": 1224,
+    "maxDamageReceived": 1658,
+    "formData": "eyJCTFZhdXRvIjoib24iLCJBX0Jhc2VMViI6IjkyIiwiQV9Kb2JMViI6IjEiLCJBX0pPQiI6IjIxIiwiQV9TVFIiOiI1MCIsIkFfQUdJIjoiNTAiLCJBX1ZJVCI6IjUwIiwiQV9JTlQiOiI1MCIsIkFfREVYIjoiNTAiLCJBX0xVSyI6IjUwIiwiQV9TcGVlZFBPVCI6IjAiLCJBX1dlYXBvblR5cGUiOiIyIiwiQV9XZWFwb24yVHlwZSI6IjAiLCJBX0Fycm93IjoiMCIsIkFfd2VhcG9uMSI6IjE2IiwiQV9XZWFwb25fQVRLcGx1cyI6IjAiLCJBX1dlYXBvbl9lbGVtZW50IjoiMCIsIkFfV2VhcG9uX1N0YXJDcnVtYiI6IjAiLCJBX2NhcmRzaG9ydCI6IjAiLCJBX3dlYXBvbjFfY2FyZDEiOiIzNjMiLCJBX3dlYXBvbjFfY2FyZDIiOiIxNTciLCJBX3dlYXBvbjFfY2FyZDMiOiIzMjYiLCJBX3dlYXBvbjFfY2FyZDQiOiIyNTMiLCJBX1dlYXBvbjJfQVRLcGx1cyI6IjAiLCJBX1dlYXBvbjJfU3RhckNydW1iIjoiMCIsIkFfY2FyZHNob3J0TGVmdCI6IjAiLCJBX3dlYXBvbjJfY2FyZDEiOiIwIiwiQV93ZWFwb24yX2NhcmQyIjoiMCIsIkFfd2VhcG9uMl9jYXJkMyI6IjAiLCJBX3dlYXBvbjJfY2FyZDQiOiIwIiwiQV9IRUFEX0RFRl9QTFVTIjoiMCIsIkFfaGVhZDEiOiI0NTkiLCJBX2hlYWQxX2NhcmQiOiIzODMiLCJBX0JPRFlfREVGX1BMVVMiOiIwIiwiQV9ib2R5IjoiMzAzIiwiQV9ib2R5X2NhcmQiOiIzODQiLCJBX2hlYWQyIjoiMjQ1IiwiQV9oZWFkMl9jYXJkIjoiMzQyIiwiQV9MRUZUX0RFRl9QTFVTIjoiMCIsIkFfbGVmdCI6IjMwNiIsIkFfbGVmdF9jYXJkIjoiMzEwIiwiQV9oZWFkMyI6IjI2OCIsIkFfU0hPVUxERVJfREVGX1BMVVMiOiIwIiwiQV9zaG91bGRlciI6IjcwNiIsIkFfc2hvdWxkZXJfY2FyZCI6IjI5NSIsIkFfYWNjZXMxIjoiMzMyIiwiQV9hY2NlczFfY2FyZCI6IjI5NyIsIkFfU0hPRVNfREVGX1BMVVMiOiIwIiwiQV9zaG9lcyI6IjcxNiIsIkFfc2hvZXNfY2FyZCI6IjM2MiIsIkFfYWNjZXMyIjoiNzMyIiwiQV9hY2NlczJfY2FyZCI6IjE0NCIsIkFfUEFTU0lWRV9TS0lMTDAiOiIwIiwiQV9QQVNTSVZFX1NLSUxMMSI6IjAiLCJBX1BBU1NJVkVfU0tJTEwyIjoiMCIsIkFfUEFTU0lWRV9TS0lMTDMiOiIwIiwiQV9QQVNTSVZFX1NLSUxMNCI6IjAiLCJBX1BBU1NJVkVfU0tJTEw1IjoiMCIsIkFfUEFTU0lWRV9TS0lMTDYiOiIwIiwiQV9QQVNTSVZFX1NLSUxMNyI6IjAiLCJBX1BBU1NJVkVfU0tJTEw4IjoiMCIsIkFfUEFTU0lWRV9TS0lMTDkiOiIwIiwiQV9QQVNTSVZFX1NLSUxMMTAiOiIwIiwiQV9QQVNTSVZFX1NLSUxMMTEiOiIwIiwiQV9TVVBQT1JUSVZFX1NLSUxMMCI6IjAiLCJBX1NVUFBPUlRJVkVfU0tJTEwxIjoiMCIsIkFfU1VQUE9SVElWRV9TS0lMTDIiOiIwIiwiQV9TVVBQT1JUSVZFX1NLSUxMNCI6IjAiLCJBX1NVUFBPUlRJVkVfU0tJTEw2IjoiMCIsIkFfU1VQUE9SVElWRV9TS0lMTDgiOiIwIiwiQV9TVVBQT1JUSVZFX1NLSUxMOSI6IjAiLCJBX1NVUFBPUlRJVkVfU0tJTEwxMCI6IjAiLCJBX1NVUFBPUlRJVkVfU0tJTEwxMyI6IjAiLCJBX1NVUFBPUlRJVkVfU0tJTEwxNCI6IjAiLCJBX0FjdGl2ZVNraWxsIjoiMCIsIkFfQWN0aXZlU2tpbGxMViI6IjEiLCJTa2lsbFN1Yk51bSI6IiIsIkJfRW5lbXkiOiIxNDQiLCJUYXJnZXRTdGF0dXNGbGFnMCI6IjAiLCJUYXJnZXRTdGF0dXNGbGFnMSI6IjAiLCJUYXJnZXRTdGF0dXNGbGFnMTEiOiIwIiwiVGFyZ2V0U3RhdHVzRmxhZzEyIjoiMCIsIlRhcmdldFN0YXR1c0ZsYWcxOCI6IjAiLCJUYXJnZXRTdGF0dXNGbGFnMjUiOiIwIiwiVGFyZ2V0U3RhdHVzRmxhZzI2IjoiMCIsIlRhcmdldFN0YXR1c0ZsYWcyNyI6IjAiLCJBX1BFUkZPUk1BTkNFX0JBUkRfU1RSIjoiMSIsIkFfUEVSRk9STUFOQ0VfQkFSRF9BR0kiOiIxIiwiQV9QRVJGT1JNQU5DRV9CQVJEX0RFWCI6IjEiLCJBX1BFUkZPUk1BTkNFX0JBUkRfVklUIjoiMSIsIkFfUEVSRk9STUFOQ0VfQkFSRF9JTlQiOiIxIiwiQV9QRVJGT1JNQU5DRV9CQVJEX0xVSyI6IjEiLCJQRVJGT1JNQU5DRV9TS0lMTF9QRVJGRUNUX1RBQkxBVFVSRTBfMSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9QRVJGRUNUX1RBQkxBVFVSRTBfMyI6IjEiLCJQRVJGT1JNQU5DRV9TS0lMTF9JTVBSRVNTSVZFX1JJRlQxXzEiOiIwIiwiUEVSRk9STUFOQ0VfU0tJTExfSU1QUkVTU0lWRV9SSUZUMV8zIjoiMSIsIlBFUkZPUk1BTkNFX1NLSUxMX01BR0lDX1NUUklORzJfMSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9NQUdJQ19TVFJJTkcyXzQiOiIxIiwiUEVSRk9STUFOQ0VfU0tJTExfU09OR19PRl9MVVRJRTNfMSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9TT05HX09GX0xVVElFM18yIjoiMSIsIlBFUkZPUk1BTkNFX1NLSUxMX0ZPQ1VTX0JBTExFVDRfMSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9GT0NVU19CQUxMRVQ0XzMiOiIxIiwiUEVSRk9STUFOQ0VfU0tJTExfTEFEWV9MVUNLNV8xIjoiMCIsIlBFUkZPUk1BTkNFX1NLSUxMX0xBRFlfTFVDSzVfMyI6IjEiLCJQRVJGT1JNQU5DRV9TS0lMTF9HWVBTSUVfS0lTUzZfMSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9HWVBTSUVfS0lTUzZfMyI6IjEiLCJBX1BFUkZPUk1BTkNFX1NLSUxMNyI6IjAiLCJBX1BFUkZPUk1BTkNFX1NLSUxMOCI6IjAiLCJBX1BFUkZPUk1BTkNFX1NLSUxMOSI6IjAiLCJQRVJGT1JNQU5DRV9TS0lMTF9JTVBSRVNTSVZFX1JJRlQxMCI6IjAiLCJBX1BFUkZPUk1BTkNFX1NLSUxMNDEiOiIwIiwiQV9QRVJGT1JNQU5DRV9TS0lMTDQyIjoiMCIsIkFfUEVSRk9STUFOQ0VfU0tJTEw0MyI6IjAiLCJBX1BFUkZPUk1BTkNFX1NLSUxMNDQiOiIwIiwiQV9HUk9VTkRfU1VQUE9SVElWRV9TS0lMTDAiOiIwIiwiQV9HUk9VTkRfU1VQUE9SVElWRV9TS0lMTDEiOiIwIiwiQV9HUk9VTkRfU1VQUE9SVElWRV9TS0lMTDIiOiIwIiwiQV9GT09EX0JPWF9CT05VUzMiOiIwIiwiQV9GT09EX0JPWF9CT05VUzQiOiIwIiwiQV9GT09EX0JPWF9CT05VUzUiOiIwIiwiQV9GT09EX0JPWF9CT05VUzYiOiIwIiwiQV9GT09EX0JPWF9CT05VUzciOiIwIiwiQV9GT09EX0JPWF9CT05VUzgiOiIwIiwiQ29uZjAxIjoiMTAiLCJfaWQiOiJ2ZTV0bXYifQ==",
+    "_id": "ve5tmv",
+    "ammo": "Arrow",
+    "ammoId": 1750,
+    "matkMin": 103,
+    "matkMax": 155,
+    "vitdefMin": 40,
+    "vitdefMax": 40
+  }
+]

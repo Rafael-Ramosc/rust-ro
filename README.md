@@ -1,5 +1,7 @@
 ![build](https://github.com/nmeylan/rust-ro/actions/workflows/rust.yml/badge.svg)
 
+[Discord](https://discord.gg/AJkR8mhdFJ)
+
 # Welcome to rust-ro!
 **rust-ro** is a Ragnarok MMO Server implementation written in Rust. 
 
@@ -27,8 +29,7 @@ Although I mentioned above wanting to fully support packet version **20120307**,
 ## 3. Currently Working
 Below issues are under active development
 - [Skills issue](https://github.com/nmeylan/rust-ro/issues/11) - [Offensive skills progress](/doc/progress/offensive-skills-progress.md)
-- [Status issue](https://github.com/nmeylan/rust-ro/issues/29) - [Stats for each job level progress](/doc/progress/stats-for-each-job-level_progress.md)
-- [Stats and bonus issue](https://github.com/nmeylan/rust-ro/issues/35) 
+- [Status and bonus issue](https://github.com/nmeylan/rust-ro/issues/29) - [Stats for each job level progress](/doc/progress/stats-for-each-job-level_progress.md) [Stats for each items](/doc/progress/stats-for-each-items_progress.md) [Stats for each cards](/doc/progress/stats-for-each-card_progress.md)
 
 
 ## 4. Implementation details
@@ -78,13 +79,14 @@ Inside this JSON, you will find **database related variables**, **game related v
 
 
 
-### 5.2 Setup DB
+### 5.2 Database
 
 The entire database structure was based on **rAthena** but instead of using MySQL, we decided to go with PostgreSQL. There's minor modifications so far but until we mapped some **constraints**. 
 
-Since there's features like `ON CONFLICT (column) .. DO UPDATE`, `UNNEST(array)` that is not provided by MySQL, PostgreSQL took place to leverage the project in the database aspect.
+The choice to use Postgresql instead of MySQL was mainly motivated because I know better how to operate Postgresql than MySQL, and know better how Postgresql (mvcc) works internally.
+In addition past years Postgresql gained more traction than MySQL and its open source model 
 
-#### 5.2.1 Setup DB: Docker
+#### 5.2.1 Setup Database - Using Docker
 
 If you already have **Docker** installed in your machine, we prepared a **docker-compose.yml** with all configs ready for your ragnarok server.
 
@@ -101,7 +103,7 @@ The first time, along with postgresql `initdb` is run, our custom script `init.s
 
 It comes with a default player account with following credentials: `admin/qwertz`
 
-#### 5.2.2 Setup DB: Locally
+#### 5.2.1 Setup Database - From binary
 
 If you have PostgreSQL installed in your machine, you will need to log-in into PSQL and create the user, dabase and give the necessary privilege for it:
 
@@ -124,47 +126,41 @@ After that, exit pgsql and import our `/rust-ro/db/pg.sql` via cli with:
  sudo -u postgres psql -U ragnarok ragnarok < db/pg.sql
 ```
 
-> If you're using the local version, don't forget to change the `database.port` number to `5433` in your `config.json` file. 
-
-
-### 5.3 Building the Binaries
-
-So far, we have a few executables being compiled together with the project:
-
-- **maps-tool:** Generate mapcache files from client data: `cargo run --bin maps-tool`
-- **packets-tool:** Generate packet struct from packetdb: `cargo run --bin packets-tool`
-- **server:** Run the server `export DATABASE_PASSWORD=XXXXX && cargo run --package server --bin server`
-- **skills-struct-generator:** Generate skills struct from skills configuration files
-
-To build, just go on the project root and run: 
-
-```shell
-cargo build
-```
-
-Simple like that! Now you're good to run your servers. 
-
-### 5.4 Running the Server
+### 5.3 Running the Server
 
 After we have everyting set-up (binaries and database), we should run server binary to turn on **rust-ro**.
 
 To run the `server` binary, you will need a `ENV` variable called `DATABASE_PASSWORD` together with your command:
 
 ```shell
-DATABASE_PASSWORD=ragnarok cargo run --bin=server
+DATABASE_PASSWORD=ragnarok cargo run --package server --bin server
 ```
 
 If everything goes right, you should receive something like this output:
 
 ```
-INFO [server] load 39 scripts in 0.126 secs
-INFO [server::server::boot::warps_loader] load 2781 warps in 0.007 secs
-INFO [server::server::boot::mob_spawn_loader] load 3391 mob spawns in 0.022 secs
-INFO [server] load 897 map-cache in 0.05 secs
-INFO [server::proxy] Start proxy for Char proxy, 6123:6121
-INFO [server::proxy] Start proxy for map proxy, 6124:5121
-INFO [server::server] Server listen on 0.0.0.0:6901
+2024-02-11 13:45:53.695168 +01:00 [main] [INFO]: Compiled 0 item scripts compiled, skipped 2492 item scripts compilation (already compiled) in 73ms
+2024-02-11 13:45:54.976721 +01:00 [main] [INFO]: load 39 scripts in 1104ms
+2024-02-11 13:45:55.110070 +01:00 [tokio-runtime-worker] [WARN]: Not able to load boot script: pre-re/warps/other/sign.txt, due to No such file or directory (os error 2)
+2024-02-11 13:45:55.113409 +01:00 [main] [INFO]: load 2782 warps in 6ms
+2024-02-11 13:45:55.134622 +01:00 [<unnamed>] [INFO]: load 3392 mob spawns in 19ms
+2024-02-11 13:45:55.152271 +01:00 [main] [INFO]: Loaded 897 map-cache in 44ms
+2024-02-11 13:45:55.378476 +01:00 [main] [INFO]: Executed and cached 1601 item scripts, skipped 891 item scripts (requiring runtime data) in 226ms
+2024-02-11 13:45:55.388987 +01:00 [<unnamed>] [INFO]: Start proxy for map proxy, 6124:5121
+2024-02-11 13:45:55.389135 +01:00 [<unnamed>] [INFO]: Start proxy for Char proxy, 6123:6121
+2024-02-11 13:45:55.389212 +01:00 [main] [WARN]: Visual debugger has been enable in configuration, but feature has not been compiled. Please consider enabling "visual-debugger" feature.
+2024-02-11 13:45:55.389241 +01:00 [main] [INFO]: Server started in 2347ms
+2024-02-11 13:45:55.389292 +01:00 [main] [INFO]: Server listen on 0.0.0.0:6901
 ```
+
+### 5.4 [Dev] Running tools 
+
+So far, we have a few executables being compiled together with the project:
+
+- **maps-tool:** Generate mapcache files from client data: `cargo run --package tools --bin maps-tool`
+- **packets-tool:** Generate packet struct from packetdb: `cargo run --package tools --bin packets-tool`
+- **skills-struct-generator:** Generate skills struct from skills configuration files: `cargo run --package tools --bin skills-struct-generator`
+
 
 #### 5.5 Running the Game
 ![Desktop Screenshot with Development Environment using RoBrowserLegacy](.github/images/robrowser-dev.png)

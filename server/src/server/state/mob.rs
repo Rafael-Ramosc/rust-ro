@@ -9,7 +9,6 @@ use crate::server::model::movement::{Movable, Movement};
 use models::position::Position;
 
 use models::status::{StatusSnapshot};
-use crate::server::model::path::manhattan_distance;
 
 
 #[derive(Setters, Clone)]
@@ -31,6 +30,7 @@ pub struct Mob {
     pub last_attacked_at: u128,
     pub to_remove: bool,
     pub last_moved_at: u128,
+    pub damage_motion: u32,
 }
 
 pub struct MobMovement {
@@ -52,7 +52,7 @@ impl Movable for Mob {
 }
 
 impl Mob {
-    pub fn new(id: u32, x: u16, y: u16, mob_id: i16, spawn_id: u32, name: String, name_english: String, status: StatusSnapshot) -> Mob {
+    pub fn new(id: u32, x: u16, y: u16, mob_id: i16, spawn_id: u32, name: String, name_english: String, _damage_motion: u32, status: StatusSnapshot) -> Mob {
         Mob {
             id,
             x,
@@ -69,6 +69,7 @@ impl Mob {
             last_attacked_at: 0,
             to_remove: false,
             last_moved_at: 0,
+            damage_motion: 0,
         }
     }
 
@@ -145,6 +146,14 @@ impl Mob {
     }
     pub fn set_last_moved_at(&mut self, tick: u128) {
         self.last_moved_at = tick;
+    }
+
+    pub fn position(&self) -> Position {
+        Position {
+            x: self.x,
+            y: self.y,
+            dir: 0,
+        }
     }
 }
 

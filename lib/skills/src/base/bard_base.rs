@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// BA_MUSICALLESSON
+// BA_MUSICALLESSON - Music Lessons
 pub struct MusicLessons {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -81,7 +86,65 @@ impl SkillBase for MusicLessons {
         false
     }
     fn _is_physical(&self) -> bool {
+        false
+    }
+    #[inline(always)]
+    fn _has_bonuses_to_self(&self) -> bool {
         true
+    }
+    #[inline(always)]
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 3), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(40), 0, 315),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 6), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(80), 0, 315),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 9), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(120), 0, 315),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 12), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-96), 0, 315),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 15), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-56), 0, 315),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 18), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-16), 0, 315),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 21), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(24), 0, 315),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 24), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(64), 0, 315),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 27), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(104), 0, 315),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_passive_skill(BonusType::MasteryDamageUsingWeaponType(Musical, 30), 0, 315),
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(-112), 0, 315),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_passive_skill(&self) -> bool {
@@ -94,7 +157,7 @@ impl SkillBase for MusicLessons {
 }
 impl PassiveSkillBase for MusicLessons {
 }
-// BA_MUSICALSTRIKE
+// BA_MUSICALSTRIKE - Melody Strike
 pub struct MelodyStrike {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -167,7 +230,7 @@ impl SkillBase for MelodyStrike {
         0
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -249,10 +312,14 @@ impl OffensiveSkillBase for MelodyStrike {
     }
     #[inline(always)]
     fn _element(&self) -> Element {
-        Element::Weapon
+        Element::Ammo
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        vec![]
     }
 }
-// BA_DISSONANCE
+// BA_DISSONANCE - Unchained Serenade
 pub struct UnchainedSerenade {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -361,14 +428,6 @@ impl SkillBase for UnchainedSerenade {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-    #[inline(always)]
     fn is_performance_skill(&self) -> bool {
         true
     }
@@ -377,11 +436,9 @@ impl SkillBase for UnchainedSerenade {
         Some(self)
     }
 }
-impl SelfSkillBase for UnchainedSerenade {
-}
 impl PerformanceSkillBase for UnchainedSerenade {
 }
-// BA_FROSTJOKER
+// BA_FROSTJOKER - Unbarring Octave
 pub struct UnbarringOctave {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -486,17 +543,56 @@ impl SkillBase for UnbarringOctave {
        4000
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_offensive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for UnbarringOctave {
+impl OffensiveSkillBase for UnbarringOctave {
+    #[inline(always)]
+    fn _hit_count(&self) -> i8 {
+       1
+    }
+    #[inline(always)]
+    fn _element(&self) -> Element {
+        Element::Neutral
+    }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 35 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Freeze);
+            }
+        }
+        effects
+    }
 }
-// BA_WHISTLE
+// BA_WHISTLE - Perfect Tablature
 pub struct PerfectTablature {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -635,12 +731,62 @@ impl SkillBase for PerfectTablature {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(1), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(10), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(2), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(20), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(3), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(30), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(4), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(40), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(5), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(50), 2, tick, 60000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(6), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(60), 2, tick, 60000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(7), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(70), 2, tick, 60000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(8), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(80), 2, tick, 60000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(9), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(90), 2, tick, 60000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Flee(10), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Luk(100), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -651,11 +797,9 @@ impl SkillBase for PerfectTablature {
         Some(self)
     }
 }
-impl SelfSkillBase for PerfectTablature {
-}
 impl PerformanceSkillBase for PerfectTablature {
 }
-// BA_ASSASSINCROSS
+// BA_ASSASSINCROSS - Impressive Riff
 pub struct ImpressiveRiff {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -794,12 +938,52 @@ impl SkillBase for ImpressiveRiff {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(6.0), 2, tick, 120000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(7.0), 2, tick, 120000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(8.0), 2, tick, 120000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(9.0), 2, tick, 120000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(10.0), 2, tick, 120000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(11.0), 2, tick, 120000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(12.0), 2, tick, 120000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(13.0), 2, tick, 120000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(14.0), 2, tick, 120000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AspdPercentage(15.0), 2, tick, 120000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -810,11 +994,9 @@ impl SkillBase for ImpressiveRiff {
         Some(self)
     }
 }
-impl SelfSkillBase for ImpressiveRiff {
-}
 impl PerformanceSkillBase for ImpressiveRiff {
 }
-// BA_POEMBRAGI
+// BA_POEMBRAGI - Magic Strings
 pub struct MagicStrings {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -953,14 +1135,6 @@ impl SkillBase for MagicStrings {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
-        true
-    }
-    #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
-    }
-    #[inline(always)]
     fn is_performance_skill(&self) -> bool {
         true
     }
@@ -969,11 +1143,9 @@ impl SkillBase for MagicStrings {
         Some(self)
     }
 }
-impl SelfSkillBase for MagicStrings {
-}
 impl PerformanceSkillBase for MagicStrings {
 }
-// BA_APPLEIDUN
+// BA_APPLEIDUN - Song of Lutie
 pub struct SongofLutie {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1112,12 +1284,52 @@ impl SkillBase for SongofLutie {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
-        Some(self)
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(2), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(4), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(6), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(8), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(10), 2, tick, 180000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(12), 2, tick, 180000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(14), 2, tick, 180000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(16), 2, tick, 180000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(18), 2, tick, 180000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MaxhpPercentage(20), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
     }
     #[inline(always)]
     fn is_performance_skill(&self) -> bool {
@@ -1128,11 +1340,9 @@ impl SkillBase for SongofLutie {
         Some(self)
     }
 }
-impl SelfSkillBase for SongofLutie {
-}
 impl PerformanceSkillBase for SongofLutie {
 }
-// BD_ADAPTATION
+// BD_ADAPTATION - Amp
 pub struct Amp {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1203,17 +1413,17 @@ impl SkillBase for Amp {
         if status.sp() > 1 { Ok(1) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Amp {
+impl InteractiveSkillBase for Amp {
 }
-// BD_ENCORE
+// BD_ENCORE - Encore
 pub struct Encore {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1292,17 +1502,17 @@ impl SkillBase for Encore {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Encore {
+impl InteractiveSkillBase for Encore {
 }
-// BD_LULLABY
+// BD_LULLABY - Lullaby
 pub struct Lullaby {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1381,17 +1591,17 @@ impl SkillBase for Lullaby {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_performance_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for Lullaby {
+impl PerformanceSkillBase for Lullaby {
 }
-// BD_RICHMANKIM
+// BD_RICHMANKIM - Mental Sensing
 pub struct MentalSensing {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1470,17 +1680,17 @@ impl SkillBase for MentalSensing {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_performance_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for MentalSensing {
+impl PerformanceSkillBase for MentalSensing {
 }
-// BD_ETERNALCHAOS
+// BD_ETERNALCHAOS - Down Tempo
 pub struct DownTempo {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1559,17 +1769,29 @@ impl SkillBase for DownTempo {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::VitDefPercentage(-100), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_performance_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for DownTempo {
+impl PerformanceSkillBase for DownTempo {
 }
-// BD_DRUMBATTLEFIELD
+// BD_DRUMBATTLEFIELD - Battle Theme
 pub struct BattleTheme {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1678,17 +1900,50 @@ impl SkillBase for BattleTheme {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(50), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Def(4), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(75), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Def(6), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(100), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Def(8), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(125), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Def(10), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::Atk(150), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::Def(12), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_performance_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for BattleTheme {
+impl PerformanceSkillBase for BattleTheme {
 }
-// BD_RINGNIBELUNGEN
+// BD_RINGNIBELUNGEN - Harmonic Lick
 pub struct HarmonicLick {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1797,17 +2052,45 @@ impl SkillBase for HarmonicLick {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MasteryDamageUsingWeaponType(AllWeaponType, 75), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MasteryDamageUsingWeaponType(AllWeaponType, 100), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MasteryDamageUsingWeaponType(AllWeaponType, 125), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MasteryDamageUsingWeaponType(AllWeaponType, -106), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::MasteryDamageUsingWeaponType(AllWeaponType, -81), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_performance_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for HarmonicLick {
+impl PerformanceSkillBase for HarmonicLick {
 }
-// BD_ROKISWEIL
+// BD_ROKISWEIL - Classical Pluck
 pub struct ClassicalPluck {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1886,17 +2169,17 @@ impl SkillBase for ClassicalPluck {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_performance_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for ClassicalPluck {
+impl PerformanceSkillBase for ClassicalPluck {
 }
-// BD_INTOABYSS
+// BD_INTOABYSS - Power Chord
 pub struct PowerChord {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -1975,17 +2258,17 @@ impl SkillBase for PowerChord {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_performance_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for PowerChord {
+impl PerformanceSkillBase for PowerChord {
 }
-// BD_SIEGFRIED
+// BD_SIEGFRIED - Acoustic Rhythm
 pub struct AcousticRhythm {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2064,17 +2347,45 @@ impl SkillBase for AcousticRhythm {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceToStatusPercentage(AllStatusEffect, 10.0), 2, tick, 60000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceToStatusPercentage(AllStatusEffect, 20.0), 2, tick, 60000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceToStatusPercentage(AllStatusEffect, 30.0), 2, tick, 60000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceToStatusPercentage(AllStatusEffect, 40.0), 2, tick, 60000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::ResistanceToStatusPercentage(AllStatusEffect, 50.0), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_performance_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_performance_skill(&self) -> Option<&dyn PerformanceSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for AcousticRhythm {
+impl PerformanceSkillBase for AcousticRhythm {
 }
-// BA_PANGVOICE
+// BA_PANGVOICE - Pang Voice
 pub struct PangVoice {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -2132,7 +2443,7 @@ impl SkillBase for PangVoice {
        20
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -2153,17 +2464,17 @@ impl SkillBase for PangVoice {
        2000
     }
     #[inline(always)]
-    fn is_offensive_skill(&self) -> bool {
+    fn is_supportive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_offensive_skill(&self) -> Option<&dyn OffensiveSkill> {
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
-}
-impl OffensiveSkillBase for PangVoice {
     #[inline(always)]
-    fn _element(&self) -> Element {
-        Element::Neutral
+    fn _client_type(&self) -> usize {
+        16
     }
+}
+impl SupportiveSkillBase for PangVoice {
 }

@@ -6,18 +6,23 @@
 use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
-use models::enums::element::Element;
+use models::enums::element::Element::{*};
 
 use models::item::WearWeapon;
 
 use models::status::StatusSnapshot;
 use models::item::NormalInventoryItem;
+use models::enums::weapon::WeaponType::{*};
+use models::enums::bonus::{BonusType};
+use models::enums::status::StatusEffect::{*};
+use models::status_bonus::{TemporaryStatusBonus};
+use models::enums::mob::MobRace::{*};
 
 use crate::{*};
 
 use crate::base::*;
 use std::any::Any;
-// WS_MELTDOWN
+// WS_MELTDOWN - Shattering Strike
 pub struct ShatteringStrike {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -111,7 +116,7 @@ impl SkillBase for ShatteringStrike {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -182,17 +187,79 @@ impl SkillBase for ShatteringStrike {
         0
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(0.7), 2, tick, 15000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(1), 2, tick, 15000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(1.4), 2, tick, 20000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(2), 2, tick, 20000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(2.1), 2, tick, 25000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(3), 2, tick, 25000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(2.8), 2, tick, 30000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(4), 2, tick, 30000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(3.5), 2, tick, 35000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(5), 2, tick, 35000),]);
+        }
+        if self.level == 6 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(4.2), 2, tick, 40000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(6), 2, tick, 40000),]);
+        }
+        if self.level == 7 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(4.9), 2, tick, 45000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(7), 2, tick, 45000),]);
+        }
+        if self.level == 8 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(5.6), 2, tick, 50000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(8), 2, tick, 50000),]);
+        }
+        if self.level == 9 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(6.3), 2, tick, 55000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(9), 2, tick, 55000),]);
+        }
+        if self.level == 10 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::BreakArmorPercentage(7.0), 2, tick, 60000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakWeaponPercentage(10), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for ShatteringStrike {
+impl SupportiveSkillBase for ShatteringStrike {
 }
-// WS_CARTBOOST
+// WS_CARTBOOST - Cart Boost
 pub struct CartBoost {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -256,7 +323,7 @@ impl SkillBase for CartBoost {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -272,17 +339,33 @@ impl SkillBase for CartBoost {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(25), 2, tick, 60000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for CartBoost {
+impl SupportiveSkillBase for CartBoost {
 }
-// WS_WEAPONREFINE
+// WS_WEAPONREFINE - Upgrade Weapon
 pub struct UpgradeWeapon {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -346,24 +429,24 @@ impl SkillBase for UpgradeWeapon {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
         if status.sp() > 5 { Ok(5) } else {Err(())}
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn is_interactive_skill(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
         Some(self)
     }
 }
-impl SelfSkillBase for UpgradeWeapon {
+impl InteractiveSkillBase for UpgradeWeapon {
 }
-// WS_CARTTERMINATION
+// WS_CARTTERMINATION - Cart Termination
 pub struct CartTermination {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -421,7 +504,7 @@ impl SkillBase for CartTermination {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::Attack
+        SkillTargetType::Target
     }
     fn _is_magic(&self) -> bool {
         false
@@ -537,8 +620,64 @@ impl OffensiveSkillBase for CartTermination {
     fn _element(&self) -> Element {
         Element::Weapon
     }
+    #[inline(always)]
+    fn _inflict_status_effect_to_target(&self, _status: &StatusSnapshot, _target_status: &StatusSnapshot, mut _rng: fastrand::Rng) -> Vec<StatusEffect> {
+        let mut effects = Vec::with_capacity(1);
+        let chance = _rng.u8(1..=100);
+        if self.level == 1 {
+            if chance <= 5 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 2 {
+            if chance <= 10 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 3 {
+            if chance <= 15 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 4 {
+            if chance <= 20 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 5 {
+            if chance <= 25 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 6 {
+            if chance <= 30 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 7 {
+            if chance <= 35 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 8 {
+            if chance <= 40 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 9 {
+            if chance <= 45 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        if self.level == 10 {
+            if chance <= 50 {
+                effects.push(StatusEffect::Stun);
+            }
+        }
+        effects
+    }
 }
-// WS_OVERTHRUSTMAX
+// WS_OVERTHRUSTMAX - Maximum Power Thrust
 pub struct MaximumPowerThrust {
     pub(crate) level: u8,
     pub(crate) cast_time: u32,
@@ -596,13 +735,13 @@ impl SkillBase for MaximumPowerThrust {
        15
     }
     fn _target_type(&self) -> SkillTargetType {
-        SkillTargetType::MySelf
+        SkillTargetType::Party
     }
     fn _is_magic(&self) -> bool {
         false
     }
     fn _is_physical(&self) -> bool {
-        true
+        false
     }
     #[inline(always)]
     fn _validate_sp(&self, status: &StatusSnapshot) -> SkillRequirementResult<u32> {
@@ -637,13 +776,50 @@ impl SkillBase for MaximumPowerThrust {
         }
     }
     #[inline(always)]
-    fn is_self_skill(&self) -> bool {
+    fn _has_bonuses_to_self(&self) -> bool {
         true
     }
     #[inline(always)]
-    fn as_self_skill(&self) -> Option<&dyn SelfSkill> {
+    fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
+        if self.level == 1 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(20), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 180000),]);
+        }
+        if self.level == 2 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(40), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 180000),]);
+        }
+        if self.level == 3 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(60), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 180000),]);
+        }
+        if self.level == 4 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(80), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 180000),]);
+        }
+        if self.level == 5 {
+            return TemporaryStatusBonuses(vec![
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(100), 2, tick, 180000),
+                TemporaryStatusBonus::with_duration(BonusType::BreakSelfWeaponPercentage(0.1), 2, tick, 180000),]);
+        }
+        TemporaryStatusBonuses::default()
+    }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
         Some(self)
     }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
 }
-impl SelfSkillBase for MaximumPowerThrust {
+impl SupportiveSkillBase for MaximumPowerThrust {
 }
