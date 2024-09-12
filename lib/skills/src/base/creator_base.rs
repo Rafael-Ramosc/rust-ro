@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for AidCondensedPotion {
     }
     fn _id(&self) -> u32 {
         478
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -174,6 +177,18 @@ impl SkillBase for AidCondensedPotion {
         TemporaryStatusBonuses::default()
     }
     #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        2
+    }
+    #[inline(always)]
     fn is_ground_skill(&self) -> bool {
         true
     }
@@ -181,6 +196,8 @@ impl SkillBase for AidCondensedPotion {
     fn as_ground_skill(&self) -> Option<&dyn GroundSkill> {
         Some(self)
     }
+}
+impl SupportiveSkillBase for AidCondensedPotion {
 }
 impl GroundSkillBase for AidCondensedPotion {
 }
@@ -198,6 +215,9 @@ impl SkillBase for FullProtection {
     }
     fn _id(&self) -> u32 {
         479
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -295,6 +315,9 @@ impl SkillBase for AcidDemonstration {
     }
     fn _id(&self) -> u32 {
         490
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -437,6 +460,9 @@ impl SkillBase for PlantCultivation {
     }
     fn _id(&self) -> u32 {
         491
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
     }
     fn _level(&self) -> u8 {
         self.level

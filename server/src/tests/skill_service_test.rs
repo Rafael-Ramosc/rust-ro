@@ -50,15 +50,17 @@ mod tests {
     use models::enums::class::JobName;
 
     use models::enums::{EnumWithNumberValue, EnumWithStringValue};
+    use models::enums::bonus::BonusType;
     use models::enums::skill::UseSkillFailure;
     use crate::tests::common::assert_helper::*;
     use models::position::Position;
     use models::enums::skill_enums::SkillEnum;
     use models::status::{KnownSkill, Status};
+    use models::status_bonus::{StatusBonus, StatusBonuses};
     use packets::packets::{Packet, PacketZcAckTouseskill, PacketZcActionFailure, PacketZcUseskillAck2};
 
     use skills::{Skill, SkillBase};
-    use crate::{assert_sent_packet_in_current_packetver, status_snapshot, status_snapshot_mob};
+    use crate::{assert_sent_packet_in_current_packetver, assert_vec_equals, status_snapshot, status_snapshot_mob};
     use crate::GlobalConfigService;
     use crate::server::model::map_item::{MapItemSnapshot, ToMapItem, ToMapItemSnapshot};
     use crate::tests::common;
@@ -328,6 +330,40 @@ mod tests {
     #[ignore = "not yet implemented"]
     fn start_use_skill_should_consume_item_on_success() {
         // freezing trap, acid demonstration, stone curse
+    }
+
+    #[test]
+    fn use_skill_should_apply_bonuses() {
+        // Given
+        let context = before_each();
+        let mut character = create_character();
+        #[derive(Clone)]
+        struct TestResult {
+            skill: KnownSkill,
+            expected_bonuses: StatusBonuses
+        }
+        let scenario = vec![
+            TestResult { skill: KnownSkill { value: SkillEnum::AlBlessing, level: 10 }, expected_bonuses: StatusBonuses::new(vec![StatusBonus::new(BonusType::Dex(110)), StatusBonus::new(BonusType::Str(10)), StatusBonus::new(BonusType::Int(10))]) },
+            TestResult { skill: KnownSkill { value: SkillEnum::AlIncagi, level: 10 }, expected_bonuses: StatusBonuses::new(vec![StatusBonus::new(BonusType::Agi(12)), StatusBonus::new(BonusType::SpeedPercentage(25))]) },
+        ];
+        let target = MapItemSnapshot { map_item: character.to_map_item(), position: Position { x: character.x + 1, y: character.y + 1, dir: 0 } };
+        // When
+        for scenarii in scenario {
+            let source_status = status_snapshot!(context, character);
+            let target_status = status_snapshot!(context, character);
+            character.set_skill_in_use(Some(target.map_item.id()), 0, scenarii.skill.into(), true);
+            let skill_use_response = context.skill_service.do_use_skill(&mut character, Some(target.clone()), source_status, Some(&target_status), 1);
+            assert!(skill_use_response.is_some());
+            let skill_use_response = skill_use_response.unwrap();
+            assert_vec_equals!(skill_use_response.bonuses.into(), scenarii.expected_bonuses.into());
+        }
+        // Then
+    }
+    #[test]
+    fn use_skill_should_send_par_change_packets() {
+        // Given
+        // When
+        // Then
     }
 
     #[test]

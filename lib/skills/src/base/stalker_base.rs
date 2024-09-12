@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for Stealth {
     }
     fn _id(&self) -> u32 {
         389
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -104,31 +107,41 @@ impl SkillBase for Stealth {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-86), 2, tick, 10000),
-                TemporaryStatusBonus::with_duration(BonusType::Str(1), 2, tick, 10000),]);
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-86), 0, tick, 10000, 389),
+                TemporaryStatusBonus::with_duration(BonusType::Str(1), 0, tick, 10000, 389),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-81), 2, tick, 10000),
-                TemporaryStatusBonus::with_duration(BonusType::Str(2), 2, tick, 10000),]);
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-81), 0, tick, 10000, 389),
+                TemporaryStatusBonus::with_duration(BonusType::Str(2), 0, tick, 10000, 389),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-76), 2, tick, 10000),
-                TemporaryStatusBonus::with_duration(BonusType::Str(4), 2, tick, 10000),]);
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-76), 0, tick, 10000, 389),
+                TemporaryStatusBonus::with_duration(BonusType::Str(4), 0, tick, 10000, 389),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-71), 2, tick, 10000),
-                TemporaryStatusBonus::with_duration(BonusType::Str(8), 2, tick, 10000),]);
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-71), 0, tick, 10000, 389),
+                TemporaryStatusBonus::with_duration(BonusType::Str(8), 0, tick, 10000, 389),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-66), 2, tick, 10000),
-                TemporaryStatusBonus::with_duration(BonusType::Str(16), 2, tick, 10000),]);
+                TemporaryStatusBonus::with_duration(BonusType::SpeedPercentage(-66), 0, tick, 10000, 389),
+                TemporaryStatusBonus::with_duration(BonusType::Str(16), 0, tick, 10000, 389),]);
         }
         TemporaryStatusBonuses::default()
     }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
+}
+impl InteractiveSkillBase for Stealth {
 }
 // ST_REJECTSWORD - Counter Instinct
 pub struct CounterInstinct {
@@ -144,6 +157,9 @@ impl SkillBase for CounterInstinct {
     }
     fn _id(&self) -> u32 {
         390
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -238,23 +254,23 @@ impl SkillBase for CounterInstinct {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(15), 2, tick, 300000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(15), 14, tick, 300000, 390),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(30), 2, tick, 300000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(30), 14, tick, 300000, 390),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(45), 2, tick, 300000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(45), 14, tick, 300000, 390),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(60), 2, tick, 300000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(60), 14, tick, 300000, 390),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(75), 2, tick, 300000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackReflectChancePercentage(75), 14, tick, 300000, 390),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -287,6 +303,9 @@ impl SkillBase for Preserve {
     }
     fn _id(&self) -> u32 {
         475
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -347,6 +366,20 @@ impl SkillBase for Preserve {
     fn _base_cast_time(&self) -> u32 {
        1000
     }
+    #[inline(always)]
+    fn is_supportive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_supportive_skill(&self) -> Option<&dyn SupportiveSkill> {
+        Some(self)
+    }
+    #[inline(always)]
+    fn _client_type(&self) -> usize {
+        4
+    }
+}
+impl SupportiveSkillBase for Preserve {
 }
 // ST_FULLSTRIP - Divest All
 pub struct DivestAll {
@@ -362,6 +395,9 @@ impl SkillBase for DivestAll {
     }
     fn _id(&self) -> u32 {
         476
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level

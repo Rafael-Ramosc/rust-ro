@@ -20,6 +20,7 @@ pub mod weapon;
 pub mod bonus;
 pub mod mob;
 pub mod trigger;
+pub mod client_effect_icon;
 
 pub trait EnumWithStringValue {
     fn try_from_string(value: &str) -> Result<Self, String>
@@ -73,3 +74,6 @@ pub trait EnumStackable<T: PartialEq> {
     }
     fn get_enum_value<'a>(single_enum: &T, enums: &'a Vec<&T>) -> Option<f32>;
 }
+
+
+

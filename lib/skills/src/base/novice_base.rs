@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for BasicSkill {
     }
     fn _id(&self) -> u32 {
         1
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Passive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -113,6 +116,9 @@ impl SkillBase for FirstAid {
     }
     fn _id(&self) -> u32 {
         142
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Passive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -194,6 +200,9 @@ impl SkillBase for PlayDead {
     }
     fn _id(&self) -> u32 {
         143
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level

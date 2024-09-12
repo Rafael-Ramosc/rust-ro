@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for RagingPalmStrike {
     }
     fn _id(&self) -> u32 {
         370
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -192,6 +195,9 @@ impl SkillBase for GlacierFist {
     fn _id(&self) -> u32 {
         371
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -314,6 +320,9 @@ impl SkillBase for ChainCrushCombo {
     }
     fn _id(&self) -> u32 {
         372
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -532,6 +541,9 @@ impl SkillBase for Zen {
     fn _id(&self) -> u32 {
         401
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -591,4 +603,14 @@ impl SkillBase for Zen {
     fn _base_cast_time(&self) -> u32 {
        2000
     }
+    #[inline(always)]
+    fn is_interactive_skill(&self) -> bool {
+        true
+    }
+    #[inline(always)]
+    fn as_interactive_skill(&self) -> Option<&dyn InteractiveSkill> {
+        Some(self)
+    }
+}
+impl InteractiveSkillBase for Zen {
 }

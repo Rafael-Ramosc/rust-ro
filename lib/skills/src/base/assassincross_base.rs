@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for AdvancedKatarMastery {
     }
     fn _id(&self) -> u32 {
         376
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Passive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -96,23 +99,23 @@ impl SkillBase for AdvancedKatarMastery {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(12), 0, 376),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(12), StatusBonusFlag::Default.as_flag(), 376),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(14), 0, 376),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(14), StatusBonusFlag::Default.as_flag(), 376),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(16), 0, 376),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(16), StatusBonusFlag::Default.as_flag(), 376),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(18), 0, 376),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(18), StatusBonusFlag::Default.as_flag(), 376),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(20), 0, 376),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AtkPercentage(20), StatusBonusFlag::Default.as_flag(), 376),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -141,6 +144,9 @@ impl SkillBase for EnchantDeadlyPoison {
     }
     fn _id(&self) -> u32 {
         378
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -247,28 +253,28 @@ impl SkillBase for EnchantDeadlyPoison {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(100), 2, tick, 40000),
-                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 3.0), 2, tick, 40000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(100), 14, tick, 40000, 378),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 3.0), 14, tick, 40000, 378),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-106), 2, tick, 45000),
-                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 3.5), 2, tick, 45000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-106), 14, tick, 45000, 378),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 3.5), 14, tick, 45000, 378),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-56), 2, tick, 50000),
-                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 4.0), 2, tick, 50000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-56), 14, tick, 50000, 378),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 4.0), 14, tick, 50000, 378),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-6), 2, tick, 55000),
-                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 4.5), 2, tick, 55000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(-6), 14, tick, 55000, 378),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 4.5), 14, tick, 55000, 378),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(44), 2, tick, 60000),
-                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 5.0), 2, tick, 60000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(44), 14, tick, 60000, 378),
+                TemporaryStatusBonus::with_duration(BonusType::SkillIdSuccessPercentage(378, 5.0), 14, tick, 60000, 378),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -301,6 +307,9 @@ impl SkillBase for SoulDestroyer {
     }
     fn _id(&self) -> u32 {
         379
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -561,6 +570,9 @@ impl SkillBase for MeteorAssault {
     fn _id(&self) -> u32 {
         406
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -793,103 +805,103 @@ impl OffensiveSkillBase for MeteorAssault {
         let chance = _rng.u8(1..=100);
         if self.level == 1 {
             if chance <= 10 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 2 {
             if chance <= 15 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 3 {
             if chance <= 20 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 4 {
             if chance <= 25 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 5 {
             if chance <= 30 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 6 {
             if chance <= 35 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 7 {
             if chance <= 40 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 8 {
             if chance <= 45 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 9 {
             if chance <= 50 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         if self.level == 10 {
             if chance <= 55 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Bleeding);
             }
         }
         let chance = _rng.u8(1..=100);
         if self.level == 1 {
             if chance <= 10 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 2 {
             if chance <= 15 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 3 {
             if chance <= 20 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 4 {
             if chance <= 25 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 5 {
             if chance <= 30 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 6 {
             if chance <= 35 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 7 {
             if chance <= 40 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 8 {
             if chance <= 45 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 9 {
             if chance <= 50 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         if self.level == 10 {
             if chance <= 55 {
-                effects.push(StatusEffect::Bleeding);
+                effects.push(StatusEffect::Stun);
             }
         }
         effects
@@ -909,6 +921,9 @@ impl SkillBase for CreateDeadlyPoison {
     }
     fn _id(&self) -> u32 {
         407
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
     }
     fn _level(&self) -> u8 {
         self.level

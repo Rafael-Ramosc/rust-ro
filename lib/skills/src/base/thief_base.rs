@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for DoubleAttack {
     }
     fn _id(&self) -> u32 {
         48
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Passive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -96,53 +99,53 @@ impl SkillBase for DoubleAttack {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(1), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 5.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(1), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 5.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(2), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 10.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(2), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 10.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(3), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 15.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(3), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 15.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(4), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 20.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(4), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 20.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(5), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 25.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(5), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 25.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 6 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(6), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 30.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(6), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 30.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 7 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(7), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 35.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(7), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 35.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 8 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(8), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 40.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(8), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 40.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 9 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(9), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 45.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(9), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 45.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         if self.level == 10 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(10), 0, 48),
-                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 50.0), 0, 48),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::AccuracyPercentage(10), StatusBonusFlag::Default.as_flag(), 48),
+                TemporaryStatusBonus::with_passive_skill(BonusType::AutospellSkillIdChancePercentage(48, 50.0), StatusBonusFlag::Default.as_flag(), 48),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -171,6 +174,9 @@ impl SkillBase for ImproveDodge {
     }
     fn _id(&self) -> u32 {
         49
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Passive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -231,43 +237,43 @@ impl SkillBase for ImproveDodge {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(1), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(1), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(2), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(2), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(3), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(3), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(4), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(4), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(5), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(5), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 6 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(6), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(6), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 7 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(7), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(7), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 8 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(8), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(8), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 9 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(9), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(9), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         if self.level == 10 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(10), 0, 49),]);
+                TemporaryStatusBonus::with_passive_skill(BonusType::SpeedPercentage(10), StatusBonusFlag::Default.as_flag(), 49),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -296,6 +302,9 @@ impl SkillBase for Steal {
     }
     fn _id(&self) -> u32 {
         50
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -416,6 +425,9 @@ impl SkillBase for Hiding {
     fn _id(&self) -> u32 {
         51
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -496,6 +508,9 @@ impl SkillBase for Envenom {
     }
     fn _id(&self) -> u32 {
         52
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -646,6 +661,9 @@ impl SkillBase for Detoxify {
     fn _id(&self) -> u32 {
         53
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -730,6 +748,9 @@ impl SkillBase for SandAttack {
     }
     fn _id(&self) -> u32 {
         149
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -835,6 +856,9 @@ impl SkillBase for BackSlide {
     fn _id(&self) -> u32 {
         150
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -915,6 +939,9 @@ impl SkillBase for FindStone {
     }
     fn _id(&self) -> u32 {
         151
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Interactive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -1010,6 +1037,9 @@ impl SkillBase for StoneFling {
     fn _id(&self) -> u32 {
         152
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -1097,13 +1127,13 @@ impl OffensiveSkillBase for StoneFling {
         let chance = _rng.u8(1..=100);
         if self.level == 1 {
             if chance <= 3 {
-                effects.push(StatusEffect::Blind);
+                effects.push(StatusEffect::Stun);
             }
         }
         let chance = _rng.u8(1..=100);
         if self.level == 1 {
             if chance <= 3 {
-                effects.push(StatusEffect::Stun);
+                effects.push(StatusEffect::Blind);
             }
         }
         effects

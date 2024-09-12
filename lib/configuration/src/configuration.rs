@@ -14,6 +14,8 @@ use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::{env, fs};
+use models::enums::client_effect_icon::ClientEffectIcon;
+use models::status_bonus::StatusBonusFlag;
 use crate::bonus_type_wrapper::BonusTypeWrapper;
 
 const DEFAULT_LOG_LEVEL: &str = "info";
@@ -229,6 +231,12 @@ pub struct SkillConfig {
     default
     )]
     damage_flags: Option<u64>,
+    #[serde(
+        rename = "bonusflags",
+        deserialize_with = "deserialize_bonus_flags",
+        default
+    )]
+    bonus_flags: Option<u64>,
     #[serde(
     rename = "flags",
     deserialize_with = "deserialize_skill_flags",
@@ -829,6 +837,8 @@ pub struct SkillConfig {
         default
     )]
     bonus_to_target_before_hit: Vec<BonusPerLevel>,
+    #[serde(rename = "effectClientIcon", deserialize_with = "deserialize_optional_string_enum",default)]
+    effect_client_icon: Option<ClientEffectIcon>,
 }
 
 #[derive(Deserialize, Debug, Clone, GettersAll)]
@@ -908,7 +918,7 @@ pub struct SkillRequirements {
     #[serde(rename = "itemcost", default)]
     item_cost: Vec<InternalSkillItemCost>,
     #[serde(rename = "joblevel", default)]
-    job_level: Option<u32>,
+    job_level: Option<u32>
 }
 
 #[derive(Deserialize, Debug, Clone, GettersAll)]
@@ -1055,6 +1065,13 @@ fn deserialize_skill_flags<'de, D>(deserializer: D) -> Result<Option<u64>, D::Er
         D: Deserializer<'de>,
 {
     deserialize_flags::<_, SkillFlags>(deserializer)
+}
+
+fn deserialize_bonus_flags<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>
+    where
+        D: Deserializer<'de>,
+{
+    deserialize_flags::<_, StatusBonusFlag>(deserializer)
 }
 
 fn deserialize_weapon_flags<'de, D>(deserializer: D) -> Result<Option<u64>, D::Error>

@@ -3,7 +3,7 @@
 
 #![allow(dead_code, unused_must_use, unused_imports, unused_variables)]
 
-use models::enums::{EnumWithMaskValueU64, EnumWithNumberValue};
+use models::enums::{*};
 use models::enums::skill::*;
 use models::enums::weapon::AmmoType;
 use models::enums::element::Element::{*};
@@ -15,7 +15,7 @@ use models::item::NormalInventoryItem;
 use models::enums::weapon::WeaponType::{*};
 use models::enums::bonus::{BonusType};
 use models::enums::status::StatusEffect::{*};
-use models::status_bonus::{TemporaryStatusBonus};
+use models::status_bonus::{StatusBonusFlag, TemporaryStatusBonus};
 use models::enums::mob::MobRace::{*};
 
 use crate::{*};
@@ -36,6 +36,9 @@ impl SkillBase for AuraBlade {
     }
     fn _id(&self) -> u32 {
         355
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -138,23 +141,23 @@ impl SkillBase for AuraBlade {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::Atk(20), 2, tick, 40000),]);
+                TemporaryStatusBonus::with_duration(BonusType::Atk(20), 14, tick, 40000, 355),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::Atk(40), 2, tick, 60000),]);
+                TemporaryStatusBonus::with_duration(BonusType::Atk(40), 14, tick, 60000, 355),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::Atk(60), 2, tick, 80000),]);
+                TemporaryStatusBonus::with_duration(BonusType::Atk(60), 14, tick, 80000, 355),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::Atk(80), 2, tick, 100000),]);
+                TemporaryStatusBonus::with_duration(BonusType::Atk(80), 14, tick, 100000, 355),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::Atk(100), 2, tick, 120000),]);
+                TemporaryStatusBonus::with_duration(BonusType::Atk(100), 14, tick, 120000, 355),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -187,6 +190,9 @@ impl SkillBase for Parrying {
     }
     fn _id(&self) -> u32 {
         356
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -259,43 +265,43 @@ impl SkillBase for Parrying {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(5), 2, tick, 15000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(5), 14, tick, 15000, 356),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(10), 2, tick, 20000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(10), 14, tick, 20000, 356),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(15), 2, tick, 25000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(15), 14, tick, 25000, 356),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(20), 2, tick, 30000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(20), 14, tick, 30000, 356),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(25), 2, tick, 35000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(25), 14, tick, 35000, 356),]);
         }
         if self.level == 6 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(30), 2, tick, 40000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(30), 14, tick, 40000, 356),]);
         }
         if self.level == 7 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(35), 2, tick, 45000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(35), 14, tick, 45000, 356),]);
         }
         if self.level == 8 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(40), 2, tick, 50000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(40), 14, tick, 50000, 356),]);
         }
         if self.level == 9 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(45), 2, tick, 55000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(45), 14, tick, 55000, 356),]);
         }
         if self.level == 10 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(50), 2, tick, 60000),]);
+                TemporaryStatusBonus::with_duration(BonusType::PhysicalAttackBlockChancePercentage(50), 14, tick, 60000, 356),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -328,6 +334,9 @@ impl SkillBase for Concentration {
     }
     fn _id(&self) -> u32 {
         357
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -422,28 +431,28 @@ impl SkillBase for Concentration {
     fn _bonuses_to_self(&self, tick: u128) -> TemporaryStatusBonuses {
         if self.level == 1 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 2, tick, 25000),
-                TemporaryStatusBonus::with_duration(BonusType::Def(-5), 2, tick, 25000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(5), 14, tick, 25000, 357),
+                TemporaryStatusBonus::with_duration(BonusType::Def(-5), 14, tick, 25000, 357),]);
         }
         if self.level == 2 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(10), 2, tick, 30000),
-                TemporaryStatusBonus::with_duration(BonusType::Def(-10), 2, tick, 30000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(10), 14, tick, 30000, 357),
+                TemporaryStatusBonus::with_duration(BonusType::Def(-10), 14, tick, 30000, 357),]);
         }
         if self.level == 3 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(15), 2, tick, 35000),
-                TemporaryStatusBonus::with_duration(BonusType::Def(-15), 2, tick, 35000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(15), 14, tick, 35000, 357),
+                TemporaryStatusBonus::with_duration(BonusType::Def(-15), 14, tick, 35000, 357),]);
         }
         if self.level == 4 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(20), 2, tick, 40000),
-                TemporaryStatusBonus::with_duration(BonusType::Def(-20), 2, tick, 40000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(20), 14, tick, 40000, 357),
+                TemporaryStatusBonus::with_duration(BonusType::Def(-20), 14, tick, 40000, 357),]);
         }
         if self.level == 5 {
             return TemporaryStatusBonuses(vec![
-                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(25), 2, tick, 45000),
-                TemporaryStatusBonus::with_duration(BonusType::Def(-25), 2, tick, 45000),]);
+                TemporaryStatusBonus::with_duration(BonusType::AtkPercentage(25), 14, tick, 45000, 357),
+                TemporaryStatusBonus::with_duration(BonusType::Def(-25), 14, tick, 45000, 357),]);
         }
         TemporaryStatusBonuses::default()
     }
@@ -476,6 +485,9 @@ impl SkillBase for Relax {
     }
     fn _id(&self) -> u32 {
         358
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
     }
     fn _level(&self) -> u8 {
         self.level
@@ -562,6 +574,9 @@ impl SkillBase for Frenzy {
     fn _id(&self) -> u32 {
         359
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Support
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -646,6 +661,9 @@ impl SkillBase for SpiralPierce {
     }
     fn _id(&self) -> u32 {
         397
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
@@ -858,6 +876,9 @@ impl SkillBase for TraumaticBlow {
     fn _id(&self) -> u32 {
         398
     }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
+    }
     fn _level(&self) -> u8 {
         self.level
     }
@@ -1000,6 +1021,9 @@ impl SkillBase for VitalStrike {
     }
     fn _id(&self) -> u32 {
         399
+    }
+    fn skill_type(&self) -> SkillType {
+        SkillType::Offensive
     }
     fn _level(&self) -> u8 {
         self.level
