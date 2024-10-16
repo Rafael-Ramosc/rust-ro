@@ -21,20 +21,20 @@ static SERVICE_INSTANCE_INIT: Once = Once::new();
 #[allow(dead_code)]
 pub struct StatusService {
     configuration_service: &'static GlobalConfigService,
-    vm: Arc<Vm>,
+    item_script_vm: Arc<Vm>,
 }
 
 impl StatusService {
-    pub fn new(configuration_service: &'static GlobalConfigService, native_function_file_path: &str) -> StatusService {
-        StatusService { configuration_service, vm: Arc::new(Vm::new(native_function_file_path, rathena_script_lang_interpreter::lang::vm::DebugFlag::None.value())) }
+    pub fn new(configuration_service: &'static GlobalConfigService, item_script_vm: Arc<Vm>) -> StatusService {
+        StatusService { configuration_service, item_script_vm }
     }
     pub fn instance() -> &'static StatusService {
         unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
     }
 
-    pub fn init(configuration_service: &'static GlobalConfigService, native_function_file_path: &str) {
+    pub fn init(configuration_service: &'static GlobalConfigService, item_script_vm: Arc<Vm>) {
         SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(StatusService::new(configuration_service, native_function_file_path));
+            SERVICE_INSTANCE = Some(StatusService::new(configuration_service, item_script_vm));
         });
     }
     //#[metrics::elapsed]
@@ -91,9 +91,16 @@ impl StatusService {
             self.collect_bonuses(status, &mut bonuses, item_model);
         }
 
+
         // TODO card and item combo
 
+        // Apply skills bonuses
+        for temporary_bonus in status.temporary_bonuses.iter() {
+            bonuses.push(temporary_bonus.bonus().clone());
+        }
+
         bonuses = BonusType::merge_enums(&bonuses);
+
         bonuses.iter().for_each(|bonus| bonus.add_bonus_to_status(&mut snapshot));
         // TODO [([base_hp*(1 + VIT/100)* trans_mod]+HPAdditions)*ItemHPMultipliers] https://irowiki.org/classic/Max_HP
         let hp_rebirth_modifier: f32 = if job.is_rebirth() { 1.25 } else { 1.0 };
@@ -127,14 +134,14 @@ impl StatusService {
     #[inline]
     fn collect_dynamic_script(&self, status: &Status, bonuses: &mut &mut Vec<BonusType>, item_model: &&ItemModel) {
         let dynamic_item_script_handler = DynamicItemScriptHandler::new(self.configuration_service, status, item_model.id as u32);
-        if self.vm.contains_class(format!("itemscript{}", item_model.id).as_str()) {
-            Vm::repl_on_registered_class(self.vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
+        if self.item_script_vm.contains_class(format!("itemscript{}", item_model.id).as_str()) {
+            Vm::repl_on_registered_class(self.item_script_vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
                 .map_err(|e| error!("Failed to execute item script for item {}, due to \n{}", item_model.id, e)).unwrap();
         } else if let Some(script_compilation) = &item_model.script_compilation {
             let script = general_purpose::STANDARD.decode(script_compilation).unwrap();
             let maybe_class = Compiler::from_binary(&script).unwrap().pop();
-            Vm::bootstrap_without_init(self.vm.clone(), vec![maybe_class.unwrap()]);
-            Vm::repl_on_registered_class(self.vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
+            Vm::bootstrap_without_init(self.item_script_vm.clone(), vec![maybe_class.unwrap()]);
+            Vm::repl_on_registered_class(self.item_script_vm.clone(), format!("itemscript{}", item_model.id).as_str(), Box::new(&dynamic_item_script_handler), vec![])
                 .map_err(|e| error!("Failed to execute item script for item {}, due to \n{}", item_model.id, e.message)).unwrap();
         }
         bonuses.extend(dynamic_item_script_handler.drain());
@@ -279,5 +286,30 @@ impl StatusService {
     #[inline]
     pub fn character_vit_def(&self, status_snapshot: &StatusSnapshot) -> u16 {
         status_snapshot.vit() // TODO angelus multiplier
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use models::enums::bonus::BonusType;
+    use models::enums::skill_enums::SkillEnum;
+    use models::status::Status;
+    use models::status_bonus::{StatusBonus, TemporaryStatusBonus};
+    use crate::server::service::global_config_service::GlobalConfigService;
+    use crate::server::service::status_service::StatusService;
+    use crate::tests::common;
+
+    #[test]
+    fn test_snapshot_bonuses_have_temporary_bonuses() {
+        // Given
+        common::before_all();
+        let service = StatusService::new(GlobalConfigService::instance(), common::test_script_vm());
+        let mut status = Status::default();
+        status.temporary_bonuses.add(TemporaryStatusBonus::with_duration(BonusType::Agi(10), 0, 0, 1000, SkillEnum::AlIncagi.id() as u16));
+        // When
+        let snapshot = service.to_snapshot(&status);
+        // Then
+        assert!(snapshot.bonuses().iter().find(|status_bonus| { matches!(status_bonus.bonus(), BonusType::Agi(10)) }).is_some(), "missing agi bonus");
     }
 }

@@ -19,23 +19,26 @@ use std::sync::mpsc::SyncSender;
 use std::sync::mpsc::Receiver;
 use std::sync::{Arc, Mutex, Once};
 use log::{LevelFilter};
+use rathena_script_lang_interpreter::lang::vm::{DebugFlag, Vm};
 use simple_logger::SimpleLogger;
 
 use crate::repository::model::item_model::{ItemModel, ItemModels};
 use crate::repository::model::mob_model::{MobModel, MobModels};
 use configuration::configuration::Config;
 use packets::packets::Packet;
-
+use crate::repository::Repository;
 use crate::server::model::events::client_notification::Notification;
+use crate::server::model::events::game_event::GameEvent;
 use crate::server::model::events::persistence_event::PersistenceEvent;
+use crate::server::model::map_item::MapItems;
+use crate::server::model::tasks_queue::TasksQueue;
+use crate::server::Server;
 use crate::server::service::item_service::ItemService;
-
-
-
+use crate::server::service::server_service::ServerService;
+use crate::server::state::server::ServerState;
 use crate::tests::common::mocked_repository::MockedRepository;
 use crate::tests::common::sync_helper::{CountDownLatch, IncrementLatch};
-
-
+use crate::util::cell::MyUnsafeCell;
 
 static mut CONFIGS: Option<Config> = None;
 static INIT: Once = Once::new();
@@ -177,6 +180,44 @@ pub fn mocked_repository() -> Arc<MockedRepository> {
     Arc::new(MockedRepository)
 }
 
+pub fn test_script_vm() -> Arc<Vm> {
+    Arc::new(Vm::new("../native_functions_list.txt", DebugFlag::None.value()))
+}
+
+pub struct ServerBuilder {
+    pub configuration: &'static Config,
+    pub repository: Arc<MockedRepository>,
+    map_items: MapItems,
+    tasks_queue: Arc<TasksQueue<GameEvent>>,
+    server_service: ServerService,
+}
+
+impl ServerBuilder {
+    pub fn new(configuration: &'static Config, server_service: ServerService) -> Self {
+        ServerBuilder {
+            configuration,
+            repository: mocked_repository(),
+            map_items: MapItems::default(),
+            tasks_queue: Arc::new(Default::default()),
+            server_service
+        }
+    }
+    pub fn map_items(mut self, map_items: MapItems) -> Self {
+        self.map_items = map_items;
+        self
+    }
+    pub fn tasks_queue(mut self, tasks_queue: Arc<TasksQueue<GameEvent>>) -> Self {
+        self.tasks_queue = tasks_queue;
+        self
+    }
+    pub fn repository(mut self, repository: MockedRepository) -> Self {
+        self.repository = Arc::new(repository);
+        self
+    }
+    pub fn build(self) -> Server {
+        Server::new_without_service_init(self.configuration, self.repository, self.map_items, self.tasks_queue, self.server_service)
+    }
+}
 
 #[macro_export]
 macro_rules! status_snapshot {

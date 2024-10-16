@@ -13,7 +13,7 @@ use models::enums::bonus::BonusType;
 
 
 use packets::packets::PacketZcUseItemAck2;
-use crate::repository::{ItemRepository, Repository};
+use crate::repository::ItemRepository;
 use crate::repository::model::item_model::{ItemModel};
 
 use crate::server::model::events::client_notification::{CharNotification, Notification};
@@ -26,9 +26,6 @@ use crate::server::state::character::Character;
 use crate::util::cell::{MyRef, MyUnsafeCell};
 
 
-static mut SERVICE_INSTANCE: Option<ItemService> = None;
-static SERVICE_INSTANCE_INIT: Once = Once::new();
-
 #[allow(dead_code)]
 pub struct ItemService {
     client_notification_sender: SyncSender<Notification>,
@@ -36,16 +33,12 @@ pub struct ItemService {
     repository: Arc<dyn ItemRepository>,
     configuration_service: &'static GlobalConfigService,
     item_script_cache: MyUnsafeCell<HashMap<u32, ClassFile>>,
+    item_script_vm: Arc<Vm>,
 }
 
 impl ItemService {
-    pub fn instance() -> &'static ItemService {
-        unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
-    }
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<Repository>, configuration_service: &'static GlobalConfigService) {
-        SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(ItemService { client_notification_sender, persistence_event_sender, repository, configuration_service, item_script_cache: Default::default() });
-        });
+    pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn ItemRepository>, item_script_vm: Arc<Vm>, configuration_service: &'static GlobalConfigService) -> Self {
+        ItemService { client_notification_sender, persistence_event_sender, repository, configuration_service, item_script_cache: Default::default(), item_script_vm }
     }
 
     pub fn get_item_script(&self, item_id: i32, runtime: &Runtime) -> Option<MyRef<ClassFile>> {
@@ -69,18 +62,18 @@ impl ItemService {
     }
 
     #[metrics::elapsed]
-    pub fn use_item(&self, server_ref: Arc<Server>, runtime: &Runtime, character_user_item: CharacterUseItem, character: &mut Character) {
+    pub fn use_item(&self, server_ref: &Server, runtime: &Runtime, character_user_item: CharacterUseItem, character: &mut Character) {
         if let Some(item) = character.get_item_from_inventory(character_user_item.index) {
             if item.item_type().is_consumable() {
                 // TODO check if char can use (class restriction, level restriction)
                 //TODO rework, this is deprecated, items script are now compiled. In addition it is not efficient to instantiate PlayerScriptHandler each time
-                let maybe_script_ref = ItemService::instance().get_item_script(item.item_id, runtime);
+                let maybe_script_ref = self.get_item_script(item.item_id, runtime);
                 if maybe_script_ref.is_some() {
                     let script = maybe_script_ref.as_ref().unwrap();
                     let (tx, _rx) = mpsc::channel(1);
                     let session = server_ref.state().get_session(character.account_id);
                     session.set_script_handler_channel_sender(tx);
-                    let script_result = Vm::repl(server_ref.vm.clone(), script,
+                    let script_result = Vm::repl(self.item_script_vm.clone(), script,
                                                  Box::new(PlayerScriptHandler::instance()), vec![0, character.char_id, character.account_id]);
                     let mut packet_zc_use_item_ack = PacketZcUseItemAck2::new(self.configuration_service.packetver());
                     packet_zc_use_item_ack.set_aid(character_user_item.char_id);
@@ -125,22 +118,26 @@ impl ItemService {
                 let mut complex_script = false;
                 for op_code in script_main.op_codes.borrow().iter() {
                     match op_code {
-                        LoadConstant(_) | LoadValue |  LoadGlobal => {}
+                        LoadConstant(_) | LoadValue | LoadGlobal => {}
                         CallNative { reference, .. } => {
                             let native = vm.get_from_native_pool(*reference).unwrap();
                             if !(native.name == "bonus" || native.name == "bonus2" || native.name == "bonus3" || native.name == "bonus4" || native.name == "bonus5" || native.name == "skill") {
-                                complex_script = true; break;
+                                complex_script = true;
+                                break;
                             }
                         }
                         // When script contains those op code, it means script need to be executed each time the item is used
                         // E.g Gibbet_card          Rybio_Card
                         // if (getrefine()<6)       bonus2 bAddEffWhenHit,Eff_Stun,300+600*(readparam(bDex)>=77);
                         //    bonus bMdef,5;
-                        _ => { complex_script = true; break; }
+                        _ => {
+                            complex_script = true;
+                            break;
+                        }
                     }
                 }
 
-                Vm::repl(vm.clone(), class_file, Box::new(&script_handler), vec![]);
+                let _ = Vm::repl(vm.clone(), class_file, Box::new(&script_handler), vec![]);
                 item.bonuses = script_handler.drain();
 
                 item.bonuses.iter().filter_map(|b| {

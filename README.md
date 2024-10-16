@@ -2,6 +2,7 @@
 
 [Discord](https://discord.gg/AJkR8mhdFJ)
 
+[Rust ro 3 years journey blog post](https://nmeylan.ch/blog/rust-ro-3-years-after/)
 # Welcome to rust-ro!
 **rust-ro** is a Ragnarok MMO Server implementation written in Rust. 
 
@@ -211,6 +212,7 @@ https://user-images.githubusercontent.com/1909074/178155321-d3eeb4b8-32ed-4901-b
 
 ### 7.2 Visual debugger
 ![visual-debugger](doc/img/visual_debugger.PNG)
+![visual-debugger](doc/img/stats_debugger.PNG)
 Debug server state with a UI
 
 ### 7.3 Warps

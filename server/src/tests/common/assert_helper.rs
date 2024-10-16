@@ -2,6 +2,8 @@
 
 use std::collections::HashSet;
 use std::fmt::Debug;
+use std::ops::Deref;
+use std::panic;
 use std::sync::Arc;
 use packets::packets::{Packet};
 use packets::packets_parser::parse;
@@ -64,33 +66,33 @@ pub fn variance(expectation: u32, variance: usize) -> u32 {
     (variance as f32 / 100_f32).round() as u32 * expectation
 }
 
-pub fn assert_vecs_equal<T: std::fmt::Debug + std::cmp::PartialEq>(mut vec1: Vec<T>, mut vec2: Vec<T>) {
-    let mut missing_from_vec2 = Vec::new();
-    let mut extra_in_vec2 = Vec::new();
+pub fn assert_vecs_equal<T: std::fmt::Debug + std::cmp::PartialEq>(mut actual: Vec<T>, mut expected: Vec<T>) {
+    let mut not_expected = Vec::new();
+    let mut missing = Vec::new();
 
     // Find elements in vec1 that are missing in vec2
-    for elem in &vec1 {
-        if !vec2.contains(elem) {
-            missing_from_vec2.push(elem);
+    for elem in &actual {
+        if !expected.contains(elem) {
+            not_expected.push(elem);
         } else {
             // Remove the matched element from vec2 to prevent multiple matches
-            if let Some(pos) = vec2.iter().position(|x| x == elem) {
-                vec2.remove(pos);
+            if let Some(pos) = expected.iter().position(|x| x == elem) {
+                expected.remove(pos);
             }
         }
     }
 
     // Remaining elements in vec2 are extra
-    extra_in_vec2.extend(vec2.iter());
+    missing.extend(expected.iter());
     // Print the results
-    if missing_from_vec2.is_empty() && extra_in_vec2.is_empty() {
+    if not_expected.is_empty() && missing.is_empty() {
         assert!(true)
     } else {
-        if !missing_from_vec2.is_empty() {
-            assert!(false, "Missing elements in vec2: {:?}", missing_from_vec2);
+        if !not_expected.is_empty() {
+            assert!(false, "Should not contain following elements: {:?}", not_expected);
         }
-        if !extra_in_vec2.is_empty() {
-            assert!(false, "Extra elements in vec2: {:?}", extra_in_vec2);
+        if !missing.is_empty() {
+            assert!(false, "Missing expected elements: {:?}", missing);
         }
     }
 }
@@ -202,7 +204,10 @@ pub fn has_sent_notification(notifications: &Vec<Notification>, expectation: Not
     let res = get_sent_notification(notifications, &expectation, packetver).is_some();
     if !res {
         println!("Can't find {expectation:?} among events below");
-        notifications.iter().for_each(|e| println!("  {e:?}"));
+        notifications.iter().for_each(|e| {
+            println!("  {e:?}");
+            e.packet(packetver).display();
+        });
     }
     res
 }
@@ -269,11 +274,11 @@ macro_rules! assert_sent_persistence_event {
     }
 }
 
-fn contains_packet(expectation: &NotificationExpectation, packetver: u32, packets: &Vec<u8>) -> bool {
-    if packets.is_empty() {
+fn contains_packet(expectation: &NotificationExpectation, packetver: u32, bytes: &Vec<u8>) -> bool {
+    if bytes.is_empty() {
         return false;
     }
-    let packets = parse_packet(packets, packetver);
+    let packets = parse_packet(bytes, packetver);
     for expectation_packet in expectation.packets.iter() {
         let mut i = 0;
         for packet in packets.iter() {
@@ -292,15 +297,35 @@ fn contains_packet(expectation: &NotificationExpectation, packetver: u32, packet
     false
 }
 
-fn parse_packet(packets: &[u8], packetver: u32) -> Vec<Box<dyn Packet>> {
-    let mut packet = parse(packets, packetver);
+fn parse_packet(bytes: &[u8], packetver: u32) -> Vec<Box<dyn Packet>> {
+    let mut buffer = [0_u8; 20048];
+    if bytes.len() < 2 {
+        return vec![];
+    }
+    if bytes.len() > buffer.len() {
+        std::panic!("Bulk of packet is greater {} than buffer {}", bytes.len(), buffer.len());
+    }
+    for (i, byte) in bytes.iter().enumerate() {
+        if i >= buffer.len() {
+            break;
+        }
+        buffer[i] = *byte;
+    }
+    let mut bytes_read = bytes.len();
+    let packet = parse(&buffer[..bytes.len()], packetver);
     let mut parsed_packets = vec![];
-    if packet.raw().len() < packets.len() {
+    if packet.raw().len() < bytes_read {
         let mut offset = 0;
-        while offset < packets.len() {
-            packet = parse(&packets[offset..packets.len()], packetver);
-            offset += packet.raw().len();
-            parsed_packets.push(packet);
+        while offset < bytes_read {
+            let result = panic::catch_unwind(|| {
+                parse(&buffer[offset..bytes_read], packetver)
+            });
+            if let Ok(packet) = result {
+                offset += packet.raw().len();
+                parsed_packets.push(packet);
+            } else {
+                break;
+            }
         }
     } else {
         parsed_packets.push(packet);

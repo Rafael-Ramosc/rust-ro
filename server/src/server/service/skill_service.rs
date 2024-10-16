@@ -4,23 +4,19 @@ use std::sync::Once;
 use models::enums::EnumWithNumberValue;
 use models::enums::skill::{SkillType, UseSkillFailure, UseSkillFailureClientSideType};
 use models::item::NormalInventoryItem;
-use packets::packets::{PacketZcAckTouseskill, PacketZcActionFailure, PacketZcNotifySkill2, PacketZcUseskillAck2};
+use packets::packets::{PacketZcAckTouseskill, PacketZcActionFailure, PacketZcNotifySkill2, PacketZcUseSkill, PacketZcUseskillAck2};
 use skills::OffensiveSkill;
 use models::enums::skill_enums::SkillEnum;
 use models::status::{StatusSnapshot};
-use models::status_bonus::StatusBonusSource::Skill;
 use crate::server::model::events::client_notification::{AreaNotification, AreaNotificationRangeType, CharNotification, Notification};
 use crate::server::model::events::persistence_event::PersistenceEvent;
 use crate::server::model::map_item::MapItemSnapshot;
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::state::character::Character;
 use crate::packets::packets::Packet;
-use crate::server::model::action::{Damage, SkillUsed};
+use crate::server::model::action::{SkillCasted, SkillUsed};
 use crate::server::service::battle_service::BattleService;
 use crate::server::service::status_service::StatusService;
-
-static mut SERVICE_INSTANCE: Option<SkillService> = None;
-static SERVICE_INSTANCE_INIT: Once = Once::new();
 
 #[allow(dead_code)]
 pub struct SkillService {
@@ -29,26 +25,23 @@ pub struct SkillService {
     configuration_service: &'static GlobalConfigService,
     battle_service: BattleService,
     status_service: &'static StatusService,
+    force_no_delay: bool,
 }
 
 
 impl SkillService {
     pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService) -> SkillService {
-        SkillService { client_notification_sender, persistence_event_sender, configuration_service, battle_service, status_service }
-    }
-    pub fn instance() -> &'static SkillService {
-        unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
+        SkillService { client_notification_sender, persistence_event_sender, configuration_service, battle_service, status_service, force_no_delay: false }
     }
 
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, battle_service: BattleService, status_service: &'static StatusService, configuration_service: &'static GlobalConfigService) {
-        SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(SkillService::new(client_notification_sender, persistence_event_sender, battle_service, status_service, configuration_service));
-        });
+    pub fn force_no_delay(mut self) -> Self {
+        self.force_no_delay = true;
+        self
     }
 
-    pub fn start_use_skill(&self, character: &mut Character, target: Option<MapItemSnapshot>, source_status: &StatusSnapshot, target_status: Option<&StatusSnapshot>, skill_id: u32, skill_level: u8, tick: u128) -> Option<SkillUsed> {
+    pub fn start_use_skill(&self, character: &mut Character, target: Option<MapItemSnapshot>, source_status: &StatusSnapshot, target_status: Option<&StatusSnapshot>, skill_id: u32, skill_level: u8, tick: u128) -> SkillCasted {
         if target.is_none() || target_status.is_none() {
-            return None;
+            return SkillCasted::invalid();
         }
         let target_snapshot = target.unwrap();
         let skill = SkillEnum::from_id(skill_id);
@@ -57,12 +50,12 @@ impl SkillService {
         let validate_sp = skill.validate_sp(source_status);
         if validate_sp.is_err() {
             self.send_skill_fail_packet(character, UseSkillFailure::SpInsufficient);
-            return None;
+            return SkillCasted::invalid();
         }
         let validate_hp = skill.validate_hp(source_status);
         if validate_hp.is_err() {
             self.send_skill_fail_packet(character, UseSkillFailure::HpInsufficient);
-            return None;
+            return SkillCasted::invalid();
         }
         let maybe_ammo = character.status.ammo.map(|ammo|
             (ammo.ammo_type, character.get_item_from_inventory(ammo.inventory_index).map(|ammo_in_inventory| ammo_in_inventory.amount as u32).unwrap_or(0)));
@@ -71,24 +64,24 @@ impl SkillService {
             let mut packet_zc_action_failure = PacketZcActionFailure::new(self.configuration_service.packetver());
             packet_zc_action_failure.fill_raw();
             self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_action_failure.raw_mut())))).unwrap();
-            return None;
+            return SkillCasted::invalid();
         }
 
         let validate_weapon = skill.validate_weapon(source_status);
         if validate_weapon.is_err() {
             self.send_skill_fail_packet(character, UseSkillFailure::ThisWeapon);
-            return None;
+            return SkillCasted::invalid();
         }
         let validate_zeny = skill.validate_zeny(source_status);
         if validate_zeny.is_err() {
             self.send_skill_fail_packet(character, UseSkillFailure::Money);
-            return None;
+            return SkillCasted::invalid();
         }
 
         let validate_items = skill.validate_item(&character.inventory_normal().iter().map(|(_, i)| i.to_normal_item()).collect::<Vec<NormalInventoryItem>>());
         if validate_items.is_err() {
             self.send_skill_fail_packet(character, validate_items.err().unwrap());
-            return None;
+            return SkillCasted::invalid();
         }
 
         // TODO use char stats
@@ -107,14 +100,13 @@ impl SkillService {
         )).unwrap();
 
 
-        let no_delay = skill.cast_time() == 0;
-        character.set_skill_in_use(target.map(|target| target.map_item().id()), tick, skill, no_delay);
-        let mut skill_usage_response = None;
+        let no_delay = self.force_no_delay || skill.cast_time() == 0;
+        character.set_skill_in_use(target.map(|target| target.map_item().id()), tick, skill);
+        let mut skill_usage_response = SkillCasted::valid();
         if no_delay {
-            skill_usage_response = self.do_use_skill(character, target, source_status, target_status, tick);
+            skill_usage_response = SkillCasted::no_delay();
         }
 
-        validate_sp.unwrap();
         skill_usage_response
     }
 
@@ -123,7 +115,7 @@ impl SkillService {
             return None;
         }
 
-        if tick < character.skill_in_use().start_skill_tick + character.skill_in_use().skill.cast_time() as u128 {
+        if !self.force_no_delay && tick < character.skill_in_use().start_skill_tick + character.skill_in_use().skill.cast_time() as u128 {
             return None;
         }
         let skill = &character.skill_in_use().skill;
@@ -155,17 +147,25 @@ impl SkillService {
                 packet_zc_notify_skill2.fill_raw();
                 packets = mem::take(packet_zc_notify_skill2.raw_mut());
 
-                character.update_skill_used_at_tick(tick);
             }
             SkillType::Interactive => {}
             SkillType::Performance => {}
             SkillType::Support => {
                 let skill = skill.as_supportive_skill().unwrap();
                 bonuses = skill.bonuses_to_target(tick);
+                let mut packet_zc_use_skill = PacketZcUseSkill::new(self.configuration_service.packetver());
+                packet_zc_use_skill.set_src_aid(character.char_id);
+                packet_zc_use_skill.set_target_aid(target_id);
+                packet_zc_use_skill.set_skid(skill.id() as u16);
+                packet_zc_use_skill.set_level(skill.level() as i16);
+                packet_zc_use_skill.set_result(true);
+                packet_zc_use_skill.fill_raw();
+                packets = mem::take(packet_zc_use_skill.raw_mut());
             }
             SkillType::Passive => {}
         }
-        if packets.len() > 0 {
+        character.update_skill_used_at_tick(tick);
+        if !packets.is_empty() {
             self.client_notification_sender.send(Notification::Area(
                 AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(), AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, packets)
             )).unwrap();

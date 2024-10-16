@@ -1,6 +1,4 @@
-#![feature(future_join)]
-#![feature(stmt_expr_attributes)]
-#![feature(proc_macro_hygiene)]
+#![feature(trait_upcasting)]
 
 #![feature(test)]
 extern crate test;
@@ -38,7 +36,7 @@ use proxy::map::MapProxy;
 use crate::proxy::char::CharProxy;
 use std::sync::{Arc};
 
-use crate::repository::{ItemRepository, Repository};
+use crate::repository::{ItemRepository, MobRepository, PgRepository, Repository};
 use std::time::{Instant};
 use base64::Engine;
 use base64::engine::general_purpose;
@@ -46,7 +44,7 @@ use log::{LevelFilter};
 use rathena_script_lang_interpreter::lang::compiler::Compiler;
 
 
-use rathena_script_lang_interpreter::lang::vm::{DebugFlag, Vm};
+use rathena_script_lang_interpreter::lang::vm::Vm;
 use simple_logger::SimpleLogger;
 use tokio::runtime::Runtime;
 use server::Server;
@@ -80,11 +78,11 @@ pub static mut MAP_DIR: &str = "./config/maps/pre-re";
 pub async fn main() {
     let _start = Instant::now();
     unsafe {
-        CONFIGS = Some(Config::load().unwrap());
+        CONFIGS = Some(Config::load("").unwrap());
     }
 
     setup_logger();
-    let repository : Repository = Repository::new_pg(&configs().database, Runtime::new().unwrap()).await;
+    let repository : PgRepository = PgRepository::new_pg(&configs().database, Runtime::new().unwrap()).await;
     let repository_arc = Arc::new(repository);
     // Load all items in memory, it takes only few mb
     let mut items =  repository_arc.get_all_items().await.unwrap();
@@ -99,8 +97,8 @@ pub async fn main() {
 
 
     // Setup script virtual machine for NPC
-    let vm = Arc::new(Vm::new("native_functions_list.txt", DebugFlag::None.value()));
-    let scripts = load_scripts(vm.clone());
+    let npc_script_vm = create_script_vm("native_functions_list.txt");
+    let scripts = load_scripts(npc_script_vm.clone());
 
     // Loading configs
     let skills_config = Config::load_skills_config(".").unwrap();
@@ -126,7 +124,8 @@ pub async fn main() {
     let (client_notification_sender, single_client_notification_receiver) = std::sync::mpsc::sync_channel::<Notification>(2048);
     let (persistence_event_sender, persistence_event_receiver) = std::sync::mpsc::sync_channel::<PersistenceEvent>(2048);
     // Create server
-    let server = Server::new(configs(), repository_arc.clone(), map_item_ids, vm, client_notification_sender, persistence_event_sender.clone());
+    let item_script_vm = create_script_vm("native_functions_list.txt");
+    let server = Server::new(configs(), repository_arc.clone(), map_item_ids, npc_script_vm, item_script_vm, client_notification_sender.clone(), persistence_event_sender.clone());
     let server_ref = Arc::new(server);
     PlayerScriptHandler::init(GlobalConfigService::instance(), server_ref.clone());
     let server_ref_clone = server_ref;
@@ -149,7 +148,7 @@ pub async fn main() {
         }
     }
     info!("Server started in {}ms", _start.elapsed().as_millis());
-    Server::start(server_ref_clone, single_client_notification_receiver, persistence_event_receiver, persistence_event_sender, true);
+    Server::start(server_ref_clone, client_notification_sender, single_client_notification_receiver, persistence_event_receiver, persistence_event_sender, true);
 
     for handle in handles {
         handle.join().expect("Failed await server and proxy threads");
@@ -174,7 +173,7 @@ fn update_item_and_mob_static_db(items: &mut Vec<ItemModel>, mobs: &Vec<MobModel
     }
 }
 
-async fn compile_item_scripts(repository_arc: &Arc<Repository>, items: &mut Vec<ItemModel>) {
+async fn compile_item_scripts(repository_arc: &Arc<PgRepository>, items: &mut Vec<ItemModel>) {
     let start = Instant::now();
     let mut script_compilation_to_update: Vec<(i32, Vec<u8>, u128)> = vec![];
     let mut item_script_compiled = 0;
@@ -199,7 +198,7 @@ async fn compile_item_scripts(repository_arc: &Arc<Repository>, items: &mut Vec<
     info!("Compiled {} item scripts compiled, skipped {} item scripts compilation (already compiled) in {}ms", item_script_compiled, item_script_skipped, start.elapsed().as_millis());
 }
 
-fn setup_logger() {
+pub fn setup_logger() {
     let level = match configs().server.log_level.as_ref().unwrap().to_lowercase().as_str() {
         "info" => LevelFilter::Info,
         "debug" => LevelFilter::Debug,
@@ -225,4 +224,9 @@ pub fn load_scripts(vm: Arc<Vm>) -> HashMap<String, Vec<Script>> {
 
 pub fn configs() -> &'static Config {
     unsafe { CONFIGS.as_ref().unwrap() }
+}
+
+
+pub fn create_script_vm(native_function_file_path: &str) -> Arc<Vm> {
+    Arc::new(Vm::new(native_function_file_path, rathena_script_lang_interpreter::lang::vm::DebugFlag::None.value()))
 }

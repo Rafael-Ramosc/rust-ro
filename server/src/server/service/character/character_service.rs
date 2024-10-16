@@ -15,7 +15,7 @@ use models::enums::EnumWithNumberValue;
 use models::enums::skill_enums::SkillEnum;
 
 
-use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues, PacketZcNotifyMove};
+use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues, PacketZcNotifyMove, PacketZcMsgStateChange2};
 use crate::repository::model::item_model::InventoryItemModel;
 use crate::repository::{CharacterRepository};
 use crate::server::model::events::game_event::{CharacterKillMonster, CharacterLook, CharacterUpdateStat, CharacterZeny, GameEvent};
@@ -26,7 +26,7 @@ use crate::server::model::path::manhattan_distance;
 use crate::server::model::events::client_notification::{AreaNotification, AreaNotificationRangeType, CharNotification, Notification};
 use crate::server::model::events::persistence_event::{IncreaseSkillLevel, PersistenceEvent, ResetSkills, SavePositionUpdate, StatusUpdate};
 use crate::server::model::events::persistence_event::PersistenceEvent::SaveCharacterPosition;
-use crate::server::{PLAYER_FOV, Server};
+use crate::server::PLAYER_FOV;
 use crate::server::model::events::map_event::{MapEvent, MobDropItems};
 use crate::server::model::map_instance::{MapInstance, MapInstanceKey};
 use models::position::Position;
@@ -44,10 +44,7 @@ use crate::server::state::map_instance::MapInstanceState;
 use crate::server::state::server::ServerState;
 use crate::util::packet::chain_packets;
 use crate::util::string::StringUtil;
-use crate::util::tick::get_tick_client;
-
-static mut SERVICE_INSTANCE: Option<CharacterService> = None;
-static SERVICE_INSTANCE_INIT: Once = Once::new();
+use crate::util::tick::{get_tick, get_tick_client};
 
 pub struct CharacterService {
     client_notification_sender: SyncSender<Notification>,
@@ -60,17 +57,9 @@ pub struct CharacterService {
 }
 
 impl CharacterService {
-    pub fn instance() -> &'static CharacterService {
-        unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
-    }
 
     pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: &'static StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) -> Self {
         Self { client_notification_sender, persistence_event_sender, repository, configuration_service, skill_tree_service, server_task_queue, status_service }
-    }
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn CharacterRepository + Sync>, configuration_service: &'static GlobalConfigService, skill_tree_service: SkillTreeService, status_service: &'static StatusService, server_task_queue: Arc<TasksQueue<GameEvent>>) {
-        SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(CharacterService { client_notification_sender, persistence_event_sender, repository, configuration_service, skill_tree_service, server_task_queue, status_service });
-        });
     }
 
     pub fn max_weight(&self, character: &Character) -> u32 {
@@ -372,7 +361,7 @@ impl CharacterService {
         }
     }
 
-    pub fn stat_mut<'a>(&'a self, status: &'a mut Status, status_type: &StatusTypes) -> &mut u16 {
+    pub fn stat_mut<'a>(&'a self, status: &'a mut Status, status_type: &StatusTypes) -> &'a mut u16 {
         match status_type {
             StatusTypes::Str => {
                 &mut status.str
@@ -620,31 +609,37 @@ impl CharacterService {
         }
     }
 
-    pub fn reload_client_side_status(&self, server_ref: &Server, character: &Character) {
+    pub fn reload_client_side_status(&self, character: &Character) {
         let character_status = self.status_service.to_snapshot(&character.status);
         let mut packet_str = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_str.set_status_type(StatusTypes::Str.value() as u32);
         packet_str.set_default_status(character_status.base_str() as i32);
+        packet_str.set_plus_status(character_status.bonus_str() as i32);
         packet_str.fill_raw();
         let mut packet_agi = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_agi.set_status_type(StatusTypes::Agi.value() as u32);
         packet_agi.set_default_status(character_status.base_agi() as i32);
+        packet_agi.set_plus_status(character_status.bonus_agi() as i32);
         packet_agi.fill_raw();
         let mut packet_dex = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_dex.set_status_type(StatusTypes::Dex.value() as u32);
         packet_dex.set_default_status(character_status.base_dex() as i32);
+        packet_dex.set_plus_status(character_status.bonus_dex() as i32);
         packet_dex.fill_raw();
         let mut packet_int = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_int.set_status_type(StatusTypes::Int.value() as u32);
         packet_int.set_default_status(character_status.base_int() as i32);
+        packet_int.set_plus_status(character_status.bonus_int() as i32);
         packet_int.fill_raw();
         let mut packet_vit = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_vit.set_status_type(StatusTypes::Vit.value() as u32);
         packet_vit.set_default_status(character_status.base_vit() as i32);
+        packet_vit.set_plus_status(character_status.bonus_vit() as i32);
         packet_vit.fill_raw();
         let mut packet_luk = PacketZcStatusValues::new(self.configuration_service.packetver());
         packet_luk.set_status_type(StatusTypes::Luk.value() as u32);
         packet_luk.set_default_status(character_status.base_luk() as i32);
+        packet_luk.set_plus_status(character_status.bonus_luk() as i32);
         packet_luk.fill_raw();
         let mut packet_str_increase_cost = PacketZcParChange::new(self.configuration_service.packetver());
         packet_str_increase_cost.set_var_id(StatusTypes::StrNextLevelIncreaseCost.value() as u16);
@@ -745,7 +740,7 @@ impl CharacterService {
         packet_sp.fill_raw();
         let mut packet_speed = PacketZcParChange::new(self.configuration_service.packetver());
         packet_speed.set_var_id(StatusTypes::Speed.value() as u16);
-        packet_speed.set_count(character.status.speed as i32);
+        packet_speed.set_count(character_status.speed() as i32);
         packet_speed.fill_raw();
         let mut packet_exp_required_to_reach_next_base_level = PacketZcParChange::new(self.configuration_service.packetver());
         packet_exp_required_to_reach_next_base_level.set_var_id(StatusTypes::Nextbaseexp.value() as u16);
@@ -768,8 +763,30 @@ impl CharacterService {
             &packet_exp_required_to_reach_next_base_level, &packet_exp_required_to_reach_next_job_level,
         ]);
         final_response_packet.extend(self.weight_update_packets(character));
-        server_ref.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
             .expect("Fail to send client notification");
+
+        // Sending another batch of packet for active bonuses
+        let mut final_response_packet: Vec<u8> = vec![];
+        let mut icons = HashSet::new();
+        for temporary_bonus in character.status.temporary_bonuses.iter().filter(|bonus| bonus.has_icon()) {
+            let icon = temporary_bonus.icon().unwrap();
+            if icons.contains(&icon) {
+                continue;
+            }
+            let mut packet_zc_msg_state_change = PacketZcMsgStateChange2::new(self.configuration_service.packetver());
+            packet_zc_msg_state_change.set_aid(character.char_id);
+            packet_zc_msg_state_change.set_index(icon as i16);
+            packet_zc_msg_state_change.set_remain_ms(temporary_bonus.remaining_ms(get_tick()));
+            packet_zc_msg_state_change.set_state(true);
+            packet_zc_msg_state_change.fill_raw();
+            final_response_packet.extend(packet_zc_msg_state_change.raw());
+            icons.insert(icon);
+        }
+        if !final_response_packet.is_empty() {
+            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
+                .expect("Fail to send client notification");
+        }
     }
 
     pub fn load_units_in_fov(&self, server_state: &ServerState, character: &mut Character, map_instance_state: &MapInstanceState) {

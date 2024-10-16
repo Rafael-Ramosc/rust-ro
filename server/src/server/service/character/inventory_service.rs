@@ -27,9 +27,6 @@ use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::state::character::Character;
 use crate::util::packet::{chain_packets, chain_packets_raws_by_value};
 
-static mut SERVICE_INSTANCE: Option<InventoryService> = None;
-static SERVICE_INSTANCE_INIT: Once = Once::new();
-
 pub struct InventoryService {
     client_notification_sender: SyncSender<Notification>,
     persistence_event_sender: SyncSender<PersistenceEvent>,
@@ -39,17 +36,9 @@ pub struct InventoryService {
 }
 
 impl InventoryService {
-    pub fn instance() -> &'static InventoryService {
-        unsafe { SERVICE_INSTANCE.as_ref().unwrap() }
-    }
 
     pub fn new(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn InventoryRepository + Sync>, configuration_service: &'static GlobalConfigService, task_queue: Arc<TasksQueue<GameEvent>>) -> Self {
         Self { client_notification_sender, persistence_event_sender, repository, configuration_service, server_task_queue: task_queue }
-    }
-    pub fn init(client_notification_sender: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>, repository: Arc<dyn InventoryRepository + Sync>, configuration_service: &'static GlobalConfigService, task_queue: Arc<TasksQueue<GameEvent>>) {
-        SERVICE_INSTANCE_INIT.call_once(|| unsafe {
-            SERVICE_INSTANCE = Some(InventoryService { client_notification_sender, persistence_event_sender, repository, configuration_service, server_task_queue: task_queue });
-        });
     }
 
     pub fn add_items_in_inventory(&self, runtime: &Runtime, add_items: CharacterAddItems, character: &mut Character) {
@@ -202,13 +191,13 @@ impl InventoryService {
         }
         if let Some((index, ammo)) = ammo {
             let item_info = self.configuration_service.get_item(ammo.item_id);
-            character.wear_equip_item(index, item_info.location, item_info);
+            character.wear_equip_item(index, ammo.equip as u64, item_info);
             packet_zc_equip_arrow.set_index(index as i16);
         }
         packet_zc_equip_arrow.fill_raw();
         for item in equipments.iter() {
             let item_info = self.configuration_service.get_item(item.itid as i32);
-            character.wear_equip_item(item.index as usize, item.location as u64, item_info);
+            character.wear_equip_item(item.index as usize, item.wear_state as u64, item_info);
         }
         packet_zc_equipment_itemlist3.set_packet_length((PacketZcEquipmentItemlist3::base_len(self.configuration_service.packetver()) + equipments.len() * EquipmentitemExtrainfo301::base_len(self.configuration_service.packetver())) as i16);
         packet_zc_equipment_itemlist3.set_item_info(equipments);

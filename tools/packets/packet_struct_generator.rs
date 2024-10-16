@@ -157,11 +157,20 @@ fn write_display_trait(file: &mut File, struct_definition: &StructDefinition, _i
     file.write_all("        let mut fields = Vec::new();\n".to_string().as_bytes()).unwrap();
     for field in &struct_definition.fields {
         let value_to_print;
+        if  field.name.eq("packet_id") {
+            file.write_all(format!("        fields.push(format!(\"{}{}[{}, {}]: 0X{{:02X?}}{{:02X?}}\", {}));\n",
+                                   field.name,
+                                   display_type(field),
+                                   field.position, if field.length > -1 { (field.position + field.length).to_string() } else { "?".to_string() },
+                                   "&self.packet_id_raw[0], &self.packet_id_raw[1]"
+            ).as_bytes()).unwrap();
+            continue;
+        }
         if field.data_type.name == "Array" {
             value_to_print = format!("&self.{}.pretty_output()", field.name);
         } else if field.data_type.name == "Vec" {
             value_to_print = format!("&self.{}.iter().map(|item| format!(\"\n  >{{}}\", item)).collect::<String>()", field.name);
-        } else {
+        }  else {
             value_to_print = format!("&self.{}", field.name);
         }
         file.write_all(format!("        fields.push(format!(\"{}{}[{}, {}]: {{}}\", {}));\n",
@@ -240,15 +249,19 @@ fn write_struct_from_method(file: &mut File, struct_definition: &StructDefinitio
             file.write_all("            },\n".to_string().as_bytes()).unwrap();
         } else if field.length > -1 {
             file.write_all(format!("            {}_raw: {{\n", field.name).as_bytes()).unwrap();
-            file.write_all(format!("                let mut dst: [u8; {}] = [0u8; {}];\n", field_length(field), field_length(field)).as_bytes()).unwrap();
+            let mut length = field.length;
+            if field.data_type.name == "Array" {
+                length = field.length * field.sub_type.expect(format!("Expected subtype for field {:?}", field).as_str()).length.unwrap();
+            }
+            file.write_all(format!("                let mut dst: [u8; {}] = [0u8; {}];\n", length, length).as_bytes()).unwrap();
             if field.condition.is_some() {
                 file.write_all(format!("                {}", packetver_if("packetver", field)).as_bytes()).unwrap();
-                file.write_all(format!("                    dst.clone_from_slice(&buffer[offset..offset + {}]);\n", field_length(field)).as_bytes()).unwrap();
-                file.write_all(format!("                    offset += {};\n", field.length).as_bytes()).unwrap();
+                file.write_all(format!("                    dst.clone_from_slice(&buffer[offset..offset + {}]);\n", length).as_bytes()).unwrap();
+                file.write_all(format!("                    offset += {};\n", length).as_bytes()).unwrap();
                 file.write_all("                }\n".to_string().as_bytes()).unwrap();
             } else {
-                file.write_all(format!("                dst.clone_from_slice(&buffer[offset..offset + {}]);\n", field_length(field)).as_bytes()).unwrap();
-                file.write_all(format!("                offset += {};\n", field.length).as_bytes()).unwrap();
+                file.write_all(format!("                dst.clone_from_slice(&buffer[offset..offset + {}]);\n", length).as_bytes()).unwrap();
+                file.write_all(format!("                offset += {};\n", length).as_bytes()).unwrap();
             }
             file.write_all("                dst\n".to_string().as_bytes()).unwrap();
             file.write_all("            },\n".to_string().as_bytes()).unwrap();
@@ -699,6 +712,8 @@ fn field_type(field: &StructField) -> String {
 fn field_type_raw(field: &StructField) -> String {
     if field.data_type.name == "Vec" {
         "Vec<Vec<u8>>".to_string()
+    } else if field.length > -1 && field.data_type.name == "Array" {
+        format!("[u8; {}]", field.length * field.sub_type.unwrap().length.unwrap())
     } else if field.length > -1 {
         format!("[u8; {}]", field.length)
     } else {
@@ -736,7 +751,7 @@ fn field_default_value(field: &StructField) -> String {
                     value = "0 as char";
                 }
                 res = format!("{}        {}: [{}; {}],\n", res, field.name, value, field.length);
-                res = format!("{}        {}_raw: [0; {}],\n", res, field.name, field.length);
+                res = format!("{}        {}_raw: [0; {}],\n", res, field.name, field.length * field.sub_type.unwrap().length.unwrap());
                 res
             } else {
                 res = format!("{}        {}: vec![],\n", res, field.name);

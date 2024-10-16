@@ -103,12 +103,12 @@ impl Character {
             last_attack_motion: 0,
         });
     }
-    pub fn set_skill_in_use(&mut self, target_id: Option<u32>, start_skill_tick: u128, skill: Box<dyn Skill>, no_cast_delay: bool) {
+    pub fn set_skill_in_use(&mut self, target_id: Option<u32>, start_skill_tick: u128, skill: Box<dyn Skill>) {
         self.skill_in_use = Some(SkillInUse {
             target: target_id,
             start_skill_tick,
             skill,
-            used_at_tick: if no_cast_delay { Some(start_skill_tick) } else { None },
+            used_at_tick: None,
         });
     }
     pub fn attack(&self) -> Attack {
@@ -332,6 +332,9 @@ impl Character {
     }
 
     pub fn wear_equip_item(&mut self, index: usize, location: u64, item_to_equip_model: &ItemModel) -> Option<EquippedItem> {
+        if location == 0 {
+            return None
+        }
         let res = if let Some(item) = self.get_item_from_inventory_mut(index) {
             item.equip = location as i32;
             Some(EquippedItem { item_id: item.item_id, location, index })

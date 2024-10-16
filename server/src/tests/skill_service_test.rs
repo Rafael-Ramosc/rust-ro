@@ -8,7 +8,7 @@ use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::service::skill_service::SkillService;
 use crate::server::service::status_service::StatusService;
 use crate::tests::common;
-use crate::tests::common::{create_mpsc, TestContext};
+use crate::tests::common::{create_mpsc, test_script_vm, TestContext};
 use crate::tests::common::sync_helper::CountDownLatch;
 
 struct SkillServiceTestContext {
@@ -28,7 +28,7 @@ fn before_each_with_latch(latch_size: usize) -> SkillServiceTestContext {
     let (client_notification_sender, client_notification_receiver) = create_mpsc::<Notification>();
     let (persistence_event_sender, persistence_event_receiver) = create_mpsc::<PersistenceEvent>();
     let count_down_latch = CountDownLatch::new(latch_size);
-    StatusService::init(GlobalConfigService::instance(), "../native_functions_list.txt");
+    StatusService::init(GlobalConfigService::instance(), test_script_vm());
     SkillServiceTestContext {
         test_context: TestContext::new(client_notification_sender.clone(), client_notification_receiver, persistence_event_sender.clone(), persistence_event_receiver, count_down_latch),
         skill_service: SkillService::new(client_notification_sender.clone(), persistence_event_sender.clone(), BattleService::new(client_notification_sender.clone(), StatusService::instance(), GlobalConfigService::instance(), BattleResultMode::Normal), StatusService::instance(), GlobalConfigService::instance()),
@@ -57,12 +57,13 @@ mod tests {
     use models::enums::skill_enums::SkillEnum;
     use models::status::{KnownSkill, Status};
     use models::status_bonus::{StatusBonus, StatusBonuses};
-    use packets::packets::{Packet, PacketZcAckTouseskill, PacketZcActionFailure, PacketZcUseskillAck2};
+    use packets::packets::{Packet, PacketZcAckTouseskill, PacketZcActionFailure, PacketZcUseSkill, PacketZcUseskillAck2};
 
     use skills::{Skill, SkillBase};
     use crate::{assert_sent_packet_in_current_packetver, assert_vec_equals, status_snapshot, status_snapshot_mob};
     use crate::GlobalConfigService;
     use crate::server::model::map_item::{MapItemSnapshot, ToMapItem, ToMapItemSnapshot};
+    use crate::server::Server;
     use crate::tests::common;
     use crate::tests::common::character_helper::{add_item_in_inventory, create_character, equip_item_from_id, equip_item_from_name, takeoff_weapon};
     use crate::tests::common::mob_helper::create_mob;
@@ -335,7 +336,7 @@ mod tests {
     #[test]
     fn use_skill_should_apply_bonuses() {
         // Given
-        let context = before_each();
+        let mut context = before_each();
         let mut character = create_character();
         #[derive(Clone)]
         struct TestResult {
@@ -346,24 +347,22 @@ mod tests {
             TestResult { skill: KnownSkill { value: SkillEnum::AlBlessing, level: 10 }, expected_bonuses: StatusBonuses::new(vec![StatusBonus::new(BonusType::Dex(110)), StatusBonus::new(BonusType::Str(10)), StatusBonus::new(BonusType::Int(10))]) },
             TestResult { skill: KnownSkill { value: SkillEnum::AlIncagi, level: 10 }, expected_bonuses: StatusBonuses::new(vec![StatusBonus::new(BonusType::Agi(12)), StatusBonus::new(BonusType::SpeedPercentage(25))]) },
         ];
-        let target = MapItemSnapshot { map_item: character.to_map_item(), position: Position { x: character.x + 1, y: character.y + 1, dir: 0 } };
+        let target = MapItemSnapshot { map_item: character.to_map_item(), position: Position { x: character.x, y: character.y, dir: 0 } };
         // When
         for scenarii in scenario {
+            context.test_context.reset_increment_latch();
+            context.test_context.clear_sent_packet();
             let source_status = status_snapshot!(context, character);
             let target_status = status_snapshot!(context, character);
-            character.set_skill_in_use(Some(target.map_item.id()), 0, scenarii.skill.into(), true);
+            character.set_skill_in_use(Some(target.map_item.id()), 0, scenarii.skill.into());
             let skill_use_response = context.skill_service.do_use_skill(&mut character, Some(target.clone()), source_status, Some(&target_status), 1);
+            // Then
             assert!(skill_use_response.is_some());
             let skill_use_response = skill_use_response.unwrap();
-            assert_vec_equals!(skill_use_response.bonuses.into(), scenarii.expected_bonuses.into());
+            context.test_context.increment_latch().wait_expected_count_with_timeout(1, Duration::from_millis(200));
+            assert_vec_equals!(skill_use_response.bonuses.to_vec(), scenarii.expected_bonuses.into());
+            assert_sent_packet_in_current_packetver!(context, NotificationExpectation::of_fov(character.x, character.y, vec![SentPacket::with_count(PacketZcUseSkill::packet_id(GlobalConfigService::instance().packetver()), 1)]));
         }
-        // Then
-    }
-    #[test]
-    fn use_skill_should_send_par_change_packets() {
-        // Given
-        // When
-        // Then
     }
 
     #[test]
