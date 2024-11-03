@@ -10,7 +10,7 @@ use models::enums::skill_enums::SkillEnum;
 use models::status::{StatusSnapshot};
 use crate::server::model::events::client_notification::{AreaNotification, AreaNotificationRangeType, CharNotification, Notification};
 use crate::server::model::events::persistence_event::PersistenceEvent;
-use crate::server::model::map_item::MapItemSnapshot;
+use crate::server::model::map_item::{MapItemSnapshot, MapItemType};
 use crate::server::service::global_config_service::GlobalConfigService;
 use crate::server::state::character::Character;
 use crate::packets::packets::Packet;
@@ -63,7 +63,8 @@ impl SkillService {
         if validate_ammo.is_err() {
             let mut packet_zc_action_failure = PacketZcActionFailure::new(self.configuration_service.packetver());
             packet_zc_action_failure.fill_raw();
-            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_action_failure.raw_mut())))).unwrap();
+            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_action_failure.raw_mut()))))
+                .unwrap_or_else(|_| error!("Failed to send notification packet_zc_action_failure to client"));
             return SkillCasted::invalid();
         }
 
@@ -85,7 +86,7 @@ impl SkillService {
         }
 
         // TODO use char stats
-        skill.update_cast_time(skill.base_cast_time());
+        skill.update_cast_time((skill.base_cast_time() as f32 * self.status_service.cast_time_reduction(source_status)).ceil() as u32);
         skill.update_after_cast_act_delay(skill.base_after_cast_act_delay());
         skill.update_after_cast_walk_delay(skill.base_after_cast_walk_delay());
         let mut packet_zc_useskill_ack2 = PacketZcUseskillAck2::new(self.configuration_service.packetver());
@@ -97,7 +98,7 @@ impl SkillService {
         packet_zc_useskill_ack2.fill_raw();
         self.client_notification_sender.send(Notification::Area(
             AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(), AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, mem::take(packet_zc_useskill_ack2.raw_mut()))
-        )).unwrap();
+        )).unwrap_or_else(|_| error!("Failed to send notification packet_zc_useskill_ack2 to client"));
 
 
         let no_delay = self.force_no_delay || skill.cast_time() == 0;
@@ -122,7 +123,7 @@ impl SkillService {
         let skill_type = skill.skill_type();
         let mut damage: i32 = 0;
         let mut packets: Vec<u8> = vec![];
-        let mut attack_motion: u128 = 0;
+        let mut attack_motion: i32 = 0;
         let mut target_id = character.char_id;
         let mut bonuses = Default::default();
         match skill.skill_type() {
@@ -131,14 +132,19 @@ impl SkillService {
                 damage = self.calculate_damage(source_status, target_status.as_ref().unwrap(), skill);
                 let mut packet_zc_notify_skill2 = PacketZcNotifySkill2::new(self.configuration_service.packetver());
                 packet_zc_notify_skill2.set_skid(skill.id() as u16);
-                target_id = target.as_ref().unwrap().map_item().id();
+                let target = target.as_ref().unwrap();
+                target_id = target.map_item().id();
                 packet_zc_notify_skill2.set_target_id(target_id);
                 packet_zc_notify_skill2.set_damage(damage);
                 packet_zc_notify_skill2.set_start_time(0);
 
-                attack_motion = self.status_service.attack_motion(source_status) as u128;
+                attack_motion = self.status_service.attack_delay(source_status) as i32;
                 packet_zc_notify_skill2.set_attack_mt(attack_motion as i32);
                 packet_zc_notify_skill2.set_attacked_mt(attack_motion as i32);
+                if matches!(target.map_item.object_type(), MapItemType::Mob) {
+                    let mob = self.configuration_service.get_mob(target.map_item.client_item_class() as i32);
+                    packet_zc_notify_skill2.set_attacked_mt(mob.damage_motion);
+                }
                 packet_zc_notify_skill2.set_level(skill.level() as i16);
 
                 packet_zc_notify_skill2.set_count(skill.hit_count().abs() as i16);
@@ -168,7 +174,7 @@ impl SkillService {
         if !packets.is_empty() {
             self.client_notification_sender.send(Notification::Area(
                 AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(), AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, packets)
-            )).unwrap();
+            )).unwrap_or_else(|_| error!("Failed to send notification packet_zc_use_skill to client"));
         }
 
         Some(
@@ -180,7 +186,7 @@ impl SkillService {
                 damage_to_self: 0,
                 effects: vec![],
                 bonuses,
-                attacked_at: tick + attack_motion,
+                attacked_at: tick + attack_motion as u128,
             }
         )
     }
@@ -199,7 +205,8 @@ impl SkillService {
         packet_zc_ack_touseskill.set_num(UseSkillFailureClientSideType::SkillFailed.value() as u32);
         packet_zc_ack_touseskill.set_result(false);
         packet_zc_ack_touseskill.fill_raw();
-        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_ack_touseskill.raw_mut())))).unwrap();
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, mem::take(packet_zc_ack_touseskill.raw_mut()))))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_zc_ack_touseskill to client"));
     }
 
     pub fn calculate_damage(&self, source_status: &StatusSnapshot, target_status: &StatusSnapshot, skill: &dyn OffensiveSkill) -> i32 {

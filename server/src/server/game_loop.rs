@@ -31,6 +31,7 @@ use crate::server::service::character::skill_tree_service::SkillTreeService;
 use crate::server::service::global_config_service::GlobalConfigService;
 
 use crate::server::service::server_service::ServerService;
+use crate::server::service::status_service::StatusService;
 
 const MOVEMENT_TICK_RATE: u128 = 16;
 pub const GAME_TICK_RATE: u128 = 40;
@@ -38,6 +39,9 @@ pub const GAME_TICK_RATE: u128 = 40;
 impl Server {
     pub(crate) fn game_loop(server_ref: Arc<Server>, runtime: Runtime) {
         loop {
+            if !server_ref.is_alive() {
+                break;
+            }
             let tick = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
             Self::game_loop_iteration(server_ref.clone().as_ref(), &runtime, tick);
             let time_spent = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis() - tick;
@@ -59,7 +63,7 @@ impl Server {
             for task in tasks {
                 match task {
                     GameEvent::CharacterLeaveGame(char_id) => {
-                        server_state_mut.characters_mut().remove(&char_id);
+                        server_ref.disconnect_character(char_id);
                     }
                     GameEvent::CharacterJoinGame(char_id) => {
                         let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
@@ -112,6 +116,7 @@ impl Server {
                         server_ref.inventory_service().reload_inventory(runtime, char_id, character);
                         server_ref.inventory_service().reload_equipped_item_sprites(character);
                         server_ref.character_service().reload_client_side_status(character);
+                        server_ref.character_service().reload_client_side_hotkeys(character);
                     }
                     GameEvent::CharacterUpdateWeight(char_id) => {
                         let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
@@ -210,6 +215,25 @@ impl Server {
                     GameEvent::CharacterDamage(_damage) => {
                         println!("GameEvent::CharacterDamage: Not implemented yet!")
                     }
+                    GameEvent::CharacterUpdateSpeed(char_id, speed) => {
+                        let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
+                        character.status.set_speed(speed);
+                        server_ref.character_service().reload_client_side_status(character);
+                    }
+                    GameEvent::CharacterHotkeyAdd(char_id,hotkey) => {
+                        let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
+                        server_ref.character_service().hotkey_add(character, hotkey);
+                    }
+                    GameEvent::CharacterHotkeyRemove(char_id,hotkey_index) => {
+                        let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
+                        server_ref.character_service().hotkey_remove(character, hotkey_index);
+
+                    }
+                    GameEvent::CharacterRestoreAllHpAndSP(char_id) => {
+                        let character = server_state_mut.characters_mut().get_mut(&char_id).unwrap();
+                        let status = StatusService::instance().to_snapshot(&character.status);
+                        server_ref.character_service().update_hp_sp(character, status.max_hp(), status.max_sp());
+                    }
                 }
             }
         }
@@ -231,6 +255,9 @@ impl Server {
 
     pub(crate) fn character_movement_loop(server_ref: Arc<Server>, client_notification_sender_clone: SyncSender<Notification>, persistence_event_sender: SyncSender<PersistenceEvent>) {
         loop {
+            if !server_ref.is_alive() {
+                break;
+            }
             let tick = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
             let mut server_state_mut = server_ref.state_mut();
             if let Some(tasks) = server_ref.pop_movement_task() {

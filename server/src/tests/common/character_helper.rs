@@ -20,6 +20,8 @@ pub fn create_character() -> Character {
             job: JobName::Novice.value() as u32,
             hp: 0,
             sp: 0,
+            max_hp: 0,
+            max_sp: 0,
             str: 1,
             agi: 1,
             vit: 1,
@@ -60,6 +62,7 @@ pub fn create_character() -> Character {
         map_view: Default::default(),
         script_variable_store: Mutex::new(Default::default()),
         last_moved_at: 0,
+        hotkeys: vec![],
     }
 }
 

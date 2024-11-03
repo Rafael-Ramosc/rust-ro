@@ -15,7 +15,7 @@ use models::enums::EnumWithNumberValue;
 use models::enums::skill_enums::SkillEnum;
 
 
-use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues, PacketZcNotifyMove, PacketZcMsgStateChange2};
+use packets::packets::{Packet, PacketZcAttackRange, PacketZcItemDisappear, PacketZcItemEntry, PacketZcLongparChange, PacketZcNotifyEffect, PacketZcNotifyStandentry7, PacketZcNotifyVanish, PacketZcNpcackMapmove, PacketZcParChange, PacketZcSpriteChange2, PacketZcStatusChangeAck, PacketZcStatusValues, PacketZcNotifyMove, PacketZcMsgStateChange2, PacketZcShortcutKeyListV2, ShortCutKey};
 use crate::repository::model::item_model::InventoryItemModel;
 use crate::repository::{CharacterRepository};
 use crate::server::model::events::game_event::{CharacterKillMonster, CharacterLook, CharacterUpdateStat, CharacterZeny, GameEvent};
@@ -31,6 +31,7 @@ use crate::server::model::events::map_event::{MapEvent, MobDropItems};
 use crate::server::model::map_instance::{MapInstance, MapInstanceKey};
 use models::position::Position;
 use models::status::{KnownSkill, Status};
+use crate::server::model::hotkey::Hotkey;
 use crate::server::model::movement::Movable;
 use crate::server::model::tasks_queue::TasksQueue;
 use crate::server::service::character::skill_tree_service::SkillTreeService;
@@ -42,7 +43,7 @@ use crate::server::service::status_service::StatusService;
 use crate::server::state::character::Character;
 use crate::server::state::map_instance::MapInstanceState;
 use crate::server::state::server::ServerState;
-use crate::util::packet::chain_packets;
+use crate::util::packet::{chain_packets};
 use crate::util::string::StringUtil;
 use crate::util::tick::{get_tick, get_tick_client};
 
@@ -116,7 +117,7 @@ impl CharacterService {
         packet_zc_npcack_mapmove.set_y_pos(new_position.y as i16);
         packet_zc_npcack_mapmove.fill_raw();
         self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, std::mem::take(packet_zc_npcack_mapmove.raw_mut()))))
-            .expect("Failed to send notification event with PacketZcNpcackMapmove");
+            .unwrap_or_else(|_| error!("Failed to send notification packet_zc_npcack_mapmove to client"));
 
         character.update_position(new_position.x, new_position.y);
         character.clear_map_view();
@@ -149,7 +150,7 @@ impl CharacterService {
             map_instance_id: character.current_map_instance(),
             range_type: AreaNotificationRangeType::Fov { x: character.x(), y: character.y(), exclude_id: None },
             packet: packets,
-        })).expect("Fail to send client notification");
+        })).unwrap_or_else(|_| error!("Failed to send notification send_area_notification_around_characters to client"));
     }
 
     pub fn update_zeny(&self, runtime: &Runtime, zeny_update: CharacterZeny, character: &mut Character) {
@@ -168,11 +169,37 @@ impl CharacterService {
         packet_zc_longpar_change.set_amount(character.get_zeny() as i32);
         packet_zc_longpar_change.set_var_id(StatusTypes::Zeny.value() as u16);
         packet_zc_longpar_change.fill_raw();
-        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, std::mem::take(packet_zc_longpar_change.raw_mut())))).expect("Fail to send client notification");
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, std::mem::take(packet_zc_longpar_change.raw_mut()))))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_zc_longpar_change(update zeny) to client"));
+    }
+
+    pub fn update_hp_sp(&self, character: &mut Character, hp: u32, sp: u32) {
+        character.status.set_hp(hp);
+        character.status.set_sp(sp);
+        let mut packet_status_hp_change = PacketZcParChange::new(self.configuration_service.packetver());
+        packet_status_hp_change.set_var_id(StatusTypes::Hp.value() as u16);
+        packet_status_hp_change.set_count(hp as i32);
+        packet_status_hp_change.fill_raw();
+        let mut packet_status_sp_change = PacketZcParChange::new(self.configuration_service.packetver());
+        packet_status_sp_change.set_var_id(StatusTypes::Sp.value() as u16);
+        packet_status_sp_change.set_count(sp as i32);
+        packet_status_sp_change.fill_raw();
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, chain_packets(vec![&packet_status_hp_change, &packet_status_sp_change]))))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_status_change(status update) to client"));
+    }
+
+    pub async fn save_characters_state(&self, characters: Vec<&Character>) {
+        self.repository.characters_update(characters.iter().map(|c| &c.status).collect(),
+                                          characters.iter().map(|c| c.char_id as i32).collect(),
+                                          characters.iter().map(|c| c.x() as i16).collect(),
+                                          characters.iter().map(|c| c.y() as i16).collect(),
+                                          characters.iter().map(|c| c.map_instance_key.map_without_ext().chars().take(11).collect()).collect(),
+        ).await.unwrap()
     }
 
     pub fn notify_weight(&self, character: &Character) {
-        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, self.weight_update_packets(character)))).expect("Fail to send client notification");
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, self.weight_update_packets(character))))
+            .unwrap_or_else(|_| error!("Failed to send notification notify_weight to client"));
     }
 
     fn weight_update_packets(&self, character: &Character) -> Vec<u8> {
@@ -764,7 +791,7 @@ impl CharacterService {
         ]);
         final_response_packet.extend(self.weight_update_packets(character));
         self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
-            .expect("Fail to send client notification");
+            .unwrap_or_else(|_| error!("Failed to send notification reload client side status to client"));
 
         // Sending another batch of packet for active bonuses
         let mut final_response_packet: Vec<u8> = vec![];
@@ -785,8 +812,40 @@ impl CharacterService {
         }
         if !final_response_packet.is_empty() {
             self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
-                .expect("Fail to send client notification");
+                .unwrap_or_else(|_| error!("Failed to send notification reload client side status to client"));
         }
+    }
+
+    pub fn reload_client_side_hotkeys(&self, character: &Character) {
+        let mut packet_zc_shortcut_key_list_v2 = PacketZcShortcutKeyListV2::new(self.configuration_service.packetver());
+        let mut shortcuts: Vec<ShortCutKey> = Vec::with_capacity(38);
+        for _ in 0..38 {
+            shortcuts.push(ShortCutKey::new(self.configuration_service.packetver()));
+        }
+        for hotkey in character.hotkeys.iter() {
+            let mut shortcut =  &mut shortcuts[hotkey.index as usize];
+            shortcut.set_count(hotkey.skill_lvl);
+            shortcut.set_is_skill(hotkey.is_skill as i8);
+            shortcut.set_id(hotkey.itemskill_id as u32);
+        }
+        packet_zc_shortcut_key_list_v2.set_short_cut_key(shortcuts);
+        packet_zc_shortcut_key_list_v2.fill_raw();
+
+        let mut final_response_packet: Vec<u8> = vec![];
+        final_response_packet.extend(packet_zc_shortcut_key_list_v2.raw());
+        if !final_response_packet.is_empty() {
+            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, final_response_packet)))
+                .unwrap_or_else(|_| error!("Failed to send notification reload client side status to client"));
+        }
+    }
+
+    pub fn hotkey_remove(&self, character: &mut Character, index: usize) {
+        character.hotkeys.retain(|hotkey| hotkey.index as usize != index);
+    }
+
+    pub fn hotkey_add(&self, character: &mut Character, new_hotkey: Hotkey) {
+        character.hotkeys.retain(|hotkey| hotkey.index != new_hotkey.index);
+        character.hotkeys.push(new_hotkey);
     }
 
     pub fn load_units_in_fov(&self, server_state: &ServerState, character: &mut Character, map_instance_state: &MapInstanceState) {
@@ -867,7 +926,8 @@ impl CharacterService {
             }
         }
         if !packets.is_empty() {
-            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packets))).expect("Failed to send notification to client");
+            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packets)))
+                .unwrap_or_else(|_| error!("Failed to send notification packet_zc_notify_standentry to client"));
         }
 
         let mut packets = vec![];
@@ -890,7 +950,8 @@ impl CharacterService {
             }
         }
         if !packets.is_empty() {
-            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packets))).expect("Failed to send notification to client");
+            self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packets)))
+                .unwrap_or_else(|_| error!("Failed to send notification packet_zc_notify_vanish(load unit in fov) to client"));
         }
         character.map_view = new_map_view;
     }
@@ -901,7 +962,8 @@ impl CharacterService {
         packet_status_change.set_var_id(status_type.value() as u16);
         packet_status_change.set_count(new_value as i32);
         packet_status_change.fill_raw();
-        self.client_notification_sender.send(Notification::Char(CharNotification::new(char_id, packet_status_change.raw))).expect("Fail to send client notification");
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(char_id, packet_status_change.raw)))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_status_change(status update) to client"));
     }
 
     pub fn character_increase_stat(&self, character: &mut Character, character_update_stat: CharacterUpdateStat) {
@@ -911,7 +973,8 @@ impl CharacterService {
         packet_zc_status_change_ack.set_result(result);
         packet_zc_status_change_ack.set_value(self.stat_value(&character.status, &StatusTypes::from_value(character_update_stat.stat_id as usize)) as u8);
         packet_zc_status_change_ack.fill_raw();
-        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packet_zc_status_change_ack.raw))).expect("Fail to send client notification");
+        self.client_notification_sender.send(Notification::Char(CharNotification::new(character.char_id, packet_zc_status_change_ack.raw)))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_zc_status_change_ack(character_increase_stat update) to client"));
     }
 
     pub fn character_kill_monster(&self, character: &mut Character, character_kill_monster: CharacterKillMonster, map_instance: &MapInstance) {

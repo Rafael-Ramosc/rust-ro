@@ -268,8 +268,8 @@ impl BattleService {
         packet_zc_notify_act3.set_target_gid(attack.target);
         packet_zc_notify_act3.set_action(ActionType::Attack.value() as u8);
         packet_zc_notify_act3.set_gid(character.char_id);
-        packet_zc_notify_act3.set_attack_mt(attack_motion as i32);
-        packet_zc_notify_act3.set_attacked_mt(attack_motion as i32);
+        packet_zc_notify_act3.set_attack_mt(attack_motion as i32 / 2);
+        packet_zc_notify_act3.set_attacked_mt(attack_motion as i32 / 2);
         let damage = if matches!(target.map_item.object_type(), MapItemType::Mob) {
             let mob = self.configuration_service.get_mob(target.map_item.client_item_class() as i32);
             packet_zc_notify_act3.set_attacked_mt(mob.damage_motion);
@@ -282,7 +282,8 @@ impl BattleService {
         packet_zc_notify_act3.fill_raw();
         self.client_notification_sender.send(
             Notification::Area(AreaNotification::new(character.current_map_name().clone(), character.current_map_instance(),
-                                                     AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, mem::take(packet_zc_notify_act3.raw_mut())))).expect("Failed to send notification to client");
+                                                     AreaNotificationRangeType::Fov { x: character.x, y: character.y, exclude_id: None }, mem::take(packet_zc_notify_act3.raw_mut()))))
+            .unwrap_or_else(|_| error!("Failed to send notification packet_zc_notify_act3 to client"));
         if damage >= 0 {
             Some(Damage {
                 target_id: attack.target,

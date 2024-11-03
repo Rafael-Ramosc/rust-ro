@@ -6,6 +6,7 @@ pub mod inventory_repository;
 pub mod persistence_error;
 pub mod mob_repository;
 mod login_repository;
+mod hotkey_repository;
 
 use async_trait::async_trait;
 
@@ -14,12 +15,14 @@ use sqlx::postgres::{PgPoolOptions, PgQueryResult};
 use tokio::runtime::Runtime;
 use crate::repository::model::item_model::{GetItemModel, InventoryItemModel, ItemBuySellModel, ItemModel};
 use configuration::configuration::DatabaseConfig;
-use models::status::KnownSkill;
+use models::status::{KnownSkill, Status};
 use crate::repository::model::char_model::{CharInsertModel, CharSelectModel, CharacterInfoNeoUnionWrapped};
 use crate::repository::model::mob_model::MobModel;
 use crate::server::model::events::game_event::CharacterRemoveItem;
 use crate::server::model::events::persistence_event::{DeleteItems, InventoryItemUpdate};
+use crate::server::model::hotkey::Hotkey;
 use crate::server::script::Value;
+use crate::server::state::character::Character;
 
 pub struct PgRepository {
     pub pool: PgPool,
@@ -62,7 +65,9 @@ pub trait Repository: Sync + Send
 + InventoryRepository
 + MobRepository
 + ScriptVariableRepository
-+ LoginRepository  {}
++ LoginRepository
++ HotKeyRepository
+{}
 
 impl Repository for PgRepository {}
 
@@ -86,6 +91,7 @@ pub trait CharacterRepository {
     async fn character_fetch(&self, _account_id: u32, _char_num: u8) -> Result<CharSelectModel, Error> { todo!() }
     async fn character_reset_skills(&self, _char_id: i32, _skills: Vec<i32>) -> Result<(), Error> { todo!() }
     async fn character_allocate_skill_point(&self, _char_id: i32,  _skill_id: i32, _increment: u8) -> Result<(), Error> { todo!() }
+    async fn characters_update(&self, _statuses: Vec<&Status>, _char_ids: Vec<i32>, _x: Vec<i16>, _y: Vec<i16>, _maps: Vec<String>) -> Result<(), Error> { todo!() }
 }
 
 #[async_trait]
@@ -96,6 +102,13 @@ pub trait InventoryRepository {
     async fn character_inventory_fetch(&self, _char_id: i32) -> Result<Vec<InventoryItemModel>, Error> { todo!() }
     async fn character_inventory_wearable_item_update(&self, _items: Vec<InventoryItemModel>) -> Result<PgQueryResult, Error> { todo!() }
 }
+
+#[async_trait]
+pub trait HotKeyRepository {
+    async fn save_hotkeys(&self, _char_id: u32, _hotkeys: &Vec<Hotkey>) -> Result<(), Error> { todo!() }
+    async fn load_hotkeys(&self, _char_id: u32) -> Result<Vec<Hotkey>, Error> { todo!() }
+}
+
 
 #[async_trait]
 pub trait ItemRepository: Sync + Send  {
