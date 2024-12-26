@@ -1,7 +1,10 @@
 use std::collections::HashMap;
+use std::fs::File;
 use std::net::{Shutdown, TcpStream};
 use std::sync::{Arc, Mutex, RwLock};
 
+use crate::server::service::global_config_service::GlobalConfigService;
+use serde::Serialize;
 use std::io::Write;
 use tokio::sync::mpsc::Sender;
 
@@ -15,7 +18,43 @@ pub struct Session {
     pub user_level: u32,
     pub char_id: Option<u32>,
     pub packetver: u32,
+    pub is_simulated: bool,
     pub script_handler_channel_sender: Mutex<Option<Sender<Vec<u8>>>> // TODO keep track on creation. Abort script thread after X minutes + abort on new script interaction
+}
+
+#[derive(Serialize)]
+pub struct SessionRecord {
+    pub session_id: u32,
+    pub char_id: Option<u32>,
+    pub entries: Mutex<Vec<SessionRecordEntry>>
+}
+
+impl SessionRecord {
+    pub fn new(session_id: u32, char_id: u32) -> Self {
+        Self {
+            session_id,
+            char_id: Some(char_id),
+            entries: Mutex::new(vec![]),
+        }
+    }
+
+    pub fn record(&self, tick: u128, data: Vec<u8>) {
+        self.entries.lock().unwrap().push(SessionRecordEntry { time: tick, data })
+    }
+
+    pub fn finish(&self) {
+        if self.entries.lock().unwrap().is_empty() {
+            return
+        }
+        let mut file = File::create(format!("target/session_{}.record", self.session_id)).unwrap();
+        file.write_all(&bitcode::serialize(self).unwrap()).unwrap();
+    }
+}
+
+#[derive(Serialize)]
+struct SessionRecordEntry {
+    time: u128,
+    data: Vec<u8>
 }
 
 pub trait SessionsIter {
@@ -27,7 +66,11 @@ impl SessionsIter for HashMap<u32, Arc<Session>> {
         let map_entry_option = self.iter().find(|(_, session)| {
             if session.map_server_socket.is_some() {
                 let map_server_socket = read_lock!(session.map_server_socket.as_ref().unwrap());
-                let is_map_stream = map_server_socket.peer_addr().is_ok() && map_server_socket.peer_addr().unwrap() == tcp_stream.peer_addr().unwrap();
+                let is_map_stream = if session.is_simulated {
+                    map_server_socket.peer_addr().is_ok() && map_server_socket.local_addr().unwrap() == tcp_stream.peer_addr().unwrap()
+                } else {
+                    map_server_socket.peer_addr().is_ok() && map_server_socket.peer_addr().unwrap() == tcp_stream.peer_addr().unwrap()
+                };
                 if is_map_stream {
                     return true;
                 }
@@ -58,6 +101,7 @@ impl Session {
             user_level,
             char_id: None,
             packetver,
+            is_simulated: false,
             script_handler_channel_sender: Mutex::new(None)
         }
     }
@@ -71,6 +115,7 @@ impl Session {
             user_level: self.user_level,
             char_id: self.char_id,
             packetver: self.packetver,
+            is_simulated: self.is_simulated,
             script_handler_channel_sender: Mutex::new(None)
         }
     }
@@ -84,6 +129,21 @@ impl Session {
             user_level: self.user_level,
             char_id: self.char_id,
             packetver: self.packetver,
+            is_simulated: false,
+            script_handler_channel_sender: Mutex::new(None)
+        }
+    }
+
+    pub fn create_with_map_socket_and_char_id(account_id: u32, char_id: u32, packetver: u32, map_socket: Arc<RwLock<TcpStream>>) -> Session {
+        Session {
+            char_server_socket: None,
+            map_server_socket: Some(map_socket),
+            account_id,
+            auth_code: 0,
+            user_level: 99,
+            char_id: Some(char_id),
+            packetver,
+            is_simulated: true,
             script_handler_channel_sender: Mutex::new(None)
         }
     }
@@ -97,6 +157,7 @@ impl Session {
             user_level: self.user_level,
             char_id: Some(char_id),
             packetver: self.packetver,
+            is_simulated: self.is_simulated,
             script_handler_channel_sender: Mutex::new(None)
         }
     }
@@ -110,16 +171,9 @@ impl Session {
             user_level: self.user_level,
             char_id: None,
             packetver: self.packetver,
+            is_simulated: self.is_simulated,
             script_handler_channel_sender: Mutex::new(None)
         }
-    }
-
-    pub fn send_to_map_socket(&self, data: &[u8]) {
-        if self.map_server_socket.is_none() {
-            return;
-        }
-        let map_socket = self.map_server_socket.as_ref().unwrap();
-        socket_send_deprecated!(map_socket, data);
     }
 
     pub fn set_script_handler_channel_sender(&self, script_handler_channel_sender: Sender<Vec<u8>>) {
@@ -133,11 +187,15 @@ impl Session {
     pub fn disconnect(&self) {
         if let Some(socket) = self.char_server_socket.as_ref() {
             let write_guard = socket.write().unwrap();
-            write_guard.shutdown(Shutdown::Both).unwrap()
+            if let Ok(_) = write_guard.shutdown(Shutdown::Both) {
+                debug!("Disconnected from char server");
+            }
         }
         if let Some(socket) = self.map_server_socket.as_ref() {
             let write_guard = socket.write().unwrap();
-            write_guard.shutdown(Shutdown::Both).unwrap()
+            if let Ok(_) = write_guard.shutdown(Shutdown::Both) {
+                debug!("Disconnected from map server");
+            }
         }
     }
 }
